@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  HOUSE_USER
+  HOUSE_LANDLORD
+  HOUSE_ADMIN
+  HOUSE_IT_ADMIN
+}
+
+enum Language {
+  EN
+  IT
+}
+
+model User {
+  id                 Int          @id @default(autoincrement())
+  email              String       @unique
+  password           String?
+  auth0_user_id      String?      @unique
+  first_name         String
+  last_name          String
+  role               Role         @default(HOUSE_USER)
+  preferred_language Language     @default(EN)
+  phone_number       String?
+  mobile_number      String?
+  created_at         DateTime     @default(now())
+  updated_at         DateTime     @updatedAt
+  last_login         DateTime?
+  listings           Listing[]
+  invitations_sent   Invitation[]
+  configs_updated    ServiceConfig[]
+}
+
+model Invitation {
+  id         Int      @id @default(autoincrement())
+  email      String
+  role       Role
+  language   Language
+  token      String   @unique
+  used       Boolean  @default(false)
+  created_at DateTime @default(now())
+  expires_at DateTime
+  invited_by Int
+  inviter    User     @relation(fields: [invited_by], references: [id])
+}
+
+model Listing {
+  id                      Int             @id @default(autoincrement())
+  title                   String
+  description             String
+  address_1               String
+  address_2               String?
+  postal_code             String
+  city                    String
+  province                String
+  latitude                Float?
+  longitude               Float?
+  monthly_rent            Decimal
+  deposit                 Decimal?
+  condominium_expenses    Decimal?
+  utility_electricity     Boolean         @default(false)
+  utility_gas             Boolean         @default(false)
+  utility_water           Boolean         @default(false)
+  utility_telephone       Boolean         @default(false)
+  utility_internet        Boolean         @default(false)
+  accommodation_type      String
+  floor                   String
+  bathrooms               Int
+  bedrooms                Int
+  floor_space             Int?
+  feature_storage_room    Boolean         @default(false)
+  feature_basement        Boolean         @default(false)
+  feature_garden          Boolean         @default(false)
+  feature_balcony         Boolean         @default(false)
+  feature_air_con         Boolean         @default(false)
+  feature_washing_machine Boolean         @default(false)
+  feature_dryer           Boolean         @default(false)
+  feature_fireplace       Boolean         @default(false)
+  feature_dishwasher      Boolean         @default(false)
+  feature_elevator        Boolean         @default(false)
+  feature_tv              Boolean         @default(false)
+  feature_telephone       Boolean         @default(false)
+  feature_wifi            Boolean         @default(false)
+  feature_wired_internet  Boolean         @default(false)
+  feature_parking         Boolean         @default(false)
+  feature_pets_allowed    Boolean         @default(false)
+  created_at              DateTime        @default(now())
+  updated_at              DateTime        @updatedAt
+  owner_id                Int
+  owner                   User            @relation(fields: [owner_id], references: [id])
+  available_dates         AvailableDate[]
+  photos                  ListingPhoto[]
+}
+
+model AvailableDate {
+  id             Int       @id @default(autoincrement())
+  listing_id     Int
+  listing        Listing   @relation(fields: [listing_id], references: [id], onDelete: Cascade)
+  available_from DateTime
+  available_to   DateTime?
+}
+
+model ListingPhoto {
+  id         Int     @id @default(autoincrement())
+  listing_id Int
+  listing    Listing @relation(fields: [listing_id], references: [id], onDelete: Cascade)
+  s3_key     String
+  s3_url     String
+  sort_order Int     @default(0)
+}
+
+model ServiceConfig {
+  id         Int      @id @default(autoincrement())
+  service    String
+  key        String
+  value      String
+  is_secret  Boolean  @default(false)
+  updated_at DateTime @updatedAt
+  updated_by Int?
+  updater    User?    @relation(fields: [updated_by], references: [id])
+
+  @@unique([service, key])
+}
+
+model Auth0RoleMapping {
+  id              Int      @id @default(autoincrement())
+  auth0_role_id   String   @unique
+  auth0_role_name String
+  local_role      Role
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+}

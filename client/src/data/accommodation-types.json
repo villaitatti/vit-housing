@@ -1,0 +1,6 @@
+[
+  { "value": "apartment", "labelKey": "listingForm.accommodationType.apartment" },
+  { "value": "house", "labelKey": "listingForm.accommodationType.house" },
+  { "value": "studio", "labelKey": "listingForm.accommodationType.studio" },
+  { "value": "room", "labelKey": "listingForm.accommodationType.room" }
+]

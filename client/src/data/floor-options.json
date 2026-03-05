@@ -1,0 +1,10 @@
+[
+  { "value": "basement", "labelKey": "listingForm.floor.basement" },
+  { "value": "ground", "labelKey": "listingForm.floor.ground" },
+  { "value": "1", "labelKey": "listingForm.floor.1" },
+  { "value": "2", "labelKey": "listingForm.floor.2" },
+  { "value": "3", "labelKey": "listingForm.floor.3" },
+  { "value": "4", "labelKey": "listingForm.floor.4" },
+  { "value": "5", "labelKey": "listingForm.floor.5" },
+  { "value": "6", "labelKey": "listingForm.floor.6" }
+]
