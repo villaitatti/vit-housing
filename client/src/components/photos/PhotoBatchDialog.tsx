@@ -115,6 +115,7 @@ export function PhotoBatchDialog({ open, files, onComplete, onCancel }: PhotoBat
   const initializedRef = useRef(false);
   const imagesRef = useRef<BatchImage[]>([]);
   const validationBatchRef = useRef(0);
+  const cropDirtyRef = useRef(false);
 
   useEffect(() => {
     imagesRef.current = images;
@@ -193,13 +194,18 @@ export function PhotoBatchDialog({ open, files, onComplete, onCancel }: PhotoBat
   const activeImage = images[activeIndex];
 
   const onCropComplete = useCallback((_croppedArea: Area, croppedPixels: Area) => {
+    // Mark dirty only after the initial onCropComplete from cropper mount
+    if (croppedAreaPixels !== null) {
+      cropDirtyRef.current = true;
+    }
     setCroppedAreaPixels(croppedPixels);
-  }, []);
+  }, [croppedAreaPixels]);
 
   const resetCropState = () => {
     setCrop({ x: 0, y: 0 });
     setZoom(1);
     setCroppedAreaPixels(null);
+    cropDirtyRef.current = false;
   };
 
   const isLastImage = activeIndex === images.length - 1;
@@ -270,8 +276,10 @@ export function PhotoBatchDialog({ open, files, onComplete, onCancel }: PhotoBat
   const handleThumbnailClick = (index: number) => {
     if (index === activeIndex) return;
 
-    // If current image is valid (uncropped) and user has a crop area, prompt to save
-    if (activeImage?.status === 'valid' && croppedAreaPixels) {
+    // Prompt if user has interacted with the cropper on a valid or cropped image
+    const hasUnsavedCrop = (activeImage?.status === 'valid' || activeImage?.status === 'cropped')
+      && cropDirtyRef.current && croppedAreaPixels;
+    if (hasUnsavedCrop) {
       setPendingNavigateIndex(index);
       setShowUnsavedCropConfirm(true);
       return;

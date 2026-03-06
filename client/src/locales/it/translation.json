@@ -199,7 +199,9 @@
       "imageCount": "Foto {{current}} di {{total}}",
       "unsavedCropTitle": "Salvare il ritaglio prima di uscire?",
       "unsavedCropMessage": "Hai un ritaglio non salvato su questa foto. Vuoi salvarlo prima di passare a un'altra foto?",
-      "changeMainHint": "Clicca su una foto per impostarla come foto principale."
+      "changeMainHint": "Clicca su una foto per impostarla come foto principale.",
+      "photoLabel": "Foto {{index}}",
+      "removePhoto": "Rimuovi foto {{index}}"
     },
     "saveListing": "Salva Annuncio"
   },

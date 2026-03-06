@@ -99,7 +99,7 @@ export function NewListingPage() {
 
   useEffect(() => {
     return () => {
-      photosRef.current.forEach((p) => URL.revokeObjectURL(p.preview));
+      photosRef.current.forEach((p) => { URL.revokeObjectURL(p.preview); });
     };
   }, []);
 
@@ -725,11 +725,11 @@ export function NewListingPage() {
                         }
                       }}
                       title={t('listingForm.photos.setAsMain')}
-                      aria-label={`${t('listingForm.photos.setAsMain')} - Photo ${index + 1}${photo.isMain ? ` (${t('listingForm.photos.mainPhotoBadge')})` : ''}`}
+                      aria-label={`${t('listingForm.photos.setAsMain')} - ${t('listingForm.photos.photoLabel', { index: index + 1 })}${photo.isMain ? ` (${t('listingForm.photos.mainPhotoBadge')})` : ''}`}
                     >
                       <img
                         src={photo.preview}
-                        alt={`Photo ${index + 1}`}
+                        alt={t('listingForm.photos.photoLabel', { index: index + 1 })}
                         className="w-full h-full object-cover"
                       />
                       {photo.isMain && (
@@ -740,7 +740,7 @@ export function NewListingPage() {
                       )}
                       <button
                         type="button"
-                        aria-label={`Remove photo ${index + 1}`}
+                        aria-label={t('listingForm.photos.removePhoto', { index: index + 1 })}
                         onClick={(e) => {
                           e.stopPropagation();
                           removePhoto(index);
