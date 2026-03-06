@@ -10,7 +10,8 @@ export function AppLayout() {
   const location = useLocation();
   const { i18n } = useTranslation();
   const routeLang = lang === 'it' ? 'it' : 'en';
-  const isLoginRoute = location.pathname === `/${routeLang}/login`;
+  const normalizedPath = location.pathname.replace(/\/+$/, '') || '/';
+  const isLoginRoute = new RegExp(`^/${routeLang}/login(?:$|/)`).test(normalizedPath);
 
   useLayoutEffect(() => {
     if (i18n.resolvedLanguage !== routeLang) {
