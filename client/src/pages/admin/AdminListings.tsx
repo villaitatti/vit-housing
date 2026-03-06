@@ -43,7 +43,7 @@ export function AdminListingsPage() {
   const { data, isLoading } = useQuery<PaginatedData<AdminListing>>({
     queryKey: queryKeys.listings.all,
     queryFn: async () => {
-      const res = await api.get('/api/v1/listings', { params: { limit: 100 } });
+      const res = await api.get('/api/v1/listings', { params: { limit: 50 } });
       return res.data;
     },
   });
@@ -105,7 +105,7 @@ export function AdminListingsPage() {
               <TableCell>
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="sm" asChild>
-                    <Link to={`/${lang}/listings/${listing.id}`}>
+                    <Link to={`/${lang}/listings/${listing.id}/edit`}>
                       <Pencil className="h-4 w-4" />
                     </Link>
                   </Button>

@@ -56,6 +56,7 @@ export const listingFiltersSchema = z.object({
   maxRent: z.coerce.number().min(0).optional(),
   minFloorSpace: z.coerce.number().int().min(0).optional(),
   maxFloorSpace: z.coerce.number().int().min(0).optional(),
+  owner: z.enum(['me']).optional(),
   sortBy: z.enum(['monthly_rent', 'created_at']).default('created_at'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
   page: z.coerce.number().int().min(1).default(1),
