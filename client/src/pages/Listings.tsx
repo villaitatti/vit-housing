@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Building2 } from 'lucide-react';
+import { Building2, SearchX } from 'lucide-react';
 import api from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { ListingCard } from '@/components/listings/ListingCard';
@@ -21,7 +21,7 @@ interface ListingsListItem {
   bedrooms: number;
   bathrooms: number;
   created_at: string;
-  photos?: { s3_url: string }[];
+  photos?: { url: string }[];
 }
 
 type ListingsResponse = PaginatedData<ListingsListItem>;
@@ -48,6 +48,14 @@ export function ListingsPage() {
     }),
     [searchParams],
   );
+
+  const hasActiveFilters = useMemo(() => {
+    const filterKeys = [
+      'minRent', 'maxRent', 'minBedrooms', 'maxBedrooms',
+      'minBathrooms', 'maxBathrooms', 'minFloorSpace', 'maxFloorSpace',
+    ];
+    return filterKeys.some((key) => searchParams.has(key));
+  }, [searchParams]);
 
   const { data, isLoading } = useQuery<ListingsResponse>({
     queryKey: queryKeys.listings.list(filters),
@@ -106,11 +114,30 @@ export function ListingsPage() {
               ))}
             </div>
           ) : data?.items?.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Building2 className="h-16 w-16 text-muted-foreground/30 mb-4" />
-              <h3 className="text-lg font-semibold mb-1">{t('listings.noListings')}</h3>
-              <p className="text-sm text-muted-foreground">{t('listings.noListingsDescription')}</p>
-            </div>
+            hasActiveFilters ? (
+              <div className="rounded-2xl border border-dashed border-border/60 bg-gradient-to-br from-muted/30 via-background to-muted/50 px-6 py-14">
+                <div className="mx-auto flex max-w-md flex-col items-center text-center">
+                  <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100 ring-8 ring-orange-50 dark:bg-orange-900/30 dark:ring-orange-900/10">
+                    <SearchX className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold tracking-tight">{t('listings.noFilterResults')}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{t('listings.noFilterResultsDescription')}</p>
+                  <Button variant="outline" className="mt-6" onClick={clearFilters}>
+                    {t('listings.clearFilters')}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-border/60 bg-gradient-to-br from-muted/30 via-background to-muted/50 px-6 py-14">
+                <div className="mx-auto flex max-w-md flex-col items-center text-center">
+                  <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 ring-8 ring-primary/5">
+                    <Building2 className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold tracking-tight">{t('listings.noListings')}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{t('listings.noListingsDescription')}</p>
+                </div>
+              </div>
+            )
           ) : (
             <>
               <motion.div

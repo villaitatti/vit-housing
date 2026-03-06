@@ -19,7 +19,7 @@ interface HomeListing {
   monthly_rent: number | string;
   bedrooms: number;
   bathrooms: number;
-  photos?: { s3_url: string }[];
+  photos?: { url: string }[];
 }
 
 export function HomePage() {

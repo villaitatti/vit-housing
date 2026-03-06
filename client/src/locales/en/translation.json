@@ -21,6 +21,7 @@
   "nav": {
     "home": "Home",
     "listings": "Listings",
+    "map": "Map",
     "addListing": "Add Listing",
     "admin": "Admin",
     "profile": "Profile",
@@ -80,8 +81,10 @@
     "maxBathrooms": "Max Bathrooms",
     "minFloorSpace": "Min Floor Space",
     "maxFloorSpace": "Max Floor Space",
-    "noListings": "No listings match your filters.",
-    "noListingsDescription": "Try adjusting your search criteria."
+    "noListings": "No listings yet",
+    "noListingsDescription": "There are no listings available at the moment. Check back soon!",
+    "noFilterResults": "No listings match your filters",
+    "noFilterResultsDescription": "Try adjusting or clearing your search criteria to see more results."
   },
   "listingDetail": {
     "description": "Description",
@@ -178,7 +181,16 @@
       "browse": "Browse Files",
       "minRequired": "At least 2 photos are required",
       "uploading": "Uploading...",
-      "coverPhoto": "Cover photo"
+      "coverPhoto": "Cover photo",
+      "cropTitle": "Crop Photo",
+      "cropSave": "Save Crop",
+      "cropCancel": "Skip",
+      "setAsMain": "Set as Main Photo",
+      "mainPhotoBadge": "Main",
+      "invalidType": "Invalid file type. Only JPEG, PNG, and WebP are allowed.",
+      "fileTooSmall": "File is too small (minimum 50KB).",
+      "dimensionsTooSmall": "Image is too small. Minimum dimensions: 800x600 pixels.",
+      "zoom": "Zoom"
     },
     "saveListing": "Save Listing"
   },
@@ -211,7 +223,6 @@
       "actions": "Actions"
     },
     "serviceAuth0": "Auth0",
-    "serviceS3": "S3 Storage",
     "serviceSes": "SES Email",
     "serviceGoogleMaps": "Google Maps",
     "serviceConfigTitle": "Service Configuration",

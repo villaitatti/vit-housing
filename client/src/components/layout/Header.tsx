@@ -33,7 +33,7 @@ function LanguageFlag({ lang }: { lang: 'en' | 'it' }) {
 
 export function Header() {
   const { lang } = useParams();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -43,7 +43,6 @@ export function Header() {
 
   const switchLanguage = () => {
     const newPath = location.pathname.replace(`/${currentLang}`, `/${otherLang}`);
-    i18n.changeLanguage(otherLang);
     navigate(newPath + location.search);
   };
 
@@ -52,6 +51,7 @@ export function Header() {
   const homePath = `/${currentLang}/home`;
   const listingsPath = `/${currentLang}/listings`;
   const newListingPath = `/${currentLang}/listings/new`;
+  const mapPath = `/${currentLang}/map`;
   const adminPath = `/${currentLang}/admin`;
 
   const navLinkClass = (isActive: boolean) =>
@@ -87,6 +87,12 @@ export function Header() {
                 )}
               >
                 {t('nav.listings')}
+              </Link>
+              <Link
+                to={mapPath}
+                className={navLinkClass(location.pathname === mapPath)}
+              >
+                {t('nav.map')}
               </Link>
               {canAddListing && (
                 <Link

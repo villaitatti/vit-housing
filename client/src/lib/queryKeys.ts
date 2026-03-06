@@ -19,6 +19,7 @@ export const queryKeys = {
   },
   config: {
     services: ['config', 'services'] as const,
+    public: ['config', 'public'] as const,
     auth0Roles: ['config', 'auth0', 'roles'] as const,
     auth0RoleMappings: ['config', 'auth0', 'role-mappings'] as const,
   },

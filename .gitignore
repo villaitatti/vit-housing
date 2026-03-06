@@ -39,5 +39,8 @@ client/dist/
 # TypeScript build info
 *.tsbuildinfo
 
+# Uploaded files
+server/uploads/
+
 # Temp files
 *.tmp

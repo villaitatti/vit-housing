@@ -13,14 +13,14 @@ interface ListingCardProps {
     monthly_rent: number | string;
     bedrooms: number;
     bathrooms: number;
-    photos?: { s3_url: string }[];
+    photos?: { url: string }[];
   };
   lang: string;
 }
 
 export function ListingCard({ listing, lang }: ListingCardProps) {
   const { t } = useTranslation();
-  const coverPhoto = listing.photos?.[0]?.s3_url;
+  const coverPhoto = listing.photos?.[0]?.url;
 
   return (
     <Link to={`/${lang}/listings/${listing.id}`}>

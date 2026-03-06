@@ -16,6 +16,7 @@ const LoginPage = lazy(() => import('@/pages/Login').then((m) => ({ default: m.L
 const RegisterPage = lazy(() => import('@/pages/Register').then((m) => ({ default: m.RegisterPage })));
 const ListingsPage = lazy(() => import('@/pages/Listings').then((m) => ({ default: m.ListingsPage })));
 const ListingDetailPage = lazy(() => import('@/pages/ListingDetail').then((m) => ({ default: m.ListingDetailPage })));
+const MapSearchPage = lazy(() => import('@/pages/MapSearch').then((m) => ({ default: m.MapSearchPage })));
 const NewListingPage = lazy(() => import('@/pages/NewListing').then((m) => ({ default: m.NewListingPage })));
 const ProfilePage = lazy(() => import('@/pages/Profile').then((m) => ({ default: m.ProfilePage })));
 const AdminListingsPage = lazy(() => import('@/pages/admin/AdminListings').then((m) => ({ default: m.AdminListingsPage })));
@@ -78,6 +79,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Suspense fallback={<PageLoader />}><ListingsPage /></Suspense>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="map"
+                element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<PageLoader />}><MapSearchPage /></Suspense>
                   </ProtectedRoute>
                 }
               />

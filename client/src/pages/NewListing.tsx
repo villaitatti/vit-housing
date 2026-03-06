@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -29,18 +29,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Plus, X, Upload } from 'lucide-react';
+import { Plus, X, Upload, Star } from 'lucide-react';
 import accommodationTypes from '@/data/accommodation-types.json';
 import floorOptions from '@/data/floor-options.json';
 import { ITALIAN_PROVINCES } from '@/lib/provinces';
+import { CropDialog } from '@/components/photos/CropDialog';
 
 interface PhotoFile {
   file: File;
   preview: string;
-  uploading?: boolean;
-  uploaded?: boolean;
-  s3_key?: string;
-  s3_url?: string;
+  isMain: boolean;
 }
 
 interface SelectOption {
@@ -50,6 +48,11 @@ interface SelectOption {
 
 const typedAccommodationTypes = accommodationTypes as SelectOption[];
 const typedFloorOptions = floorOptions as SelectOption[];
+
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MIN_FILE_SIZE = 50 * 1024; // 50KB
+const MIN_WIDTH = 800;
+const MIN_HEIGHT = 600;
 
 const featureFields = [
   'feature_storage_room', 'feature_basement', 'feature_garden', 'feature_balcony',
@@ -85,12 +88,35 @@ const utilityFields = [
   { name: 'utility_internet' as const, label: 'listingDetail.internet' },
 ];
 
+const RequiredStar = () => (
+  <span className="text-destructive" aria-hidden="true">
+    *
+  </span>
+);
+
+function validateImageDimensions(file: File): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(img.src);
+      resolve({ width: img.width, height: img.height });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(img.src);
+      reject(new Error('Failed to load image'));
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 export function NewListingPage() {
   const { t } = useTranslation();
   const { lang } = useParams();
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<PhotoFile[]>([]);
   const [showAvailableTo, setShowAvailableTo] = useState<boolean[]>([false]);
+  const [cropQueue, setCropQueue] = useState<File[]>([]);
+  const [currentCropSrc, setCurrentCropSrc] = useState<string | null>(null);
 
   type CreateListingFormValues = z.input<typeof createListingSchema>;
 
@@ -127,22 +153,93 @@ export function NewListingPage() {
     name: 'available_dates',
   });
 
+  const startCropQueue = useCallback((files: File[]) => {
+    if (files.length === 0) return;
+    const [first, ...rest] = files;
+    setCropQueue(rest);
+    setCurrentCropSrc(URL.createObjectURL(first));
+  }, []);
+
+  const handleCropSave = useCallback((blob: Blob) => {
+    const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+    const preview = URL.createObjectURL(blob);
+    setPhotos((prev) => {
+      const isFirst = prev.length === 0;
+      return [...prev, { file, preview, isMain: isFirst }];
+    });
+
+    if (currentCropSrc) URL.revokeObjectURL(currentCropSrc);
+
+    if (cropQueue.length > 0) {
+      const [next, ...rest] = cropQueue;
+      setCropQueue(rest);
+      setCurrentCropSrc(URL.createObjectURL(next));
+    } else {
+      setCurrentCropSrc(null);
+    }
+  }, [cropQueue, currentCropSrc]);
+
+  const handleCropCancel = useCallback(() => {
+    if (currentCropSrc) URL.revokeObjectURL(currentCropSrc);
+
+    if (cropQueue.length > 0) {
+      const [next, ...rest] = cropQueue;
+      setCropQueue(rest);
+      setCurrentCropSrc(URL.createObjectURL(next));
+    } else {
+      setCurrentCropSrc(null);
+    }
+  }, [cropQueue, currentCropSrc]);
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.webp'] },
-    onDrop: (acceptedFiles) => {
-      const newPhotos = acceptedFiles.map((file) => ({
-        file,
-        preview: URL.createObjectURL(file),
-      }));
-      setPhotos((prev) => [...prev, ...newPhotos]);
+    onDrop: async (acceptedFiles) => {
+      const validFiles: File[] = [];
+
+      for (const file of acceptedFiles) {
+        if (!ALLOWED_TYPES.includes(file.type)) {
+          toast.error(t('listingForm.photos.invalidType'));
+          continue;
+        }
+        if (file.size < MIN_FILE_SIZE) {
+          toast.error(t('listingForm.photos.fileTooSmall'));
+          continue;
+        }
+        try {
+          const dims = await validateImageDimensions(file);
+          if (dims.width < MIN_WIDTH || dims.height < MIN_HEIGHT) {
+            toast.error(t('listingForm.photos.dimensionsTooSmall'));
+            continue;
+          }
+        } catch {
+          toast.error(t('listingForm.photos.invalidType'));
+          continue;
+        }
+        validFiles.push(file);
+      }
+
+      if (validFiles.length > 0) {
+        startCropQueue(validFiles);
+      }
     },
   });
 
   const removePhoto = (index: number) => {
     setPhotos((prev) => {
       URL.revokeObjectURL(prev[index].preview);
-      return prev.filter((_, i) => i !== index);
+      const updated = prev.filter((_, i) => i !== index);
+      // If we removed the main photo, make the first one main
+      if (prev[index].isMain && updated.length > 0) {
+        updated[0].isMain = true;
+      }
+      return updated;
     });
+  };
+
+  const setMainPhoto = (index: number) => {
+    setPhotos((prev) =>
+      prev.map((p, i) => ({ ...p, isMain: i === index })),
+    );
   };
 
   const createMutation = useMutation({
@@ -155,24 +252,17 @@ export function NewListingPage() {
       const res = await api.post('/api/v1/listings', data);
       const listingId = res.data.listing.id;
 
-      // Upload photos via presigned URLs
-      for (const photo of photos) {
-        const presignRes = await api.post('/api/v1/listings/photos/presign', {
-          filename: photo.file.name,
-          contentType: photo.file.type,
-        });
+      // Order photos: main first, then rest
+      const mainPhoto = photos.find((p) => p.isMain);
+      const otherPhotos = photos.filter((p) => !p.isMain);
+      const orderedPhotos = mainPhoto ? [mainPhoto, ...otherPhotos] : photos;
 
-        const { uploadUrl, s3Key, s3Url } = presignRes.data;
-
-        await fetch(uploadUrl, {
-          method: 'PUT',
-          body: photo.file,
-          headers: { 'Content-Type': photo.file.type },
-        });
-
-        await api.post(`/api/v1/listings/${listingId}/photos`, {
-          s3_key: s3Key,
-          s3_url: s3Url,
+      // Upload photos via FormData
+      for (const photo of orderedPhotos) {
+        const formData = new FormData();
+        formData.append('photo', photo.file);
+        await api.post(`/api/v1/listings/${listingId}/photos`, formData, {
+          headers: { 'Content-Type': undefined as unknown as string },
         });
       }
 
@@ -214,7 +304,7 @@ export function NewListingPage() {
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('listingForm.postingTitle')} *</FormLabel>
+                    <FormLabel>{t('listingForm.postingTitle')} <RequiredStar /></FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -227,7 +317,7 @@ export function NewListingPage() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('listingForm.description')} *</FormLabel>
+                    <FormLabel>{t('listingForm.description')} <RequiredStar /></FormLabel>
                     <FormControl>
                       <textarea
                         className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -252,7 +342,7 @@ export function NewListingPage() {
                 name="address_1"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('listingForm.address1')} *</FormLabel>
+                    <FormLabel>{t('listingForm.address1')} <RequiredStar /></FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -279,7 +369,7 @@ export function NewListingPage() {
                   name="postal_code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('listingForm.postalCode')} *</FormLabel>
+                      <FormLabel>{t('listingForm.postalCode')} <RequiredStar /></FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -292,7 +382,7 @@ export function NewListingPage() {
                   name="city"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('listingForm.city')} *</FormLabel>
+                      <FormLabel>{t('listingForm.city')} <RequiredStar /></FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -306,7 +396,7 @@ export function NewListingPage() {
                 name="province"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('listingForm.province')} *</FormLabel>
+                    <FormLabel>{t('listingForm.province')} <RequiredStar /></FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -339,7 +429,7 @@ export function NewListingPage() {
                 name="monthly_rent"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('listingForm.monthlyRent')} (€) *</FormLabel>
+                    <FormLabel>{t('listingForm.monthlyRent')} (€) <RequiredStar /></FormLabel>
                     <FormControl>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
@@ -438,7 +528,7 @@ export function NewListingPage() {
                       name={`available_dates.${index}.available_from`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('listingForm.availableFrom')} *</FormLabel>
+                          <FormLabel>{t('listingForm.availableFrom')} <RequiredStar /></FormLabel>
                           <FormControl>
                             <Input type="date" {...field} value={field.value as string} />
                           </FormControl>
@@ -517,7 +607,7 @@ export function NewListingPage() {
                 name="accommodation_type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('listingForm.accommodationType.label')} *</FormLabel>
+                    <FormLabel>{t('listingForm.accommodationType.label')} <RequiredStar /></FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -541,7 +631,7 @@ export function NewListingPage() {
                 name="floor"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('listingForm.floor.label')} *</FormLabel>
+                    <FormLabel>{t('listingForm.floor.label')} <RequiredStar /></FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -674,20 +764,29 @@ export function NewListingPage() {
             {photos.length > 0 && (
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4">
                 {photos.map((photo, index) => (
-                  <div key={index} className="relative group aspect-square rounded-lg overflow-hidden">
+                  <div
+                    key={index}
+                    className="relative group aspect-square rounded-lg overflow-hidden cursor-pointer"
+                    onClick={() => setMainPhoto(index)}
+                    title={t('listingForm.photos.setAsMain')}
+                  >
                     <img
                       src={photo.preview}
                       alt={`Photo ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
-                    {index === 0 && (
-                      <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded">
-                        {t('listingForm.photos.coverPhoto')}
+                    {photo.isMain && (
+                      <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded flex items-center gap-1">
+                        <Star className="h-3 w-3" />
+                        {t('listingForm.photos.mainPhotoBadge')}
                       </span>
                     )}
                     <button
                       type="button"
-                      onClick={() => removePhoto(index)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removePhoto(index);
+                      }}
                       className="absolute top-1 right-1 rounded-full bg-destructive p-0.5 text-white opacity-0 transition-opacity hover:bg-destructive/90 group-hover:opacity-100"
                     >
                       <X className="h-3 w-3" />
@@ -708,6 +807,15 @@ export function NewListingPage() {
           </div>
         </form>
       </Form>
+
+      {currentCropSrc && (
+        <CropDialog
+          open={!!currentCropSrc}
+          imageSrc={currentCropSrc}
+          onSave={handleCropSave}
+          onCancel={handleCropCancel}
+        />
+      )}
     </motion.div>
   );
 }

@@ -6,9 +6,8 @@ import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/requireRole.js';
 import { validate } from '../middleware/validate.js';
 import { createListingSchema, updateListingSchema, listingFiltersSchema } from '@vithousing/shared';
-import { generatePresignedUploadUrl, deleteS3Object } from '../services/s3.service.js';
+import { uploadMiddleware, processAndSaveImage, deleteLocalFile } from '../services/upload.service.js';
 import { geocodeAddress } from '../services/geocoding.service.js';
-import crypto from 'crypto';
 
 const router = Router();
 
@@ -218,13 +217,13 @@ router.delete(
     try {
       const id = parseInt(req.params.id as string);
 
-      // Delete S3 photos first
+      // Delete local photos first
       const photos = await prisma.listingPhoto.findMany({ where: { listing_id: id } });
       for (const photo of photos) {
         try {
-          await deleteS3Object(photo.s3_key);
+          await deleteLocalFile(photo.file_path);
         } catch {
-          console.warn(`Failed to delete S3 object: ${photo.s3_key}`);
+          console.warn(`Failed to delete local file: ${photo.file_path}`);
         }
       }
 
@@ -236,45 +235,22 @@ router.delete(
   },
 );
 
-// POST /api/v1/listings/photos/presign — Generate S3 presigned upload URL
-router.post(
-  '/photos/presign',
-  authenticate,
-  requireRole('HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'),
-  async (req: Request, res: Response) => {
-    try {
-      const { filename, contentType } = req.body;
-
-      if (!filename || !contentType) {
-        sendError(res, 'filename and contentType are required', 'VALIDATION_ERROR', 400);
-        return;
-      }
-
-      const ext = filename.split('.').pop() || 'jpg';
-      const key = `listings/${crypto.randomUUID()}.${ext}`;
-
-      const result = await generatePresignedUploadUrl(key, contentType);
-      sendSuccess(res, result);
-    } catch (err) {
-      sendError(res, 'Failed to generate upload URL', 'PRESIGN_ERROR', 500);
-    }
-  },
-);
-
-// POST /api/v1/listings/:id/photos — Confirm photo upload
+// POST /api/v1/listings/:id/photos — Upload photo
 router.post(
   '/:id/photos',
   authenticate,
   requireRole('HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'),
+  uploadMiddleware.single('photo'),
   async (req: Request, res: Response) => {
     try {
       const listingId = parseInt(req.params.id as string);
-      const { s3_key, s3_url } = req.body;
 
-      if (!s3_key || !s3_url) {
-        sendError(res, 's3_key and s3_url are required', 'VALIDATION_ERROR', 400);
+      if (!req.file) {
+        sendError(res, 'No photo file provided', 'VALIDATION_ERROR', 400);
         return;
       }
+
+      const { filePath, url } = await processAndSaveImage(req.file.buffer);
 
       // Get current max sort order
       const maxPhoto = await prisma.listingPhoto.findFirst({
@@ -285,15 +261,20 @@ router.post(
       const photo = await prisma.listingPhoto.create({
         data: {
           listing_id: listingId,
-          s3_key,
-          s3_url,
+          file_path: filePath,
+          url,
           sort_order: (maxPhoto?.sort_order ?? -1) + 1,
         },
       });
 
       sendSuccess(res, { photo }, 201);
     } catch (err) {
-      sendError(res, 'Failed to save photo', 'PHOTO_ERROR', 500);
+      if (err instanceof Error && (err.message.includes('too small') || err.message.includes('dimensions') || err.message.includes('Invalid file'))) {
+        sendError(res, err.message, 'VALIDATION_ERROR', 400);
+        return;
+      }
+      console.error('Upload photo error:', err);
+      sendError(res, 'Failed to upload photo', 'PHOTO_ERROR', 500);
     }
   },
 );
@@ -344,9 +325,9 @@ router.delete(
       }
 
       try {
-        await deleteS3Object(photo.s3_key);
+        await deleteLocalFile(photo.file_path);
       } catch {
-        console.warn(`Failed to delete S3 object: ${photo.s3_key}`);
+        console.warn(`Failed to delete local file: ${photo.file_path}`);
       }
 
       await prisma.listingPhoto.delete({ where: { id: photoId } });

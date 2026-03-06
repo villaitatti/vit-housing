@@ -41,24 +41,24 @@ export type ListingPhotoSumAggregateOutputType = {
 export type ListingPhotoMinAggregateOutputType = {
   id: number | null
   listing_id: number | null
-  s3_key: string | null
-  s3_url: string | null
+  file_path: string | null
+  url: string | null
   sort_order: number | null
 }
 
 export type ListingPhotoMaxAggregateOutputType = {
   id: number | null
   listing_id: number | null
-  s3_key: string | null
-  s3_url: string | null
+  file_path: string | null
+  url: string | null
   sort_order: number | null
 }
 
 export type ListingPhotoCountAggregateOutputType = {
   id: number
   listing_id: number
-  s3_key: number
-  s3_url: number
+  file_path: number
+  url: number
   sort_order: number
   _all: number
 }
@@ -79,24 +79,24 @@ export type ListingPhotoSumAggregateInputType = {
 export type ListingPhotoMinAggregateInputType = {
   id?: true
   listing_id?: true
-  s3_key?: true
-  s3_url?: true
+  file_path?: true
+  url?: true
   sort_order?: true
 }
 
 export type ListingPhotoMaxAggregateInputType = {
   id?: true
   listing_id?: true
-  s3_key?: true
-  s3_url?: true
+  file_path?: true
+  url?: true
   sort_order?: true
 }
 
 export type ListingPhotoCountAggregateInputType = {
   id?: true
   listing_id?: true
-  s3_key?: true
-  s3_url?: true
+  file_path?: true
+  url?: true
   sort_order?: true
   _all?: true
 }
@@ -190,8 +190,8 @@ export type ListingPhotoGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
 export type ListingPhotoGroupByOutputType = {
   id: number
   listing_id: number
-  s3_key: string
-  s3_url: string
+  file_path: string
+  url: string
   sort_order: number
   _count: ListingPhotoCountAggregateOutputType | null
   _avg: ListingPhotoAvgAggregateOutputType | null
@@ -221,8 +221,8 @@ export type ListingPhotoWhereInput = {
   NOT?: Prisma.ListingPhotoWhereInput | Prisma.ListingPhotoWhereInput[]
   id?: Prisma.IntFilter<"ListingPhoto"> | number
   listing_id?: Prisma.IntFilter<"ListingPhoto"> | number
-  s3_key?: Prisma.StringFilter<"ListingPhoto"> | string
-  s3_url?: Prisma.StringFilter<"ListingPhoto"> | string
+  file_path?: Prisma.StringFilter<"ListingPhoto"> | string
+  url?: Prisma.StringFilter<"ListingPhoto"> | string
   sort_order?: Prisma.IntFilter<"ListingPhoto"> | number
   listing?: Prisma.XOR<Prisma.ListingScalarRelationFilter, Prisma.ListingWhereInput>
 }
@@ -230,8 +230,8 @@ export type ListingPhotoWhereInput = {
 export type ListingPhotoOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   listing_id?: Prisma.SortOrder
-  s3_key?: Prisma.SortOrder
-  s3_url?: Prisma.SortOrder
+  file_path?: Prisma.SortOrder
+  url?: Prisma.SortOrder
   sort_order?: Prisma.SortOrder
   listing?: Prisma.ListingOrderByWithRelationInput
 }
@@ -242,8 +242,8 @@ export type ListingPhotoWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ListingPhotoWhereInput[]
   NOT?: Prisma.ListingPhotoWhereInput | Prisma.ListingPhotoWhereInput[]
   listing_id?: Prisma.IntFilter<"ListingPhoto"> | number
-  s3_key?: Prisma.StringFilter<"ListingPhoto"> | string
-  s3_url?: Prisma.StringFilter<"ListingPhoto"> | string
+  file_path?: Prisma.StringFilter<"ListingPhoto"> | string
+  url?: Prisma.StringFilter<"ListingPhoto"> | string
   sort_order?: Prisma.IntFilter<"ListingPhoto"> | number
   listing?: Prisma.XOR<Prisma.ListingScalarRelationFilter, Prisma.ListingWhereInput>
 }, "id">
@@ -251,8 +251,8 @@ export type ListingPhotoWhereUniqueInput = Prisma.AtLeast<{
 export type ListingPhotoOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   listing_id?: Prisma.SortOrder
-  s3_key?: Prisma.SortOrder
-  s3_url?: Prisma.SortOrder
+  file_path?: Prisma.SortOrder
+  url?: Prisma.SortOrder
   sort_order?: Prisma.SortOrder
   _count?: Prisma.ListingPhotoCountOrderByAggregateInput
   _avg?: Prisma.ListingPhotoAvgOrderByAggregateInput
@@ -267,14 +267,14 @@ export type ListingPhotoScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ListingPhotoScalarWhereWithAggregatesInput | Prisma.ListingPhotoScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"ListingPhoto"> | number
   listing_id?: Prisma.IntWithAggregatesFilter<"ListingPhoto"> | number
-  s3_key?: Prisma.StringWithAggregatesFilter<"ListingPhoto"> | string
-  s3_url?: Prisma.StringWithAggregatesFilter<"ListingPhoto"> | string
+  file_path?: Prisma.StringWithAggregatesFilter<"ListingPhoto"> | string
+  url?: Prisma.StringWithAggregatesFilter<"ListingPhoto"> | string
   sort_order?: Prisma.IntWithAggregatesFilter<"ListingPhoto"> | number
 }
 
 export type ListingPhotoCreateInput = {
-  s3_key: string
-  s3_url: string
+  file_path: string
+  url: string
   sort_order?: number
   listing: Prisma.ListingCreateNestedOneWithoutPhotosInput
 }
@@ -282,14 +282,14 @@ export type ListingPhotoCreateInput = {
 export type ListingPhotoUncheckedCreateInput = {
   id?: number
   listing_id: number
-  s3_key: string
-  s3_url: string
+  file_path: string
+  url: string
   sort_order?: number
 }
 
 export type ListingPhotoUpdateInput = {
-  s3_key?: Prisma.StringFieldUpdateOperationsInput | string
-  s3_url?: Prisma.StringFieldUpdateOperationsInput | string
+  file_path?: Prisma.StringFieldUpdateOperationsInput | string
+  url?: Prisma.StringFieldUpdateOperationsInput | string
   sort_order?: Prisma.IntFieldUpdateOperationsInput | number
   listing?: Prisma.ListingUpdateOneRequiredWithoutPhotosNestedInput
 }
@@ -297,30 +297,30 @@ export type ListingPhotoUpdateInput = {
 export type ListingPhotoUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   listing_id?: Prisma.IntFieldUpdateOperationsInput | number
-  s3_key?: Prisma.StringFieldUpdateOperationsInput | string
-  s3_url?: Prisma.StringFieldUpdateOperationsInput | string
+  file_path?: Prisma.StringFieldUpdateOperationsInput | string
+  url?: Prisma.StringFieldUpdateOperationsInput | string
   sort_order?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type ListingPhotoCreateManyInput = {
   id?: number
   listing_id: number
-  s3_key: string
-  s3_url: string
+  file_path: string
+  url: string
   sort_order?: number
 }
 
 export type ListingPhotoUpdateManyMutationInput = {
-  s3_key?: Prisma.StringFieldUpdateOperationsInput | string
-  s3_url?: Prisma.StringFieldUpdateOperationsInput | string
+  file_path?: Prisma.StringFieldUpdateOperationsInput | string
+  url?: Prisma.StringFieldUpdateOperationsInput | string
   sort_order?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type ListingPhotoUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   listing_id?: Prisma.IntFieldUpdateOperationsInput | number
-  s3_key?: Prisma.StringFieldUpdateOperationsInput | string
-  s3_url?: Prisma.StringFieldUpdateOperationsInput | string
+  file_path?: Prisma.StringFieldUpdateOperationsInput | string
+  url?: Prisma.StringFieldUpdateOperationsInput | string
   sort_order?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
@@ -337,8 +337,8 @@ export type ListingPhotoOrderByRelationAggregateInput = {
 export type ListingPhotoCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   listing_id?: Prisma.SortOrder
-  s3_key?: Prisma.SortOrder
-  s3_url?: Prisma.SortOrder
+  file_path?: Prisma.SortOrder
+  url?: Prisma.SortOrder
   sort_order?: Prisma.SortOrder
 }
 
@@ -351,16 +351,16 @@ export type ListingPhotoAvgOrderByAggregateInput = {
 export type ListingPhotoMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   listing_id?: Prisma.SortOrder
-  s3_key?: Prisma.SortOrder
-  s3_url?: Prisma.SortOrder
+  file_path?: Prisma.SortOrder
+  url?: Prisma.SortOrder
   sort_order?: Prisma.SortOrder
 }
 
 export type ListingPhotoMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   listing_id?: Prisma.SortOrder
-  s3_key?: Prisma.SortOrder
-  s3_url?: Prisma.SortOrder
+  file_path?: Prisma.SortOrder
+  url?: Prisma.SortOrder
   sort_order?: Prisma.SortOrder
 }
 
@@ -413,15 +413,15 @@ export type ListingPhotoUncheckedUpdateManyWithoutListingNestedInput = {
 }
 
 export type ListingPhotoCreateWithoutListingInput = {
-  s3_key: string
-  s3_url: string
+  file_path: string
+  url: string
   sort_order?: number
 }
 
 export type ListingPhotoUncheckedCreateWithoutListingInput = {
   id?: number
-  s3_key: string
-  s3_url: string
+  file_path: string
+  url: string
   sort_order?: number
 }
 
@@ -457,35 +457,35 @@ export type ListingPhotoScalarWhereInput = {
   NOT?: Prisma.ListingPhotoScalarWhereInput | Prisma.ListingPhotoScalarWhereInput[]
   id?: Prisma.IntFilter<"ListingPhoto"> | number
   listing_id?: Prisma.IntFilter<"ListingPhoto"> | number
-  s3_key?: Prisma.StringFilter<"ListingPhoto"> | string
-  s3_url?: Prisma.StringFilter<"ListingPhoto"> | string
+  file_path?: Prisma.StringFilter<"ListingPhoto"> | string
+  url?: Prisma.StringFilter<"ListingPhoto"> | string
   sort_order?: Prisma.IntFilter<"ListingPhoto"> | number
 }
 
 export type ListingPhotoCreateManyListingInput = {
   id?: number
-  s3_key: string
-  s3_url: string
+  file_path: string
+  url: string
   sort_order?: number
 }
 
 export type ListingPhotoUpdateWithoutListingInput = {
-  s3_key?: Prisma.StringFieldUpdateOperationsInput | string
-  s3_url?: Prisma.StringFieldUpdateOperationsInput | string
+  file_path?: Prisma.StringFieldUpdateOperationsInput | string
+  url?: Prisma.StringFieldUpdateOperationsInput | string
   sort_order?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type ListingPhotoUncheckedUpdateWithoutListingInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  s3_key?: Prisma.StringFieldUpdateOperationsInput | string
-  s3_url?: Prisma.StringFieldUpdateOperationsInput | string
+  file_path?: Prisma.StringFieldUpdateOperationsInput | string
+  url?: Prisma.StringFieldUpdateOperationsInput | string
   sort_order?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type ListingPhotoUncheckedUpdateManyWithoutListingInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  s3_key?: Prisma.StringFieldUpdateOperationsInput | string
-  s3_url?: Prisma.StringFieldUpdateOperationsInput | string
+  file_path?: Prisma.StringFieldUpdateOperationsInput | string
+  url?: Prisma.StringFieldUpdateOperationsInput | string
   sort_order?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
@@ -494,8 +494,8 @@ export type ListingPhotoUncheckedUpdateManyWithoutListingInput = {
 export type ListingPhotoSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   listing_id?: boolean
-  s3_key?: boolean
-  s3_url?: boolean
+  file_path?: boolean
+  url?: boolean
   sort_order?: boolean
   listing?: boolean | Prisma.ListingDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["listingPhoto"]>
@@ -503,8 +503,8 @@ export type ListingPhotoSelect<ExtArgs extends runtime.Types.Extensions.Internal
 export type ListingPhotoSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   listing_id?: boolean
-  s3_key?: boolean
-  s3_url?: boolean
+  file_path?: boolean
+  url?: boolean
   sort_order?: boolean
   listing?: boolean | Prisma.ListingDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["listingPhoto"]>
@@ -512,8 +512,8 @@ export type ListingPhotoSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
 export type ListingPhotoSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   listing_id?: boolean
-  s3_key?: boolean
-  s3_url?: boolean
+  file_path?: boolean
+  url?: boolean
   sort_order?: boolean
   listing?: boolean | Prisma.ListingDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["listingPhoto"]>
@@ -521,12 +521,12 @@ export type ListingPhotoSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
 export type ListingPhotoSelectScalar = {
   id?: boolean
   listing_id?: boolean
-  s3_key?: boolean
-  s3_url?: boolean
+  file_path?: boolean
+  url?: boolean
   sort_order?: boolean
 }
 
-export type ListingPhotoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "listing_id" | "s3_key" | "s3_url" | "sort_order", ExtArgs["result"]["listingPhoto"]>
+export type ListingPhotoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "listing_id" | "file_path" | "url" | "sort_order", ExtArgs["result"]["listingPhoto"]>
 export type ListingPhotoInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   listing?: boolean | Prisma.ListingDefaultArgs<ExtArgs>
 }
@@ -545,8 +545,8 @@ export type $ListingPhotoPayload<ExtArgs extends runtime.Types.Extensions.Intern
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     listing_id: number
-    s3_key: string
-    s3_url: string
+    file_path: string
+    url: string
     sort_order: number
   }, ExtArgs["result"]["listingPhoto"]>
   composites: {}
@@ -974,8 +974,8 @@ export interface Prisma__ListingPhotoClient<T, Null = never, ExtArgs extends run
 export interface ListingPhotoFieldRefs {
   readonly id: Prisma.FieldRef<"ListingPhoto", 'Int'>
   readonly listing_id: Prisma.FieldRef<"ListingPhoto", 'Int'>
-  readonly s3_key: Prisma.FieldRef<"ListingPhoto", 'String'>
-  readonly s3_url: Prisma.FieldRef<"ListingPhoto", 'String'>
+  readonly file_path: Prisma.FieldRef<"ListingPhoto", 'String'>
+  readonly url: Prisma.FieldRef<"ListingPhoto", 'String'>
   readonly sort_order: Prisma.FieldRef<"ListingPhoto", 'Int'>
 }
     

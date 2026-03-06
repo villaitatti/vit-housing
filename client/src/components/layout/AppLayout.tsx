@@ -1,5 +1,5 @@
 import { Outlet, useParams } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from './Header';
@@ -9,9 +9,10 @@ export function AppLayout() {
   const { lang } = useParams();
   const { i18n } = useTranslation();
 
-  useEffect(() => {
-    if (lang && (lang === 'en' || lang === 'it')) {
-      i18n.changeLanguage(lang);
+  useLayoutEffect(() => {
+    const routeLang = lang === 'it' ? 'it' : 'en';
+    if (i18n.resolvedLanguage !== routeLang) {
+      void i18n.changeLanguage(routeLang);
     }
   }, [lang, i18n]);
 

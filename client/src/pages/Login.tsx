@@ -46,12 +46,12 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-8rem)] px-4">
+    <div className="flex h-full items-center justify-center px-4 py-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="w-full max-w-md"
+        className="mx-auto w-full max-w-md"
       >
         <Card>
           <CardHeader className="text-center">

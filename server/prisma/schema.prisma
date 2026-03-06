@@ -111,8 +111,8 @@ model ListingPhoto {
   id         Int     @id @default(autoincrement())
   listing_id Int
   listing    Listing @relation(fields: [listing_id], references: [id], onDelete: Cascade)
-  s3_key     String
-  s3_url     String
+  file_path  String
+  url        String
   sort_order Int     @default(0)
 }
 

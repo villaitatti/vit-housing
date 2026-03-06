@@ -3,14 +3,29 @@ import type { Request, Response } from 'express';
 import { sendSuccess, sendError } from '../lib/response.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/requireRole.js';
-import { getServiceConfigs, upsertServiceConfigs, getServiceConfigForService } from '../services/config.service.js';
+import { getServiceConfigs, upsertServiceConfigs, getServiceConfigForService, getEffectiveConfigValue } from '../services/config.service.js';
 import { VALID_SERVICES, SERVICE_DEFINITIONS } from '../config/service-definitions.js';
 import { listAuth0Roles, invalidateAuth0Token } from '../services/auth0.service.js';
 import { prisma } from '../lib/prisma.js';
-import { refreshS3Client } from '../services/s3.service.js';
 import { refreshSESClient } from '../services/email.service.js';
 
 const router = Router();
+
+// GET /api/v1/config/public — Public: view allowed public configs
+router.get('/public', async (_req: Request, res: Response) => {
+  try {
+    const clientApiKey = await getEffectiveConfigValue('google_maps', 'client_api_key');
+    
+    sendSuccess(res, {
+      google_maps: {
+        client_api_key: clientApiKey || null,
+      },
+    });
+  } catch (err) {
+    console.error('Fetch public configs error:', err);
+    sendError(res, 'Failed to fetch public configurations', 'CONFIG_ERROR', 500);
+  }
+});
 
 // GET /api/v1/config/services — IT Admin: view all service configurations
 router.get(
@@ -60,7 +75,6 @@ router.put(
       await upsertServiceConfigs(service, configs, req.user!.userId);
 
       // Refresh affected service clients
-      if (service === 's3') refreshS3Client();
       if (service === 'ses') refreshSESClient();
       if (service === 'auth0') invalidateAuth0Token();
 

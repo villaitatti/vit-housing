@@ -6,7 +6,13 @@ export function validate(schema: ZodSchema, source: 'body' | 'query' | 'params' 
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
       const parsed = schema.parse(req[source]);
-      req[source] = parsed;
+      // Express 5 defines req.query as a prototype getter (no setter),
+      // so plain assignment silently fails. Override with an own data property.
+      Object.defineProperty(req, source, {
+        value: parsed,
+        writable: true,
+        configurable: true,
+      });
       next();
     } catch (err) {
       if (err instanceof ZodError) {

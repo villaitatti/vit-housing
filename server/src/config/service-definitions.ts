@@ -20,18 +20,12 @@ export const SERVICE_DEFINITIONS: Record<string, ServiceDefinition> = {
       { key: 'audience', envVar: 'AUTH0_AUDIENCE', isSecret: false, label: 'API Audience' },
     ],
   },
-  s3: {
-    label: 'AWS S3 Storage',
+  ses: {
+    label: 'AWS SES Email',
     configs: [
       { key: 'region', envVar: 'AWS_REGION', isSecret: false, label: 'Region' },
       { key: 'access_key_id', envVar: 'AWS_ACCESS_KEY_ID', isSecret: true, label: 'Access Key ID' },
       { key: 'secret_access_key', envVar: 'AWS_SECRET_ACCESS_KEY', isSecret: true, label: 'Secret Access Key' },
-      { key: 'bucket_name', envVar: 'AWS_S3_BUCKET_NAME', isSecret: false, label: 'Bucket Name' },
-    ],
-  },
-  ses: {
-    label: 'AWS SES Email',
-    configs: [
       { key: 'from_address', envVar: 'SES_FROM_ADDRESS', isSecret: false, label: 'From Address' },
       { key: 'invitation_base_url', envVar: 'INVITATION_BASE_URL', isSecret: false, label: 'Invitation Base URL' },
     ],

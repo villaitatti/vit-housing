@@ -9,15 +9,15 @@
  * Requirements:
  * - DRUPAL_DB_URL must be set in server/.env
  * - DATABASE_URL must be set for Prisma
- * - AWS credentials must be set for S3 photo uploads
+ * - server/uploads/listings/ directory will be created for photo storage
  *
  * This script is idempotent — safe to run multiple times.
  */
 
 import { PrismaClient, Role } from '@prisma/client';
 import { createConnection, Connection } from 'mysql2/promise';
-import { writeFileSync, appendFileSync } from 'fs';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { writeFileSync, appendFileSync, mkdirSync } from 'fs';
+import { processAndSaveImage } from '../src/services/upload.service.js';
 
 const prisma = new PrismaClient();
 const LOG_FILE = 'server/scripts/migration-log.txt';
@@ -198,14 +198,7 @@ async function migrateListings(drupal: Connection) {
 async function migratePhotos(drupal: Connection) {
   log('--- Starting photo migration ---');
 
-  const s3Client = new S3Client({
-    region: process.env.AWS_REGION || 'eu-west-1',
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-    },
-  });
-  const bucketName = process.env.AWS_S3_BUCKET_NAME || '';
+  mkdirSync('uploads/listings', { recursive: true });
 
   // TODO: Adjust the query to match your Drupal file field structure
   const [rows] = await drupal.query(`
@@ -240,30 +233,20 @@ async function migratePhotos(drupal: Connection) {
 
       const buffer = Buffer.from(await response.arrayBuffer());
 
-      // Upload to S3
-      const s3Key = `listings/migrated-${row.nid}-${row.sort_order}-${row.filename}`;
-      await s3Client.send(
-        new PutObjectCommand({
-          Bucket: bucketName,
-          Key: s3Key,
-          Body: buffer,
-          ContentType: row.filemime || 'image/jpeg',
-        }),
-      );
+      // Process and save locally
+      const { filePath, url } = await processAndSaveImage(buffer);
 
-      const s3Url = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`;
-
-      // Create ListingPhoto record (upsert by unique combo)
+      // Create ListingPhoto record
       await prisma.listingPhoto.create({
         data: {
           listing_id: row.nid,
-          s3_key: s3Key,
-          s3_url: s3Url,
+          file_path: filePath,
+          url,
           sort_order: row.sort_order || 0,
         },
       });
 
-      log(`OK photo ${row.filename} -> ${s3Key}`);
+      log(`OK photo ${row.filename} -> ${filePath}`);
       migrated++;
     } catch (err) {
       log(`ERROR photo ${row.filename} for nid=${row.nid}: ${err}`);

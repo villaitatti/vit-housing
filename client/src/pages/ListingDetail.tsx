@@ -23,7 +23,7 @@ import 'swiper/css/pagination';
 
 interface ListingPhoto {
   id: number;
-  s3_url: string;
+  url: string;
 }
 
 interface ListingAvailableDate {
@@ -168,7 +168,7 @@ export function ListingDetailPage() {
             {listing.photos.map((photo) => (
               <SwiperSlide key={photo.id}>
                 <img
-                  src={photo.s3_url}
+                  src={photo.url}
                   alt={listing.title}
                   className="w-full h-full object-cover"
                 />

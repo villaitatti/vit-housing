@@ -4,9 +4,9 @@ import { getEffectiveConfigValue } from './config.service.js';
 let sesClient: SESClient | null = null;
 
 async function getSESConfig() {
-  const region = await getEffectiveConfigValue('s3', 'region') || process.env.AWS_REGION || 'eu-west-1';
-  const accessKeyId = await getEffectiveConfigValue('s3', 'access_key_id') || process.env.AWS_ACCESS_KEY_ID || '';
-  const secretAccessKey = await getEffectiveConfigValue('s3', 'secret_access_key') || process.env.AWS_SECRET_ACCESS_KEY || '';
+  const region = await getEffectiveConfigValue('ses', 'region') || process.env.AWS_REGION || 'eu-west-1';
+  const accessKeyId = await getEffectiveConfigValue('ses', 'access_key_id') || process.env.AWS_ACCESS_KEY_ID || '';
+  const secretAccessKey = await getEffectiveConfigValue('ses', 'secret_access_key') || process.env.AWS_SECRET_ACCESS_KEY || '';
   const fromAddress = await getEffectiveConfigValue('ses', 'from_address') || process.env.SES_FROM_ADDRESS || 'noreply@example.com';
   const invitationBaseUrl = await getEffectiveConfigValue('ses', 'invitation_base_url') || process.env.INVITATION_BASE_URL || 'http://localhost:5173';
   return { region, accessKeyId, secretAccessKey, fromAddress, invitationBaseUrl };

@@ -23,7 +23,8 @@
       "bcrypt",
       "esbuild",
       "prisma",
-      "browser-tabs-lock"
+      "browser-tabs-lock",
+      "sharp"
     ]
   }
 }

@@ -1062,8 +1062,8 @@ export type AvailableDateScalarFieldEnum = (typeof AvailableDateScalarFieldEnum)
 export const ListingPhotoScalarFieldEnum = {
   id: 'id',
   listing_id: 'listing_id',
-  s3_key: 's3_key',
-  s3_url: 's3_url',
+  file_path: 'file_path',
+  url: 'url',
   sort_order: 'sort_order'
 } as const
 

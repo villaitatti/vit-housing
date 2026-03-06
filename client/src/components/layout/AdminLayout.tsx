@@ -1,6 +1,6 @@
 import { Outlet, Link, useParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Building2, Users, Mail, UserPlus, ShieldCheck, HardDrive, Send, MapPin } from 'lucide-react';
+import { Building2, Users, Mail, UserPlus, ShieldCheck, Send, MapPin } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,7 +14,6 @@ const baseNavItems = [
 
 const itAdminNavItems = [
   { key: 'serviceAuth0', icon: ShieldCheck, path: 'admin/services/auth0' },
-  { key: 'serviceS3', icon: HardDrive, path: 'admin/services/s3' },
   { key: 'serviceSes', icon: Send, path: 'admin/services/ses' },
   { key: 'serviceGoogleMaps', icon: MapPin, path: 'admin/services/google_maps' },
 ];
