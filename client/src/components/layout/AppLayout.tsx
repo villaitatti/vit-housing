@@ -1,4 +1,4 @@
-import { Outlet, useParams } from 'react-router-dom';
+import { Outlet, useLocation, useParams } from 'react-router-dom';
 import { useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -7,18 +7,21 @@ import { Footer } from './Footer';
 
 export function AppLayout() {
   const { lang } = useParams();
+  const location = useLocation();
   const { i18n } = useTranslation();
+  const routeLang = lang === 'it' ? 'it' : 'en';
+  const normalizedPath = location.pathname.replace(/\/+$/, '') || '/';
+  const isLoginRoute = new RegExp(`^/${routeLang}/login(?:$|/)`).test(normalizedPath);
 
   useLayoutEffect(() => {
-    const routeLang = lang === 'it' ? 'it' : 'en';
     if (i18n.resolvedLanguage !== routeLang) {
       void i18n.changeLanguage(routeLang);
     }
-  }, [lang, i18n]);
+  }, [i18n, routeLang]);
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header />
+      {!isLoginRoute ? <Header /> : null}
       <AnimatePresence mode="wait">
         <motion.main
           key={lang}
@@ -31,7 +34,7 @@ export function AppLayout() {
           <Outlet />
         </motion.main>
       </AnimatePresence>
-      <Footer />
+      {!isLoginRoute ? <Footer /> : null}
     </div>
   );
 }
