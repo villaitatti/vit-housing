@@ -23,6 +23,7 @@
     "listings": "Listings",
     "map": "Map",
     "addListing": "Add Listing",
+    "myListings": "My Listings",
     "admin": "Admin",
     "profile": "Profile",
     "login": "Log In",
@@ -203,7 +204,14 @@
       "photoLabel": "Photo {{index}}",
       "removePhoto": "Remove photo {{index}}"
     },
-    "saveListing": "Save Listing"
+    "saveListing": "Save Listing",
+    "updateListing": "Update Listing"
+  },
+  "myListings": {
+    "title": "My Listings",
+    "noListings": "You haven't created any listings yet",
+    "noListingsDescription": "Create your first listing to get started.",
+    "createFirst": "Create Listing"
   },
   "admin": {
     "title": "Administration",

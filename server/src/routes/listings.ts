@@ -19,11 +19,16 @@ router.get('/', authenticate, validate(listingFiltersSchema, 'query'), async (re
       minBedrooms, maxBedrooms,
       minRent, maxRent,
       minFloorSpace, maxFloorSpace,
+      owner,
       sortBy, sortOrder,
       page, limit,
     } = req.query as any;
 
     const where: any = {};
+
+    if (owner === 'me') {
+      where.owner_id = req.user!.userId;
+    }
 
     if (minBathrooms !== undefined || maxBathrooms !== undefined) {
       where.bathrooms = {};
@@ -195,9 +200,24 @@ router.patch(
         }
       }
 
+      // Replace available_dates if provided
+      if (available_dates !== undefined) {
+        await prisma.availableDate.deleteMany({ where: { listing_id: id } });
+      }
+
       const listing = await prisma.listing.update({
         where: { id },
-        data: listingData,
+        data: {
+          ...listingData,
+          ...(available_dates !== undefined && {
+            available_dates: {
+              create: available_dates.map((d: any) => ({
+                available_from: new Date(d.available_from),
+                available_to: d.available_to ? new Date(d.available_to) : null,
+              })),
+            },
+          }),
+        },
         include: { photos: true, available_dates: true },
       });
 
@@ -208,14 +228,23 @@ router.patch(
   },
 );
 
-// DELETE /api/v1/listings/:id — Admin only
+// DELETE /api/v1/listings/:id — Landlord (own) + Admin
 router.delete(
   '/:id',
   authenticate,
-  requireRole('HOUSE_ADMIN', 'HOUSE_IT_ADMIN'),
+  requireRole('HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'),
   async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id as string);
+
+      // Check ownership (landlords can only delete their own)
+      if (req.user!.role === 'HOUSE_LANDLORD') {
+        const existing = await prisma.listing.findUnique({ where: { id } });
+        if (!existing || existing.owner_id !== req.user!.userId) {
+          sendError(res, 'Not authorized to delete this listing', 'FORBIDDEN', 403);
+          return;
+        }
+      }
 
       // Delete local photos first
       const photos = await prisma.listingPhoto.findMany({ where: { listing_id: id } });
