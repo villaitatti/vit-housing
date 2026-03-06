@@ -12,12 +12,14 @@ import { geocodeAddress } from '../services/geocoding.service.js';
 const router = Router();
 
 async function checkListingOwnership(req: Request, res: Response, listingId: number): Promise<boolean> {
-  if (req.user!.role === 'HOUSE_LANDLORD') {
-    const listing = await prisma.listing.findUnique({ where: { id: listingId } });
-    if (!listing || listing.owner_id !== req.user!.userId) {
-      sendError(res, 'Not authorized', 'FORBIDDEN', 403);
-      return false;
-    }
+  const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+  if (!listing) {
+    sendError(res, 'Listing not found', 'NOT_FOUND', 404);
+    return false;
+  }
+  if (req.user!.role === 'HOUSE_LANDLORD' && listing.owner_id !== req.user!.userId) {
+    sendError(res, 'Not authorized', 'FORBIDDEN', 403);
+    return false;
   }
   return true;
 }
@@ -324,6 +326,16 @@ router.patch(
 
       if (!Array.isArray(photoIds)) {
         sendError(res, 'photoIds must be an array', 'VALIDATION_ERROR', 400);
+        return;
+      }
+
+      // Verify all photoIds belong to this listing
+      const photos = await prisma.listingPhoto.findMany({
+        where: { id: { in: photoIds }, listing_id: listingId },
+        select: { id: true },
+      });
+      if (photos.length !== photoIds.length) {
+        sendError(res, 'One or more photo IDs do not belong to this listing', 'VALIDATION_ERROR', 400);
         return;
       }
 

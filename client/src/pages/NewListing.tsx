@@ -30,9 +30,7 @@ export function NewListingPage() {
         for (const photo of orderedPhotos) {
           const formData = new FormData();
           formData.append('photo', photo.file);
-          await api.post(`/api/v1/listings/${listingId}/photos`, formData, {
-            headers: { 'Content-Type': undefined as unknown as string },
-          });
+          await api.post(`/api/v1/listings/${listingId}/photos`, formData);
         }
       } catch (uploadErr) {
         // Roll back the listing if photo uploads fail

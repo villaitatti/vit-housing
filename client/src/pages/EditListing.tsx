@@ -59,7 +59,7 @@ export function EditListingPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const listingId = parseInt(id!);
+  const listingId = Number(id);
 
   const { data: listing, isLoading, error } = useQuery<ListingDetail>({
     queryKey: queryKeys.listings.detail(listingId),
@@ -67,6 +67,7 @@ export function EditListingPage() {
       const res = await api.get(`/api/v1/listings/${listingId}`);
       return res.data.listing;
     },
+    enabled: Number.isInteger(listingId) && listingId > 0,
   });
 
   // Ownership check for landlords
@@ -97,9 +98,7 @@ export function EditListingPage() {
       for (const photo of newPhotos) {
         const fd = new FormData();
         fd.append('photo', photo.file);
-        await api.post(`/api/v1/listings/${listingId}/photos`, fd, {
-          headers: { 'Content-Type': undefined as unknown as string },
-        });
+        await api.post(`/api/v1/listings/${listingId}/photos`, fd);
       }
 
       return listingId;
