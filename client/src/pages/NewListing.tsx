@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -33,7 +33,7 @@ import { Plus, X, Upload, Star } from 'lucide-react';
 import accommodationTypes from '@/data/accommodation-types.json';
 import floorOptions from '@/data/floor-options.json';
 import { ITALIAN_PROVINCES } from '@/lib/provinces';
-import { CropDialog } from '@/components/photos/CropDialog';
+import { PhotoBatchDialog } from '@/components/photos/PhotoBatchDialog';
 
 interface PhotoFile {
   file: File;
@@ -48,11 +48,6 @@ interface SelectOption {
 
 const typedAccommodationTypes = accommodationTypes as SelectOption[];
 const typedFloorOptions = floorOptions as SelectOption[];
-
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MIN_FILE_SIZE = 50 * 1024; // 50KB
-const MIN_WIDTH = 800;
-const MIN_HEIGHT = 600;
 
 const featureFields = [
   'feature_storage_room', 'feature_basement', 'feature_garden', 'feature_balcony',
@@ -94,29 +89,23 @@ const RequiredStar = () => (
   </span>
 );
 
-function validateImageDimensions(file: File): Promise<{ width: number; height: number }> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(img.src);
-      resolve({ width: img.width, height: img.height });
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(img.src);
-      reject(new Error('Failed to load image'));
-    };
-    img.src = URL.createObjectURL(file);
-  });
-}
-
 export function NewListingPage() {
   const { t } = useTranslation();
   const { lang } = useParams();
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<PhotoFile[]>([]);
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
+
+  useEffect(() => {
+    return () => {
+      photosRef.current.forEach((p) => { URL.revokeObjectURL(p.preview); });
+    };
+  }, []);
+
   const [showAvailableTo, setShowAvailableTo] = useState<boolean[]>([false]);
-  const [cropQueue, setCropQueue] = useState<File[]>([]);
-  const [currentCropSrc, setCurrentCropSrc] = useState<string | null>(null);
+  const [batchFiles, setBatchFiles] = useState<File[]>([]);
+  const [showBatchDialog, setShowBatchDialog] = useState(false);
 
   type CreateListingFormValues = z.input<typeof createListingSchema>;
 
@@ -153,73 +142,30 @@ export function NewListingPage() {
     name: 'available_dates',
   });
 
-  const startCropQueue = useCallback((files: File[]) => {
-    if (files.length === 0) return;
-    const [first, ...rest] = files;
-    setCropQueue(rest);
-    setCurrentCropSrc(URL.createObjectURL(first));
-  }, []);
-
-  const handleCropSave = useCallback((blob: Blob) => {
-    const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
-    const preview = URL.createObjectURL(blob);
-    setPhotos((prev) => {
-      const isFirst = prev.length === 0;
-      return [...prev, { file, preview, isMain: isFirst }];
+  const handleBatchComplete = useCallback((blobs: Blob[]) => {
+    const newPhotos: PhotoFile[] = blobs.map((blob, i) => {
+      const file = new File([blob], `photo-${Date.now()}-${i}.jpg`, { type: 'image/jpeg' });
+      const preview = URL.createObjectURL(blob);
+      return { file, preview, isMain: false };
     });
-
-    if (currentCropSrc) URL.revokeObjectURL(currentCropSrc);
-
-    if (cropQueue.length > 0) {
-      const [next, ...rest] = cropQueue;
-      setCropQueue(rest);
-      setCurrentCropSrc(URL.createObjectURL(next));
-    } else {
-      setCurrentCropSrc(null);
-    }
-  }, [cropQueue, currentCropSrc]);
-
-  const handleCropCancel = useCallback(() => {
-    if (currentCropSrc) URL.revokeObjectURL(currentCropSrc);
-
-    if (cropQueue.length > 0) {
-      const [next, ...rest] = cropQueue;
-      setCropQueue(rest);
-      setCurrentCropSrc(URL.createObjectURL(next));
-    } else {
-      setCurrentCropSrc(null);
-    }
-  }, [cropQueue, currentCropSrc]);
+    setPhotos((prev) => {
+      const combined = [...prev, ...newPhotos];
+      const hasMain = combined.some((p) => p.isMain);
+      if (!hasMain && combined.length > 0) {
+        return combined.map((p, i) => (i === 0 ? { ...p, isMain: true } : p));
+      }
+      return combined;
+    });
+    setShowBatchDialog(false);
+    setBatchFiles([]);
+  }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.webp'] },
-    onDrop: async (acceptedFiles) => {
-      const validFiles: File[] = [];
-
-      for (const file of acceptedFiles) {
-        if (!ALLOWED_TYPES.includes(file.type)) {
-          toast.error(t('listingForm.photos.invalidType'));
-          continue;
-        }
-        if (file.size < MIN_FILE_SIZE) {
-          toast.error(t('listingForm.photos.fileTooSmall'));
-          continue;
-        }
-        try {
-          const dims = await validateImageDimensions(file);
-          if (dims.width < MIN_WIDTH || dims.height < MIN_HEIGHT) {
-            toast.error(t('listingForm.photos.dimensionsTooSmall'));
-            continue;
-          }
-        } catch {
-          toast.error(t('listingForm.photos.invalidType'));
-          continue;
-        }
-        validFiles.push(file);
-      }
-
-      if (validFiles.length > 0) {
-        startCropQueue(validFiles);
+    onDrop: (acceptedFiles) => {
+      if (acceptedFiles.length > 0) {
+        setBatchFiles(acceptedFiles);
+        setShowBatchDialog(true);
       }
     },
   });
@@ -228,9 +174,8 @@ export function NewListingPage() {
     setPhotos((prev) => {
       URL.revokeObjectURL(prev[index].preview);
       const updated = prev.filter((_, i) => i !== index);
-      // If we removed the main photo, make the first one main
       if (prev[index].isMain && updated.length > 0) {
-        updated[0].isMain = true;
+        return updated.map((p, i) => (i === 0 ? { ...p, isMain: true } : p));
       }
       return updated;
     });
@@ -759,41 +704,56 @@ export function NewListingPage() {
               <Button type="button" variant="outline" size="sm" className="mt-3">
                 {t('listingForm.photos.browse')}
               </Button>
+              <p className="text-xs text-muted-foreground mt-2">{t('listingForm.photos.acceptedFormats')}</p>
+              <p className="text-xs text-muted-foreground">{t('listingForm.photos.minDimensions')}</p>
             </div>
 
             {photos.length > 0 && (
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4">
-                {photos.map((photo, index) => (
-                  <div
-                    key={index}
-                    className="relative group aspect-square rounded-lg overflow-hidden cursor-pointer"
-                    onClick={() => setMainPhoto(index)}
-                    title={t('listingForm.photos.setAsMain')}
-                  >
-                    <img
-                      src={photo.preview}
-                      alt={`Photo ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                    {photo.isMain && (
-                      <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded flex items-center gap-1">
-                        <Star className="h-3 w-3" />
-                        {t('listingForm.photos.mainPhotoBadge')}
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removePhoto(index);
+              <>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4">
+                  {photos.map((photo, index) => (
+                    <div
+                      key={index}
+                      role="button"
+                      tabIndex={0}
+                      className="relative group aspect-square rounded-lg overflow-hidden cursor-pointer"
+                      onClick={() => setMainPhoto(index)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setMainPhoto(index);
+                        }
                       }}
-                      className="absolute top-1 right-1 rounded-full bg-destructive p-0.5 text-white opacity-0 transition-opacity hover:bg-destructive/90 group-hover:opacity-100"
+                      title={t('listingForm.photos.setAsMain')}
+                      aria-label={`${t('listingForm.photos.setAsMain')} - ${t('listingForm.photos.photoLabel', { index: index + 1 })}${photo.isMain ? ` (${t('listingForm.photos.mainPhotoBadge')})` : ''}`}
                     >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+                      <img
+                        src={photo.preview}
+                        alt={t('listingForm.photos.photoLabel', { index: index + 1 })}
+                        className="w-full h-full object-cover"
+                      />
+                      {photo.isMain && (
+                        <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded flex items-center gap-1">
+                          <Star className="h-3 w-3" />
+                          {t('listingForm.photos.mainPhotoBadge')}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        aria-label={t('listingForm.photos.removePhoto', { index: index + 1 })}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removePhoto(index);
+                        }}
+                        className="absolute top-1 right-1 rounded-full bg-destructive p-0.5 text-white opacity-0 transition-opacity hover:bg-destructive/90 group-hover:opacity-100"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">{t('listingForm.photos.changeMainHint')}</p>
+              </>
             )}
             {photos.length < 2 && (
               <p className="mt-2 text-sm text-destructive">{t('listingForm.photos.minRequired')}</p>
@@ -808,14 +768,15 @@ export function NewListingPage() {
         </form>
       </Form>
 
-      {currentCropSrc && (
-        <CropDialog
-          open={!!currentCropSrc}
-          imageSrc={currentCropSrc}
-          onSave={handleCropSave}
-          onCancel={handleCropCancel}
-        />
-      )}
+      <PhotoBatchDialog
+        open={showBatchDialog}
+        files={batchFiles}
+        onComplete={handleBatchComplete}
+        onCancel={() => {
+          setShowBatchDialog(false);
+          setBatchFiles([]);
+        }}
+      />
     </motion.div>
   );
 }
