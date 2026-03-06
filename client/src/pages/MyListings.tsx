@@ -43,7 +43,7 @@ export function MyListingsPage() {
 
   const filters = { owner: 'me' as const, limit: 50, page };
 
-  const { data, isLoading } = useQuery<PaginatedData<MyListing>>({
+  const { data, isLoading, isError, error } = useQuery<PaginatedData<MyListing>>({
     queryKey: queryKeys.listings.mine(filters),
     queryFn: async () => {
       const res = await api.get('/api/v1/listings', { params: filters });
@@ -72,6 +72,14 @@ export function MyListingsPage() {
         {Array.from({ length: 5 }).map((_, i) => (
           <Skeleton key={i} className="h-12 w-full" />
         ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <p className="text-destructive">{(error as Error)?.message || t('common.error')}</p>
       </div>
     );
   }
@@ -131,7 +139,7 @@ export function MyListingsPage() {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Button variant="ghost" size="sm" asChild>
-                        <Link to={`/${lang}/listings/${listing.id}/edit`}>
+                        <Link to={`/${lang}/listings/${listing.id}/edit`} aria-label={`${t('common.edit')} - ${listing.title}`}>
                           <Pencil className="h-4 w-4" />
                         </Link>
                       </Button>
@@ -140,6 +148,7 @@ export function MyListingsPage() {
                         size="sm"
                         onClick={() => setDeleteId(listing.id)}
                         className="text-destructive hover:text-destructive"
+                        aria-label={`${t('common.delete')} - ${listing.title}`}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

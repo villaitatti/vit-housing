@@ -26,12 +26,18 @@ export function NewListingPage() {
       const otherPhotos = photos.filter((p) => !p.isMain);
       const orderedPhotos = mainPhoto ? [mainPhoto, ...otherPhotos] : photos;
 
-      for (const photo of orderedPhotos) {
-        const formData = new FormData();
-        formData.append('photo', photo.file);
-        await api.post(`/api/v1/listings/${listingId}/photos`, formData, {
-          headers: { 'Content-Type': undefined as unknown as string },
-        });
+      try {
+        for (const photo of orderedPhotos) {
+          const formData = new FormData();
+          formData.append('photo', photo.file);
+          await api.post(`/api/v1/listings/${listingId}/photos`, formData, {
+            headers: { 'Content-Type': undefined as unknown as string },
+          });
+        }
+      } catch (uploadErr) {
+        // Roll back the listing if photo uploads fail
+        await api.delete(`/api/v1/listings/${listingId}`).catch(() => {});
+        throw uploadErr;
       }
 
       return listingId;

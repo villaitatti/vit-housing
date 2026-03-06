@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import type { CreateListingInput } from '@vithousing/shared';
 import api from '@/lib/api';
@@ -58,6 +58,7 @@ export function EditListingPage() {
   const { lang, id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const listingId = parseInt(id!);
 
   const { data: listing, isLoading, error } = useQuery<ListingDetail>({
@@ -104,6 +105,8 @@ export function EditListingPage() {
       return listingId;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.listings.detail(listingId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.listings.all });
       toast.success(t('common.save'));
       navigate(`/${lang}/listings/${listingId}`);
     },
@@ -202,6 +205,7 @@ export function EditListingPage() {
       <h1 className="text-3xl font-bold mb-8">{t('listingForm.editTitle')}</h1>
 
       <ListingForm
+        key={listingId}
         mode="edit"
         initialData={initialData}
         existingPhotos={existingPhotos}

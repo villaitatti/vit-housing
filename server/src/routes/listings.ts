@@ -11,6 +11,17 @@ import { geocodeAddress } from '../services/geocoding.service.js';
 
 const router = Router();
 
+async function checkListingOwnership(req: Request, res: Response, listingId: number): Promise<boolean> {
+  if (req.user!.role === 'HOUSE_LANDLORD') {
+    const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+    if (!listing || listing.owner_id !== req.user!.userId) {
+      sendError(res, 'Not authorized', 'FORBIDDEN', 403);
+      return false;
+    }
+  }
+  return true;
+}
+
 // GET /api/v1/listings — Browse listings (all authenticated users)
 router.get('/', authenticate, validate(listingFiltersSchema, 'query'), async (req: Request, res: Response) => {
   try {
@@ -172,14 +183,7 @@ router.patch(
     try {
       const id = parseInt(req.params.id as string);
 
-      // Check ownership (landlords can only edit their own)
-      if (req.user!.role === 'HOUSE_LANDLORD') {
-        const existing = await prisma.listing.findUnique({ where: { id } });
-        if (!existing || existing.owner_id !== req.user!.userId) {
-          sendError(res, 'Not authorized to edit this listing', 'FORBIDDEN', 403);
-          return;
-        }
-      }
+      if (!(await checkListingOwnership(req, res, id))) return;
 
       const { available_dates, ...listingData } = req.body;
 
@@ -200,25 +204,27 @@ router.patch(
         }
       }
 
-      // Replace available_dates if provided
-      if (available_dates !== undefined) {
-        await prisma.availableDate.deleteMany({ where: { listing_id: id } });
-      }
+      const listing = await prisma.$transaction(async (tx) => {
+        // Replace available_dates atomically if provided
+        if (available_dates !== undefined) {
+          await tx.availableDate.deleteMany({ where: { listing_id: id } });
+        }
 
-      const listing = await prisma.listing.update({
-        where: { id },
-        data: {
-          ...listingData,
-          ...(available_dates !== undefined && {
-            available_dates: {
-              create: available_dates.map((d: any) => ({
-                available_from: new Date(d.available_from),
-                available_to: d.available_to ? new Date(d.available_to) : null,
-              })),
-            },
-          }),
-        },
-        include: { photos: true, available_dates: true },
+        return tx.listing.update({
+          where: { id },
+          data: {
+            ...listingData,
+            ...(available_dates !== undefined && {
+              available_dates: {
+                create: available_dates.map((d: any) => ({
+                  available_from: new Date(d.available_from),
+                  available_to: d.available_to ? new Date(d.available_to) : null,
+                })),
+              },
+            }),
+          },
+          include: { photos: true, available_dates: true },
+        });
       });
 
       sendSuccess(res, { listing });
@@ -237,14 +243,7 @@ router.delete(
     try {
       const id = parseInt(req.params.id as string);
 
-      // Check ownership (landlords can only delete their own)
-      if (req.user!.role === 'HOUSE_LANDLORD') {
-        const existing = await prisma.listing.findUnique({ where: { id } });
-        if (!existing || existing.owner_id !== req.user!.userId) {
-          sendError(res, 'Not authorized to delete this listing', 'FORBIDDEN', 403);
-          return;
-        }
-      }
+      if (!(await checkListingOwnership(req, res, id))) return;
 
       // Delete local photos first
       const photos = await prisma.listingPhoto.findMany({ where: { listing_id: id } });
@@ -273,6 +272,8 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const listingId = parseInt(req.params.id as string);
+
+      if (!(await checkListingOwnership(req, res, listingId))) return;
 
       if (!req.file) {
         sendError(res, 'No photo file provided', 'VALIDATION_ERROR', 400);
@@ -315,6 +316,10 @@ router.patch(
   requireRole('HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'),
   async (req: Request, res: Response) => {
     try {
+      const listingId = parseInt(req.params.id as string);
+
+      if (!(await checkListingOwnership(req, res, listingId))) return;
+
       const { photoIds } = req.body; // ordered array of photo IDs
 
       if (!Array.isArray(photoIds)) {
@@ -345,10 +350,13 @@ router.delete(
   requireRole('HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'),
   async (req: Request, res: Response) => {
     try {
+      const listingId = parseInt(req.params.id as string);
       const photoId = parseInt(req.params.photoId as string);
 
+      if (!(await checkListingOwnership(req, res, listingId))) return;
+
       const photo = await prisma.listingPhoto.findUnique({ where: { id: photoId } });
-      if (!photo) {
+      if (!photo || photo.listing_id !== listingId) {
         sendError(res, 'Photo not found', 'NOT_FOUND', 404);
         return;
       }
