@@ -95,7 +95,10 @@ export function NewListingPage() {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<PhotoFile[]>([]);
   const photosRef = useRef(photos);
-  photosRef.current = photos;
+
+  useEffect(() => {
+    photosRef.current = photos;
+  }, [photos]);
 
   useEffect(() => {
     return () => {
