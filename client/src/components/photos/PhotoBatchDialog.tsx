@@ -114,6 +114,7 @@ export function PhotoBatchDialog({ open, files, onComplete, onCancel }: PhotoBat
   const [isReviewMode, setIsReviewMode] = useState(false);
   const initializedRef = useRef(false);
   const imagesRef = useRef<BatchImage[]>([]);
+  const validationBatchRef = useRef(0);
 
   useEffect(() => {
     imagesRef.current = images;
@@ -133,6 +134,8 @@ export function PhotoBatchDialog({ open, files, onComplete, onCancel }: PhotoBat
       objectUrl: URL.createObjectURL(file),
       status: 'pending' as ImageStatus,
     }));
+
+    const batchToken = ++validationBatchRef.current;
 
     setImages(batch);
     setActiveIndex(0);
@@ -157,17 +160,20 @@ export function PhotoBatchDialog({ open, files, onComplete, onCancel }: PhotoBat
       }
       try {
         const dims = await validateImageDimensions(file);
+        if (validationBatchRef.current !== batchToken) return;
         if (dims.width < MIN_WIDTH || dims.height < MIN_HEIGHT) {
           updateImageStatus(index, 'invalid', t('listingForm.photos.dimensionsTooSmall'));
           return;
         }
         updateImageStatus(index, 'valid');
       } catch {
+        if (validationBatchRef.current !== batchToken) return;
         updateImageStatus(index, 'invalid', t('listingForm.photos.invalidType'));
       }
     }
 
     function updateImageStatus(index: number, status: ImageStatus, error?: string) {
+      if (validationBatchRef.current !== batchToken) return;
       setImages((prev) => {
         const next = [...prev];
         next[index] = { ...next[index], status, error };
@@ -213,24 +219,36 @@ export function PhotoBatchDialog({ open, files, onComplete, onCancel }: PhotoBat
 
   const handleSaveCrop = async () => {
     if (!croppedAreaPixels || !activeImage) return;
-    const blob = await getCroppedImg(activeImage.objectUrl, croppedAreaPixels);
-    const preview = URL.createObjectURL(blob);
+    try {
+      const blob = await getCroppedImg(activeImage.objectUrl, croppedAreaPixels);
+      const preview = URL.createObjectURL(blob);
 
-    setImages((prev) => {
-      const next = [...prev];
-      if (next[activeIndex].croppedPreview) {
-        URL.revokeObjectURL(next[activeIndex].croppedPreview!);
-      }
-      next[activeIndex] = {
-        ...next[activeIndex],
-        status: 'cropped',
-        croppedBlob: blob,
-        croppedPreview: preview,
-      };
-      return next;
-    });
+      setImages((prev) => {
+        const next = [...prev];
+        if (next[activeIndex].croppedPreview) {
+          URL.revokeObjectURL(next[activeIndex].croppedPreview!);
+        }
+        next[activeIndex] = {
+          ...next[activeIndex],
+          status: 'cropped',
+          croppedBlob: blob,
+          croppedPreview: preview,
+        };
+        return next;
+      });
 
-    advanceToNext();
+      advanceToNext();
+    } catch {
+      setImages((prev) => {
+        const next = [...prev];
+        next[activeIndex] = {
+          ...next[activeIndex],
+          status: 'invalid',
+          error: t('listingForm.photos.invalidType'),
+        };
+        return next;
+      });
+    }
   };
 
   const handleSkipNext = () => {
@@ -265,21 +283,33 @@ export function PhotoBatchDialog({ open, files, onComplete, onCancel }: PhotoBat
 
   const handleSaveAndNavigate = async () => {
     if (croppedAreaPixels && activeImage) {
-      const blob = await getCroppedImg(activeImage.objectUrl, croppedAreaPixels);
-      const preview = URL.createObjectURL(blob);
-      setImages((prev) => {
-        const next = [...prev];
-        if (next[activeIndex].croppedPreview) {
-          URL.revokeObjectURL(next[activeIndex].croppedPreview!);
-        }
-        next[activeIndex] = {
-          ...next[activeIndex],
-          status: 'cropped',
-          croppedBlob: blob,
-          croppedPreview: preview,
-        };
-        return next;
-      });
+      try {
+        const blob = await getCroppedImg(activeImage.objectUrl, croppedAreaPixels);
+        const preview = URL.createObjectURL(blob);
+        setImages((prev) => {
+          const next = [...prev];
+          if (next[activeIndex].croppedPreview) {
+            URL.revokeObjectURL(next[activeIndex].croppedPreview!);
+          }
+          next[activeIndex] = {
+            ...next[activeIndex],
+            status: 'cropped',
+            croppedBlob: blob,
+            croppedPreview: preview,
+          };
+          return next;
+        });
+      } catch {
+        setImages((prev) => {
+          const next = [...prev];
+          next[activeIndex] = {
+            ...next[activeIndex],
+            status: 'invalid',
+            error: t('listingForm.photos.invalidType'),
+          };
+          return next;
+        });
+      }
     }
     setShowUnsavedCropConfirm(false);
     if (pendingNavigateIndex !== null) {

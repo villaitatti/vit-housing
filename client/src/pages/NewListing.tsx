@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -94,6 +94,15 @@ export function NewListingPage() {
   const { lang } = useParams();
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<PhotoFile[]>([]);
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
+
+  useEffect(() => {
+    return () => {
+      photosRef.current.forEach((p) => URL.revokeObjectURL(p.preview));
+    };
+  }, []);
+
   const [showAvailableTo, setShowAvailableTo] = useState<boolean[]>([false]);
   const [batchFiles, setBatchFiles] = useState<File[]>([]);
   const [showBatchDialog, setShowBatchDialog] = useState(false);
@@ -731,6 +740,7 @@ export function NewListingPage() {
                       )}
                       <button
                         type="button"
+                        aria-label={`Remove photo ${index + 1}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           removePhoto(index);
