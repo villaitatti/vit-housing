@@ -8,6 +8,7 @@ interface ListingCardProps {
   listing: {
     id: number;
     title: string;
+    address_1: string;
     city: string;
     province: string;
     monthly_rent: number | string;
@@ -46,7 +47,7 @@ export function ListingCard({ listing, lang }: ListingCardProps) {
             {listing.title}
           </h3>
           <p className="text-sm text-muted-foreground mb-3">
-            {listing.city}, {listing.province}
+            {listing.address_1}, {listing.city}
           </p>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
