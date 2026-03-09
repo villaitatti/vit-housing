@@ -12,8 +12,10 @@ import { geocodeAddress } from '../services/geocoding.service.js';
 const router = Router();
 
 function parseId(value: string): number | null {
-  const id = parseInt(value, 10);
-  return Number.isInteger(id) && id > 0 ? id : null;
+  const trimmed = value.trim();
+  if (!/^\d+$/.test(trimmed)) return null;
+  const id = Number(trimmed);
+  return id > 0 ? id : null;
 }
 
 async function checkListingOwnership(req: Request, res: Response, listingId: number): Promise<boolean> {
@@ -339,13 +341,21 @@ router.patch(
         return;
       }
 
-      // Verify all photoIds belong to this listing
-      const photos = await prisma.listingPhoto.findMany({
-        where: { id: { in: photoIds }, listing_id: listingId },
-        select: { id: true },
-      });
-      if (photos.length !== photoIds.length) {
-        sendError(res, 'One or more photo IDs do not belong to this listing', 'VALIDATION_ERROR', 400);
+      // Verify no duplicates and all photoIds cover every photo on this listing
+      if (new Set(photoIds).size !== photoIds.length) {
+        sendError(res, 'photoIds must not contain duplicates', 'VALIDATION_ERROR', 400);
+        return;
+      }
+
+      const [photos, totalCount] = await Promise.all([
+        prisma.listingPhoto.findMany({
+          where: { id: { in: photoIds }, listing_id: listingId },
+          select: { id: true },
+        }),
+        prisma.listingPhoto.count({ where: { listing_id: listingId } }),
+      ]);
+      if (photos.length !== photoIds.length || photoIds.length !== totalCount) {
+        sendError(res, 'photoIds must include every photo for the listing exactly once', 'VALIDATION_ERROR', 400);
         return;
       }
 
