@@ -38,7 +38,7 @@ export function MyListingsPage() {
   const { lang } = useParams();
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<number | null>(null);
-  const [togglingId, setTogglingId] = useState<number | null>(null);
+  const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
   const [page, setPage] = useState(1);
 
   const filters = { owner: 'me' as const, limit: 12, page };
@@ -67,7 +67,7 @@ export function MyListingsPage() {
 
   const togglePublishMutation = useMutation({
     mutationFn: async ({ id, published }: { id: number; published: boolean }) => {
-      setTogglingId(id);
+      setTogglingIds((prev) => new Set(prev).add(id));
       await api.patch(`/api/v1/listings/${id}`, { published });
     },
     onSuccess: (_data, variables) => {
@@ -79,8 +79,12 @@ export function MyListingsPage() {
     onError: (err: Error) => {
       toast.error(err.message);
     },
-    onSettled: () => {
-      setTogglingId(null);
+    onSettled: (_data, _error, variables) => {
+      setTogglingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(variables.id);
+        return next;
+      });
     },
   });
 
@@ -147,7 +151,7 @@ export function MyListingsPage() {
                   togglePublishMutation.mutate({ id, published: !currentPublished })
                 }
                 onDelete={(id) => setDeleteId(id)}
-                isToggling={togglingId === listing.id}
+                isToggling={togglingIds.has(listing.id)}
               />
             ))}
           </div>
@@ -170,6 +174,7 @@ export function MyListingsPage() {
                 size="sm"
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
+                aria-label={t('common.next', 'Next page')}
               >
                 &rarr;
               </Button>
