@@ -10,3 +10,13 @@ export const ROLE_PRIORITY: Record<Role, number> = {
   HOUSE_ADMIN: 2,
   HOUSE_IT_ADMIN: 3,
 };
+
+export function hasRole(userRoles: Role[], ...check: Role[]): boolean {
+  return check.some(r => userRoles.includes(r));
+}
+
+export function highestRole(roles: Role[]): Role {
+  return roles.reduce<Role>((highest, r) => {
+    return (ROLE_PRIORITY[r] ?? 0) > (ROLE_PRIORITY[highest] ?? 0) ? r : highest;
+  }, roles[0] ?? 'HOUSE_USER');
+}

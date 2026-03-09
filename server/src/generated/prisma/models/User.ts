@@ -41,7 +41,6 @@ export type UserMinAggregateOutputType = {
   auth0_user_id: string | null
   first_name: string | null
   last_name: string | null
-  role: $Enums.Role | null
   preferred_language: $Enums.Language | null
   phone_number: string | null
   mobile_number: string | null
@@ -57,7 +56,6 @@ export type UserMaxAggregateOutputType = {
   auth0_user_id: string | null
   first_name: string | null
   last_name: string | null
-  role: $Enums.Role | null
   preferred_language: $Enums.Language | null
   phone_number: string | null
   mobile_number: string | null
@@ -73,7 +71,7 @@ export type UserCountAggregateOutputType = {
   auth0_user_id: number
   first_name: number
   last_name: number
-  role: number
+  roles: number
   preferred_language: number
   phone_number: number
   mobile_number: number
@@ -99,7 +97,6 @@ export type UserMinAggregateInputType = {
   auth0_user_id?: true
   first_name?: true
   last_name?: true
-  role?: true
   preferred_language?: true
   phone_number?: true
   mobile_number?: true
@@ -115,7 +112,6 @@ export type UserMaxAggregateInputType = {
   auth0_user_id?: true
   first_name?: true
   last_name?: true
-  role?: true
   preferred_language?: true
   phone_number?: true
   mobile_number?: true
@@ -131,7 +127,7 @@ export type UserCountAggregateInputType = {
   auth0_user_id?: true
   first_name?: true
   last_name?: true
-  role?: true
+  roles?: true
   preferred_language?: true
   phone_number?: true
   mobile_number?: true
@@ -234,7 +230,7 @@ export type UserGroupByOutputType = {
   auth0_user_id: string | null
   first_name: string
   last_name: string
-  role: $Enums.Role
+  roles: $Enums.Role[]
   preferred_language: $Enums.Language
   phone_number: string | null
   mobile_number: string | null
@@ -273,7 +269,7 @@ export type UserWhereInput = {
   auth0_user_id?: Prisma.StringNullableFilter<"User"> | string | null
   first_name?: Prisma.StringFilter<"User"> | string
   last_name?: Prisma.StringFilter<"User"> | string
-  role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
+  roles?: Prisma.EnumRoleNullableListFilter<"User">
   preferred_language?: Prisma.EnumLanguageFilter<"User"> | $Enums.Language
   phone_number?: Prisma.StringNullableFilter<"User"> | string | null
   mobile_number?: Prisma.StringNullableFilter<"User"> | string | null
@@ -292,7 +288,7 @@ export type UserOrderByWithRelationInput = {
   auth0_user_id?: Prisma.SortOrderInput | Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
-  role?: Prisma.SortOrder
+  roles?: Prisma.SortOrder
   preferred_language?: Prisma.SortOrder
   phone_number?: Prisma.SortOrderInput | Prisma.SortOrder
   mobile_number?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -314,7 +310,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   password?: Prisma.StringNullableFilter<"User"> | string | null
   first_name?: Prisma.StringFilter<"User"> | string
   last_name?: Prisma.StringFilter<"User"> | string
-  role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
+  roles?: Prisma.EnumRoleNullableListFilter<"User">
   preferred_language?: Prisma.EnumLanguageFilter<"User"> | $Enums.Language
   phone_number?: Prisma.StringNullableFilter<"User"> | string | null
   mobile_number?: Prisma.StringNullableFilter<"User"> | string | null
@@ -333,7 +329,7 @@ export type UserOrderByWithAggregationInput = {
   auth0_user_id?: Prisma.SortOrderInput | Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
-  role?: Prisma.SortOrder
+  roles?: Prisma.SortOrder
   preferred_language?: Prisma.SortOrder
   phone_number?: Prisma.SortOrderInput | Prisma.SortOrder
   mobile_number?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -357,7 +353,7 @@ export type UserScalarWhereWithAggregatesInput = {
   auth0_user_id?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   first_name?: Prisma.StringWithAggregatesFilter<"User"> | string
   last_name?: Prisma.StringWithAggregatesFilter<"User"> | string
-  role?: Prisma.EnumRoleWithAggregatesFilter<"User"> | $Enums.Role
+  roles?: Prisma.EnumRoleNullableListFilter<"User">
   preferred_language?: Prisma.EnumLanguageWithAggregatesFilter<"User"> | $Enums.Language
   phone_number?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   mobile_number?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
@@ -372,7 +368,7 @@ export type UserCreateInput = {
   auth0_user_id?: string | null
   first_name: string
   last_name: string
-  role?: $Enums.Role
+  roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
@@ -391,7 +387,7 @@ export type UserUncheckedCreateInput = {
   auth0_user_id?: string | null
   first_name: string
   last_name: string
-  role?: $Enums.Role
+  roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
@@ -409,7 +405,7 @@ export type UserUpdateInput = {
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
-  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -428,7 +424,7 @@ export type UserUncheckedUpdateInput = {
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
-  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -447,7 +443,7 @@ export type UserCreateManyInput = {
   auth0_user_id?: string | null
   first_name: string
   last_name: string
-  role?: $Enums.Role
+  roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
@@ -462,7 +458,7 @@ export type UserUpdateManyMutationInput = {
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
-  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -478,13 +474,21 @@ export type UserUncheckedUpdateManyInput = {
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
-  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type EnumRoleNullableListFilter<$PrismaModel = never> = {
+  equals?: $Enums.Role[] | Prisma.ListEnumRoleFieldRefInput<$PrismaModel> | null
+  has?: $Enums.Role | Prisma.EnumRoleFieldRefInput<$PrismaModel> | null
+  hasEvery?: $Enums.Role[] | Prisma.ListEnumRoleFieldRefInput<$PrismaModel>
+  hasSome?: $Enums.Role[] | Prisma.ListEnumRoleFieldRefInput<$PrismaModel>
+  isEmpty?: boolean
 }
 
 export type UserCountOrderByAggregateInput = {
@@ -494,7 +498,7 @@ export type UserCountOrderByAggregateInput = {
   auth0_user_id?: Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
-  role?: Prisma.SortOrder
+  roles?: Prisma.SortOrder
   preferred_language?: Prisma.SortOrder
   phone_number?: Prisma.SortOrder
   mobile_number?: Prisma.SortOrder
@@ -514,7 +518,6 @@ export type UserMaxOrderByAggregateInput = {
   auth0_user_id?: Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
-  role?: Prisma.SortOrder
   preferred_language?: Prisma.SortOrder
   phone_number?: Prisma.SortOrder
   mobile_number?: Prisma.SortOrder
@@ -530,7 +533,6 @@ export type UserMinOrderByAggregateInput = {
   auth0_user_id?: Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
-  role?: Prisma.SortOrder
   preferred_language?: Prisma.SortOrder
   phone_number?: Prisma.SortOrder
   mobile_number?: Prisma.SortOrder
@@ -553,6 +555,10 @@ export type UserNullableScalarRelationFilter = {
   isNot?: Prisma.UserWhereInput | null
 }
 
+export type UserCreaterolesInput = {
+  set: $Enums.Role[]
+}
+
 export type StringFieldUpdateOperationsInput = {
   set?: string
 }
@@ -561,8 +567,9 @@ export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
 }
 
-export type EnumRoleFieldUpdateOperationsInput = {
-  set?: $Enums.Role
+export type UserUpdaterolesInput = {
+  set?: $Enums.Role[]
+  push?: $Enums.Role | $Enums.Role[]
 }
 
 export type EnumLanguageFieldUpdateOperationsInput = {
@@ -635,7 +642,7 @@ export type UserCreateWithoutInvitations_sentInput = {
   auth0_user_id?: string | null
   first_name: string
   last_name: string
-  role?: $Enums.Role
+  roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
@@ -653,7 +660,7 @@ export type UserUncheckedCreateWithoutInvitations_sentInput = {
   auth0_user_id?: string | null
   first_name: string
   last_name: string
-  role?: $Enums.Role
+  roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
@@ -686,7 +693,7 @@ export type UserUpdateWithoutInvitations_sentInput = {
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
-  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -704,7 +711,7 @@ export type UserUncheckedUpdateWithoutInvitations_sentInput = {
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
-  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -721,7 +728,7 @@ export type UserCreateWithoutListingsInput = {
   auth0_user_id?: string | null
   first_name: string
   last_name: string
-  role?: $Enums.Role
+  roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
@@ -739,7 +746,7 @@ export type UserUncheckedCreateWithoutListingsInput = {
   auth0_user_id?: string | null
   first_name: string
   last_name: string
-  role?: $Enums.Role
+  roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
@@ -772,7 +779,7 @@ export type UserUpdateWithoutListingsInput = {
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
-  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -790,7 +797,7 @@ export type UserUncheckedUpdateWithoutListingsInput = {
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
-  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -807,7 +814,7 @@ export type UserCreateWithoutConfigs_updatedInput = {
   auth0_user_id?: string | null
   first_name: string
   last_name: string
-  role?: $Enums.Role
+  roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
@@ -825,7 +832,7 @@ export type UserUncheckedCreateWithoutConfigs_updatedInput = {
   auth0_user_id?: string | null
   first_name: string
   last_name: string
-  role?: $Enums.Role
+  roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
@@ -858,7 +865,7 @@ export type UserUpdateWithoutConfigs_updatedInput = {
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
-  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -876,7 +883,7 @@ export type UserUncheckedUpdateWithoutConfigs_updatedInput = {
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
-  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -943,7 +950,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   auth0_user_id?: boolean
   first_name?: boolean
   last_name?: boolean
-  role?: boolean
+  roles?: boolean
   preferred_language?: boolean
   phone_number?: boolean
   mobile_number?: boolean
@@ -963,7 +970,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   auth0_user_id?: boolean
   first_name?: boolean
   last_name?: boolean
-  role?: boolean
+  roles?: boolean
   preferred_language?: boolean
   phone_number?: boolean
   mobile_number?: boolean
@@ -979,7 +986,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   auth0_user_id?: boolean
   first_name?: boolean
   last_name?: boolean
-  role?: boolean
+  roles?: boolean
   preferred_language?: boolean
   phone_number?: boolean
   mobile_number?: boolean
@@ -995,7 +1002,7 @@ export type UserSelectScalar = {
   auth0_user_id?: boolean
   first_name?: boolean
   last_name?: boolean
-  role?: boolean
+  roles?: boolean
   preferred_language?: boolean
   phone_number?: boolean
   mobile_number?: boolean
@@ -1004,7 +1011,7 @@ export type UserSelectScalar = {
   last_login?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "auth0_user_id" | "first_name" | "last_name" | "role" | "preferred_language" | "phone_number" | "mobile_number" | "created_at" | "updated_at" | "last_login", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "auth0_user_id" | "first_name" | "last_name" | "roles" | "preferred_language" | "phone_number" | "mobile_number" | "created_at" | "updated_at" | "last_login", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   listings?: boolean | Prisma.User$listingsArgs<ExtArgs>
   invitations_sent?: boolean | Prisma.User$invitations_sentArgs<ExtArgs>
@@ -1028,7 +1035,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     auth0_user_id: string | null
     first_name: string
     last_name: string
-    role: $Enums.Role
+    roles: $Enums.Role[]
     preferred_language: $Enums.Language
     phone_number: string | null
     mobile_number: string | null
@@ -1467,7 +1474,7 @@ export interface UserFieldRefs {
   readonly auth0_user_id: Prisma.FieldRef<"User", 'String'>
   readonly first_name: Prisma.FieldRef<"User", 'String'>
   readonly last_name: Prisma.FieldRef<"User", 'String'>
-  readonly role: Prisma.FieldRef<"User", 'Role'>
+  readonly roles: Prisma.FieldRef<"User", 'Role[]'>
   readonly preferred_language: Prisma.FieldRef<"User", 'Language'>
   readonly phone_number: Prisma.FieldRef<"User", 'String'>
   readonly mobile_number: Prisma.FieldRef<"User", 'String'>

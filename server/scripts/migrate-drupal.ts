@@ -79,14 +79,18 @@ async function migrateUsers(drupal: Connection) {
         continue;
       }
 
-      // Determine role from Drupal role IDs
+      // Determine roles from Drupal role IDs
       const roleIds = row.role_ids ? row.role_ids.split(',').map(Number) : [2];
-      let role: Role = 'HOUSE_USER';
-      for (const rid of roleIds) {
-        if (DRUPAL_ROLE_MAP[rid]) {
-          role = DRUPAL_ROLE_MAP[rid];
-        }
+      const unmappedRids = roleIds.filter((rid: number) => rid !== 1 && !(rid in DRUPAL_ROLE_MAP));
+      if (unmappedRids.length > 0) {
+        log(`SKIP user uid=${row.uid} email=${row.mail} — unmapped Drupal RIDs: ${unmappedRids.join(',')}`);
+        skipped++;
+        continue;
       }
+      const mappedRoles = [...new Set(
+        roleIds.map((rid: number) => DRUPAL_ROLE_MAP[rid]).filter(Boolean),
+      )] as Role[];
+      const roles: Role[] = mappedRoles.length > 0 ? mappedRoles : ['HOUSE_USER'];
 
       // TODO: Split Drupal username into first/last name if possible
       // For now, use the username as first name
@@ -99,20 +103,19 @@ async function migrateUsers(drupal: Connection) {
         update: {
           first_name: firstName,
           last_name: lastName,
-          role,
         },
         create: {
           email: row.mail,
           first_name: firstName,
           last_name: lastName,
-          role,
+          roles,
           // No password — users will authenticate via Auth0 or invitation
           created_at: new Date(row.created * 1000),
           last_login: row.login > 0 ? new Date(row.login * 1000) : null,
         },
       });
 
-      log(`OK user uid=${row.uid} email=${row.mail} role=${role}`);
+      log(`OK user uid=${row.uid} email=${row.mail} roles=${roles.join(',')}`);
       migrated++;
     } catch (err) {
       log(`ERROR user uid=${row.uid}: ${err}`);

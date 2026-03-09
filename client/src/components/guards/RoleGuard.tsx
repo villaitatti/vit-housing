@@ -1,7 +1,6 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
-
-type Role = 'HOUSE_USER' | 'HOUSE_LANDLORD' | 'HOUSE_ADMIN' | 'HOUSE_IT_ADMIN';
+import type { Role } from '@vithousing/shared';
 
 interface RoleGuardProps {
   roles: Role[];
@@ -12,7 +11,7 @@ export function RoleGuard({ roles, children }: RoleGuardProps) {
   const { user } = useAuth();
   const { t } = useTranslation();
 
-  if (!user || !roles.includes(user.role)) {
+  if (!user || !user.roles?.length || !roles.some(r => user.roles.includes(r))) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">

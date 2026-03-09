@@ -5,7 +5,7 @@ import { sendSuccess, sendError } from '../lib/response.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/requireRole.js';
 import { validate } from '../middleware/validate.js';
-import { updateUserSchema, adminUpdateUserSchema } from '@vithousing/shared';
+import { updateUserSchema, adminUpdateUserSchema, adminUserListSchema } from '@vithousing/shared';
 
 const router = Router();
 
@@ -19,7 +19,7 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
         email: true,
         first_name: true,
         last_name: true,
-        role: true,
+        roles: true,
         preferred_language: true,
         phone_number: true,
         mobile_number: true,
@@ -51,7 +51,7 @@ router.patch('/me', authenticate, validate(updateUserSchema), async (req: Reques
         email: true,
         first_name: true,
         last_name: true,
-        role: true,
+        roles: true,
         preferred_language: true,
         phone_number: true,
         mobile_number: true,
@@ -65,32 +65,47 @@ router.patch('/me', authenticate, validate(updateUserSchema), async (req: Reques
 });
 
 // GET /api/v1/users — Admin: list all users
-router.get('/', authenticate, requireRole('HOUSE_ADMIN', 'HOUSE_IT_ADMIN'), async (req: Request, res: Response) => {
+router.get('/', authenticate, requireRole('HOUSE_ADMIN', 'HOUSE_IT_ADMIN'), validate(adminUserListSchema, 'query'), async (req: Request, res: Response) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
+    const { search, roles, sortBy, sortOrder, page, limit } = req.query as any;
     const skip = (page - 1) * limit;
+
+    const where: any = {};
+
+    if (search) {
+      where.OR = [
+        { first_name: { contains: search, mode: 'insensitive' } },
+        { last_name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (roles && Array.isArray(roles) && roles.length > 0) {
+      where.roles = { hasSome: roles };
+    }
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({
+        where,
         skip,
         take: limit,
-        orderBy: { created_at: 'desc' },
+        orderBy: [{ [sortBy]: sortOrder }, { id: 'asc' }],
         select: {
           id: true,
           email: true,
           first_name: true,
           last_name: true,
-          role: true,
+          roles: true,
           preferred_language: true,
           phone_number: true,
           mobile_number: true,
           created_at: true,
           last_login: true,
           auth0_user_id: true,
+          _count: { select: { listings: true } },
         },
       }),
-      prisma.user.count(),
+      prisma.user.count({ where }),
     ]);
 
     sendSuccess(res, {
@@ -122,7 +137,7 @@ router.patch(
           email: true,
           first_name: true,
           last_name: true,
-          role: true,
+          roles: true,
           preferred_language: true,
           phone_number: true,
           mobile_number: true,

@@ -26,7 +26,7 @@ model User {
   auth0_user_id      String?      @unique
   first_name         String
   last_name          String
-  role               Role         @default(HOUSE_USER)
+  roles              Role[]       @default([HOUSE_USER])
   preferred_language Language     @default(EN)
   phone_number       String?
   mobile_number      String?

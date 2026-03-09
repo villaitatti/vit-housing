@@ -11,7 +11,7 @@ export const queryKeys = {
   },
   users: {
     all: ['users'] as const,
-    list: (page: number) => ['users', 'list', page] as const,
+    list: (filters: object) => ['users', 'list', filters] as const,
     detail: (id: number) => ['users', 'detail', id] as const,
   },
   invitations: {

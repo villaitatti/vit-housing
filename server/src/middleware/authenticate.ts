@@ -21,6 +21,10 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
 
   try {
     const payload = verifyToken(token);
+    // Backward-compat: handle old JWTs that have `role` instead of `roles`
+    if ((payload as any).role && !payload.roles) {
+      payload.roles = [(payload as any).role];
+    }
     req.user = payload;
     next();
   } catch {

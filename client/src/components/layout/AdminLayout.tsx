@@ -45,7 +45,7 @@ export function AdminLayout() {
   const { user } = useAuth();
   const currentLang = lang || 'en';
 
-  const isItAdmin = user?.role === 'HOUSE_IT_ADMIN';
+  const isItAdmin = !!user?.roles?.includes('HOUSE_IT_ADMIN');
 
   return (
     <div className="container mx-auto px-4 py-8">

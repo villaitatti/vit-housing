@@ -10,7 +10,7 @@ export function requireRole(...roles: Role[]) {
       return;
     }
 
-    if (!roles.includes(req.user.role as Role)) {
+    if (!roles.some(r => req.user!.roles.includes(r))) {
       sendError(res, 'Insufficient permissions', 'FORBIDDEN', 403);
       return;
     }

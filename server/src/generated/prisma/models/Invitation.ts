@@ -494,6 +494,10 @@ export type InvitationUncheckedUpdateManyWithoutInviterNestedInput = {
   deleteMany?: Prisma.InvitationScalarWhereInput | Prisma.InvitationScalarWhereInput[]
 }
 
+export type EnumRoleFieldUpdateOperationsInput = {
+  set?: $Enums.Role
+}
+
 export type BoolFieldUpdateOperationsInput = {
   set?: boolean
 }

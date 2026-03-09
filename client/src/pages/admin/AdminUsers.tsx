@@ -1,10 +1,17 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Table,
   TableBody,
@@ -21,52 +28,111 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Trash2 } from 'lucide-react';
+import { Trash2, ArrowUpDown, ArrowUp, ArrowDown, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { PaginatedData, Role } from '@vithousing/shared';
+import { ALL_ROLES } from '@vithousing/shared';
 
 interface AdminUser {
   id: number;
   email: string;
   first_name: string;
   last_name: string;
-  role: Role;
+  roles: Role[];
   preferred_language: 'EN' | 'IT';
   created_at: string;
   last_login: string | null;
+  _count: { listings: number };
 }
+
+type SortBy = 'first_name' | 'email' | 'created_at' | 'last_login';
+
+const ROLE_LABELS: Record<Role, string> = {
+  HOUSE_USER: 'roleUser',
+  HOUSE_LANDLORD: 'roleLandlord',
+  HOUSE_ADMIN: 'roleAdmin',
+  HOUSE_IT_ADMIN: 'roleItAdmin',
+};
+
+const ROLE_VARIANTS: Record<Role, 'default' | 'secondary' | 'outline' | 'destructive'> = {
+  HOUSE_USER: 'outline',
+  HOUSE_LANDLORD: 'secondary',
+  HOUSE_ADMIN: 'default',
+  HOUSE_IT_ADMIN: 'destructive',
+};
 
 export function AdminUsersPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [filterRoles, setFilterRoles] = useState<Role[]>([]);
+  const [sortBy, setSortBy] = useState<SortBy>('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [page, setPage] = useState(1);
+  const limit = 20;
+
+  // Debounce search
+  const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const handleSearchChange = useCallback((value: string) => {
+    setSearch(value);
+    if (debounceTimer) clearTimeout(debounceTimer);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(value);
+      setPage(1);
+    }, 300);
+    setDebounceTimer(timer);
+  }, [debounceTimer]);
+
+  const filters = { search: debouncedSearch, roles: filterRoles.join(','), sortBy, sortOrder, page, limit };
 
   const { data, isLoading } = useQuery<PaginatedData<AdminUser>>({
-    queryKey: queryKeys.users.all,
+    queryKey: queryKeys.users.list(filters),
     queryFn: async () => {
-      const res = await api.get('/api/v1/users', { params: { limit: 100 } });
+      const params: Record<string, string | number> = { sortBy, sortOrder, page, limit };
+      if (debouncedSearch) params.search = debouncedSearch;
+      if (filterRoles.length > 0) params.roles = filterRoles.join(',');
+      const res = await api.get('/api/v1/users', { params });
       return res.data;
     },
   });
 
-  const updateRoleMutation = useMutation({
-    mutationFn: async ({ id, role }: { id: number; role: Role }) => {
-      await api.patch(`/api/v1/users/${id}`, { role });
+  // Clamp page when totalPages shrinks (e.g., after search/filter)
+  useEffect(() => {
+    if (data && data.totalPages > 0 && page > data.totalPages) {
+      setPage(data.totalPages);
+    }
+  }, [data, page]);
+
+  const updateRolesMutation = useMutation({
+    mutationFn: async ({ id, roles }: { id: number; roles: Role[] }) => {
+      await api.patch(`/api/v1/users/${id}`, { roles });
+    },
+    onMutate: async ({ id, roles: newRoles }) => {
+      const queryKey = queryKeys.users.list(filters);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<PaginatedData<AdminUser>>(queryKey);
+      if (previous) {
+        queryClient.setQueryData<PaginatedData<AdminUser>>(queryKey, {
+          ...previous,
+          items: previous.items.map(u => u.id === id ? { ...u, roles: newRoles } : u),
+        });
+      }
+      return { previous, queryKey };
+    },
+    onError: (err: Error, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(context.queryKey, context.previous);
+      }
+      toast.error(err.message);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      toast.success(t('common.save'));
+      toast.success(t('admin.rolesUpdated'));
     },
-    onError: (err: Error) => {
-      toast.error(err.message);
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
     },
   });
 
@@ -84,7 +150,39 @@ export function AdminUsersPage() {
     },
   });
 
-  if (isLoading) {
+  const handleSort = (column: SortBy) => {
+    if (sortBy === column) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      setSortOrder('asc');
+    }
+    setPage(1);
+  };
+
+  const toggleFilterRole = (role: Role) => {
+    setFilterRoles(prev =>
+      prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
+    );
+    setPage(1);
+  };
+
+  const toggleUserRole = (user: AdminUser, role: Role) => {
+    const newRoles = user.roles.includes(role)
+      ? user.roles.filter(r => r !== role)
+      : [...user.roles, role];
+    if (newRoles.length === 0) return; // must have at least 1 role
+    updateRolesMutation.mutate({ id: user.id, roles: newRoles });
+  };
+
+  const SortIcon = ({ column }: { column: SortBy }) => {
+    if (sortBy !== column) return <ArrowUpDown className="h-3.5 w-3.5 ml-1 opacity-50" />;
+    return sortOrder === 'asc'
+      ? <ArrowUp className="h-3.5 w-3.5 ml-1" />
+      : <ArrowDown className="h-3.5 w-3.5 ml-1" />;
+  };
+
+  if (isLoading && !data) {
     return (
       <div className="space-y-3">
         {Array.from({ length: 5 }).map((_, i) => (
@@ -94,19 +192,89 @@ export function AdminUsersPage() {
     );
   }
 
+  const totalPages = data?.totalPages ?? 1;
+
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-6">{t('admin.users')}</h2>
 
+      {/* Search & Filter Bar */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={t('admin.searchPlaceholder')}
+            value={search}
+            onChange={e => handleSearchChange(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <Filter className="h-4 w-4" />
+              {t('admin.filterByRole')}
+              {filterRoles.length > 0 && (
+                <Badge variant="secondary" className="ml-1">{filterRoles.length}</Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-56" align="end">
+            <div className="space-y-2">
+              {ALL_ROLES.map(role => (
+                <label key={role} className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox
+                    checked={filterRoles.includes(role)}
+                    onCheckedChange={() => toggleFilterRole(role)}
+                  />
+                  <span className="text-sm">{t(`admin.${ROLE_LABELS[role]}`)}</span>
+                </label>
+              ))}
+              {filterRoles.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-2"
+                  onClick={() => { setFilterRoles([]); setPage(1); }}
+                >
+                  {t('admin.allRoles')}
+                </Button>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>{t('admin.userColumns.name')}</TableHead>
-            <TableHead>{t('admin.userColumns.email')}</TableHead>
+            <TableHead>
+              <button className="flex items-center font-medium" onClick={() => handleSort('first_name')}>
+                {t('admin.userColumns.name')}
+                <SortIcon column="first_name" />
+              </button>
+            </TableHead>
+            <TableHead>
+              <button className="flex items-center font-medium" onClick={() => handleSort('email')}>
+                {t('admin.userColumns.email')}
+                <SortIcon column="email" />
+              </button>
+            </TableHead>
             <TableHead>{t('admin.userColumns.role')}</TableHead>
+            <TableHead>{t('admin.listingsCount')}</TableHead>
             <TableHead>{t('admin.userColumns.language')}</TableHead>
-            <TableHead>{t('admin.userColumns.lastLogin')}</TableHead>
-            <TableHead>{t('admin.userColumns.createdAt')}</TableHead>
+            <TableHead>
+              <button className="flex items-center font-medium" onClick={() => handleSort('last_login')}>
+                {t('admin.userColumns.lastLogin')}
+                <SortIcon column="last_login" />
+              </button>
+            </TableHead>
+            <TableHead>
+              <button className="flex items-center font-medium" onClick={() => handleSort('created_at')}>
+                {t('admin.userColumns.createdAt')}
+                <SortIcon column="created_at" />
+              </button>
+            </TableHead>
             <TableHead>{t('admin.userColumns.actions')}</TableHead>
           </TableRow>
         </TableHeader>
@@ -118,22 +286,38 @@ export function AdminUsersPage() {
               </TableCell>
               <TableCell>{user.email}</TableCell>
               <TableCell>
-                <Select
-                  defaultValue={user.role}
-                  onValueChange={(role) =>
-                    updateRoleMutation.mutate({ id: user.id, role: role as Role })
-                  }
-                >
-                  <SelectTrigger className="w-40 h-8">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="HOUSE_USER">{t('admin.roleUser')}</SelectItem>
-                    <SelectItem value="HOUSE_LANDLORD">{t('admin.roleLandlord')}</SelectItem>
-                    <SelectItem value="HOUSE_ADMIN">{t('admin.roleAdmin')}</SelectItem>
-                    <SelectItem value="HOUSE_IT_ADMIN">{t('admin.roleItAdmin')}</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="flex flex-wrap gap-1 cursor-pointer">
+                      {user.roles.map(role => (
+                        <Badge key={role} variant={ROLE_VARIANTS[role]}>
+                          {t(`admin.${ROLE_LABELS[role]}`)}
+                        </Badge>
+                      ))}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-52" align="start">
+                    <div className="space-y-2">
+                      {ALL_ROLES.map(role => (
+                        <label key={role} className="flex items-center gap-2 cursor-pointer">
+                          <Checkbox
+                            checked={user.roles.includes(role)}
+                            onCheckedChange={() => toggleUserRole(user, role)}
+                            disabled={user.roles.length === 1 && user.roles.includes(role)}
+                          />
+                          <span className="text-sm">{t(`admin.${ROLE_LABELS[role]}`)}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </TableCell>
+              <TableCell>
+                {user._count.listings > 0 ? (
+                  <Badge variant="outline">{user._count.listings}</Badge>
+                ) : (
+                  <span className="text-muted-foreground">0</span>
+                )}
               </TableCell>
               <TableCell>
                 <Badge variant="outline">{user.preferred_language}</Badge>
@@ -156,6 +340,38 @@ export function AdminUsersPage() {
           ))}
         </TableBody>
       </Table>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-sm text-muted-foreground">
+            {t('common.search')}: {data?.total ?? 0}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage(p => p - 1)}
+              aria-label={t('common.back')}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm">
+              {page} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => setPage(p => p + 1)}
+              aria-label={t('common.next')}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       <Dialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
         <DialogContent>

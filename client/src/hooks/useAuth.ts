@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
+import type { Role } from '@vithousing/shared';
 import api from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
 
@@ -8,7 +9,7 @@ interface User {
   email: string;
   first_name: string;
   last_name: string;
-  role: 'HOUSE_USER' | 'HOUSE_LANDLORD' | 'HOUSE_ADMIN' | 'HOUSE_IT_ADMIN';
+  roles: Role[];
   preferred_language: 'EN' | 'IT';
   phone_number?: string | null;
   mobile_number?: string | null;

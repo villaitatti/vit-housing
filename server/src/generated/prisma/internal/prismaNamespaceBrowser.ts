@@ -83,7 +83,7 @@ export const UserScalarFieldEnum = {
   auth0_user_id: 'auth0_user_id',
   first_name: 'first_name',
   last_name: 'last_name',
-  role: 'role',
+  roles: 'roles',
   preferred_language: 'preferred_language',
   phone_number: 'phone_number',
   mobile_number: 'mobile_number',
