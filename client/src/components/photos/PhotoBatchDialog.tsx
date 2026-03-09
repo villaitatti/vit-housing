@@ -351,7 +351,7 @@ export function PhotoBatchDialog({ open, files, onComplete, onCancel }: PhotoBat
 
   return (
     <>
-      <Dialog open={open} onOpenChange={() => {}}>
+      <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleRequestClose(); }}>
         <DialogContent
           className="max-w-5xl max-h-[90vh] overflow-y-auto"
           showCloseButton={false}
