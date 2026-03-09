@@ -57,7 +57,7 @@ export function MyListingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['listings'] });
-      toast.success(t('common.delete'));
+      toast.success(t('myListings.deleteSuccess'));
       setDeleteId(null);
     },
     onError: (err: Error) => {
@@ -188,8 +188,8 @@ export function MyListingsPage() {
       <Dialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('admin.deleteConfirmTitle')}</DialogTitle>
-            <DialogDescription>{t('admin.deleteConfirmMessage')}</DialogDescription>
+            <DialogTitle>{t('myListings.deleteConfirmTitle')}</DialogTitle>
+            <DialogDescription>{t('myListings.deleteConfirmMessage')}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteId(null)}>

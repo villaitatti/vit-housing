@@ -224,7 +224,10 @@
     "unpublish": "Nascondi",
     "publishSuccess": "Annuncio pubblicato con successo",
     "unpublishSuccess": "Annuncio nascosto con successo",
-    "unpublishedPreviewHint": "Questo annuncio non è visibile agli altri utenti."
+    "unpublishedPreviewHint": "Questo annuncio non è visibile agli altri utenti.",
+    "deleteSuccess": "Annuncio eliminato con successo",
+    "deleteConfirmTitle": "Elimina Annuncio",
+    "deleteConfirmMessage": "Sei sicuro di voler eliminare questo annuncio? Questa azione non può essere annullata."
   },
   "admin": {
     "title": "Amministrazione",
