@@ -90,6 +90,8 @@ const RequiredStar = () => (
   </span>
 );
 
+const EMPTY_PHOTOS: ExistingPhoto[] = [];
+
 interface ListingFormProps {
   mode: 'create' | 'edit';
   initialData?: Partial<CreateListingInput>;
@@ -98,7 +100,7 @@ interface ListingFormProps {
   isSubmitting: boolean;
 }
 
-export function ListingForm({ mode, initialData, existingPhotos = [], onSubmit, isSubmitting }: ListingFormProps) {
+export function ListingForm({ mode, initialData, existingPhotos = EMPTY_PHOTOS, onSubmit, isSubmitting }: ListingFormProps) {
   const { t } = useTranslation();
   const [newPhotos, setNewPhotos] = useState<PhotoFile[]>([]);
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<number[]>([]);
