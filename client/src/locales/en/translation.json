@@ -16,7 +16,8 @@
     "no": "No",
     "or": "OR",
     "required": "Required",
-    "optional": "Optional"
+    "optional": "Optional",
+    "next": "Next page"
   },
   "nav": {
     "home": "Home",

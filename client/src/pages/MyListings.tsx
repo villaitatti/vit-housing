@@ -35,7 +35,8 @@ interface MyListing {
 
 export function MyListingsPage() {
   const { t } = useTranslation();
-  const { lang } = useParams();
+  const { lang: rawLang } = useParams();
+  const lang = rawLang || 'en';
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
@@ -148,7 +149,7 @@ export function MyListingsPage() {
               <MyListingCard
                 key={listing.id}
                 listing={listing}
-                lang={lang || 'en'}
+                lang={lang}
                 onTogglePublish={(id, currentPublished) =>
                   togglePublishMutation.mutate({ id, published: !currentPublished })
                 }
