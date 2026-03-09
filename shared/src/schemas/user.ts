@@ -29,7 +29,7 @@ export const adminUserListSchema = z.object({
       });
       return z.NEVER;
     }
-    return items as unknown as typeof ROLE_VALUES[number][];
+    return [...new Set(items)] as unknown as typeof ROLE_VALUES[number][];
   }),
   sortBy: z.enum(['first_name', 'email', 'created_at', 'last_login']).default('created_at'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
