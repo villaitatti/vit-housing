@@ -15,6 +15,7 @@ import type { PaginatedData } from '@vithousing/shared';
 interface ListingsListItem {
   id: number;
   title: string;
+  address_1: string;
   city: string;
   province: string;
   monthly_rent: number | string;
