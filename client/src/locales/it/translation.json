@@ -23,6 +23,7 @@
     "listings": "Annunci",
     "map": "Mappa",
     "addListing": "Aggiungi Annuncio",
+    "myListings": "I Miei Annunci",
     "admin": "Amministrazione",
     "profile": "Profilo",
     "login": "Accedi",
@@ -209,7 +210,14 @@
       "photoLabel": "Foto {{index}}",
       "removePhoto": "Rimuovi foto {{index}}"
     },
-    "saveListing": "Salva Annuncio"
+    "saveListing": "Salva Annuncio",
+    "updateListing": "Aggiorna Annuncio"
+  },
+  "myListings": {
+    "title": "I Miei Annunci",
+    "noListings": "Non hai ancora creato annunci",
+    "noListingsDescription": "Crea il tuo primo annuncio per iniziare.",
+    "createFirst": "Crea Annuncio"
   },
   "admin": {
     "title": "Amministrazione",

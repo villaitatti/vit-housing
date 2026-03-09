@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Home, Building2, Plus, Shield, User, LogOut } from 'lucide-react';
+import { Home, Building2, Plus, List, Shield, User, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 function LanguageFlag({ lang }: { lang: 'en' | 'it' }) {
@@ -51,6 +51,7 @@ export function Header() {
   const homePath = `/${currentLang}/home`;
   const listingsPath = `/${currentLang}/listings`;
   const newListingPath = `/${currentLang}/listings/new`;
+  const myListingsPath = `/${currentLang}/my-listings`;
   const mapPath = `/${currentLang}/map`;
   const adminPath = `/${currentLang}/admin`;
 
@@ -95,15 +96,26 @@ export function Header() {
                 {t('nav.map')}
               </Link>
               {canAddListing && (
-                <Link
-                  to={newListingPath}
-                  className={navLinkClass(location.pathname === newListingPath)}
-                >
-                  <span className="flex items-center gap-1.5">
-                    <Plus className="h-4 w-4" />
-                    {t('nav.addListing')}
-                  </span>
-                </Link>
+                <>
+                  <Link
+                    to={myListingsPath}
+                    className={navLinkClass(location.pathname === myListingsPath)}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <List className="h-4 w-4" />
+                      {t('nav.myListings')}
+                    </span>
+                  </Link>
+                  <Link
+                    to={newListingPath}
+                    className={navLinkClass(location.pathname === newListingPath)}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <Plus className="h-4 w-4" />
+                      {t('nav.addListing')}
+                    </span>
+                  </Link>
+                </>
               )}
               {isAdmin && (
                 <Link
@@ -154,6 +166,14 @@ export function Header() {
                     {t('nav.profile')}
                   </Link>
                 </DropdownMenuItem>
+                {canAddListing && (
+                  <DropdownMenuItem asChild>
+                    <Link to={myListingsPath} className="cursor-pointer">
+                      <List className="mr-2 h-4 w-4" />
+                      {t('nav.myListings')}
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 {isAdmin && (
                   <DropdownMenuItem asChild>
                     <Link to={`/${currentLang}/admin/listings`} className="cursor-pointer">

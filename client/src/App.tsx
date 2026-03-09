@@ -18,6 +18,8 @@ const ListingsPage = lazy(() => import('@/pages/Listings').then((m) => ({ defaul
 const ListingDetailPage = lazy(() => import('@/pages/ListingDetail').then((m) => ({ default: m.ListingDetailPage })));
 const MapSearchPage = lazy(() => import('@/pages/MapSearch').then((m) => ({ default: m.MapSearchPage })));
 const NewListingPage = lazy(() => import('@/pages/NewListing').then((m) => ({ default: m.NewListingPage })));
+const EditListingPage = lazy(() => import('@/pages/EditListing').then((m) => ({ default: m.EditListingPage })));
+const MyListingsPage = lazy(() => import('@/pages/MyListings').then((m) => ({ default: m.MyListingsPage })));
 const ProfilePage = lazy(() => import('@/pages/Profile').then((m) => ({ default: m.ProfilePage })));
 const AdminListingsPage = lazy(() => import('@/pages/admin/AdminListings').then((m) => ({ default: m.AdminListingsPage })));
 const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsers').then((m) => ({ default: m.AdminUsersPage })));
@@ -101,10 +103,30 @@ function App() {
                 }
               />
               <Route
+                path="listings/:id/edit"
+                element={
+                  <ProtectedRoute>
+                    <RoleGuard roles={['HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN']}>
+                      <Suspense fallback={<PageLoader />}><EditListingPage /></Suspense>
+                    </RoleGuard>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="listings/:id"
                 element={
                   <ProtectedRoute>
                     <Suspense fallback={<PageLoader />}><ListingDetailPage /></Suspense>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="my-listings"
+                element={
+                  <ProtectedRoute>
+                    <RoleGuard roles={['HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN']}>
+                      <Suspense fallback={<PageLoader />}><MyListingsPage /></Suspense>
+                    </RoleGuard>
                   </ProtectedRoute>
                 }
               />

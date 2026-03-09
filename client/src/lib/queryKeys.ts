@@ -6,6 +6,7 @@ export const queryKeys = {
     all: ['listings'] as const,
     list: (filters: object) => ['listings', 'list', filters] as const,
     detail: (id: number) => ['listings', 'detail', id] as const,
+    mine: (filters: object) => ['listings', 'mine', filters] as const,
     latest: ['listings', 'latest'] as const,
   },
   users: {

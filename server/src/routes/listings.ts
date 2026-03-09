@@ -11,6 +11,26 @@ import { geocodeAddress } from '../services/geocoding.service.js';
 
 const router = Router();
 
+function parseId(value: string): number | null {
+  const trimmed = value.trim();
+  if (!/^\d+$/.test(trimmed)) return null;
+  const id = Number(trimmed);
+  return id > 0 ? id : null;
+}
+
+async function checkListingOwnership(req: Request, res: Response, listingId: number): Promise<boolean> {
+  const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+  if (!listing) {
+    sendError(res, 'Listing not found', 'NOT_FOUND', 404);
+    return false;
+  }
+  if (req.user!.role === 'HOUSE_LANDLORD' && listing.owner_id !== req.user!.userId) {
+    sendError(res, 'Not authorized', 'FORBIDDEN', 403);
+    return false;
+  }
+  return true;
+}
+
 // GET /api/v1/listings — Browse listings (all authenticated users)
 router.get('/', authenticate, validate(listingFiltersSchema, 'query'), async (req: Request, res: Response) => {
   try {
@@ -19,11 +39,16 @@ router.get('/', authenticate, validate(listingFiltersSchema, 'query'), async (re
       minBedrooms, maxBedrooms,
       minRent, maxRent,
       minFloorSpace, maxFloorSpace,
+      owner,
       sortBy, sortOrder,
       page, limit,
     } = req.query as any;
 
     const where: any = {};
+
+    if (owner === 'me') {
+      where.owner_id = req.user!.userId;
+    }
 
     if (minBathrooms !== undefined || maxBathrooms !== undefined) {
       where.bathrooms = {};
@@ -81,7 +106,8 @@ router.get('/', authenticate, validate(listingFiltersSchema, 'query'), async (re
 // GET /api/v1/listings/:id — Single listing detail
 router.get('/:id', authenticate, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id as string);
+    const id = parseId(req.params.id as string);
+    if (!id) { sendError(res, 'Invalid ID', 'BAD_REQUEST', 400); return; }
     const listing = await prisma.listing.findUnique({
       where: { id },
       include: {
@@ -165,16 +191,10 @@ router.patch(
   validate(updateListingSchema),
   async (req: Request, res: Response) => {
     try {
-      const id = parseInt(req.params.id as string);
+      const id = parseId(req.params.id as string);
+      if (!id) { sendError(res, 'Invalid ID', 'BAD_REQUEST', 400); return; }
 
-      // Check ownership (landlords can only edit their own)
-      if (req.user!.role === 'HOUSE_LANDLORD') {
-        const existing = await prisma.listing.findUnique({ where: { id } });
-        if (!existing || existing.owner_id !== req.user!.userId) {
-          sendError(res, 'Not authorized to edit this listing', 'FORBIDDEN', 403);
-          return;
-        }
-      }
+      if (!(await checkListingOwnership(req, res, id))) return;
 
       const { available_dates, ...listingData } = req.body;
 
@@ -195,10 +215,27 @@ router.patch(
         }
       }
 
-      const listing = await prisma.listing.update({
-        where: { id },
-        data: listingData,
-        include: { photos: true, available_dates: true },
+      const listing = await prisma.$transaction(async (tx) => {
+        // Replace available_dates atomically if provided
+        if (available_dates !== undefined) {
+          await tx.availableDate.deleteMany({ where: { listing_id: id } });
+        }
+
+        return tx.listing.update({
+          where: { id },
+          data: {
+            ...listingData,
+            ...(available_dates !== undefined && {
+              available_dates: {
+                create: available_dates.map((d: any) => ({
+                  available_from: new Date(d.available_from),
+                  available_to: d.available_to ? new Date(d.available_to) : null,
+                })),
+              },
+            }),
+          },
+          include: { photos: true, available_dates: true },
+        });
       });
 
       sendSuccess(res, { listing });
@@ -208,14 +245,17 @@ router.patch(
   },
 );
 
-// DELETE /api/v1/listings/:id — Admin only
+// DELETE /api/v1/listings/:id — Landlord (own) + Admin
 router.delete(
   '/:id',
   authenticate,
-  requireRole('HOUSE_ADMIN', 'HOUSE_IT_ADMIN'),
+  requireRole('HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'),
   async (req: Request, res: Response) => {
     try {
-      const id = parseInt(req.params.id as string);
+      const id = parseId(req.params.id as string);
+      if (!id) { sendError(res, 'Invalid ID', 'BAD_REQUEST', 400); return; }
+
+      if (!(await checkListingOwnership(req, res, id))) return;
 
       // Delete local photos first
       const photos = await prisma.listingPhoto.findMany({ where: { listing_id: id } });
@@ -243,7 +283,10 @@ router.post(
   uploadMiddleware.single('photo'),
   async (req: Request, res: Response) => {
     try {
-      const listingId = parseInt(req.params.id as string);
+      const listingId = parseId(req.params.id as string);
+      if (!listingId) { sendError(res, 'Invalid ID', 'BAD_REQUEST', 400); return; }
+
+      if (!(await checkListingOwnership(req, res, listingId))) return;
 
       if (!req.file) {
         sendError(res, 'No photo file provided', 'VALIDATION_ERROR', 400);
@@ -286,10 +329,33 @@ router.patch(
   requireRole('HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'),
   async (req: Request, res: Response) => {
     try {
+      const listingId = parseId(req.params.id as string);
+      if (!listingId) { sendError(res, 'Invalid ID', 'BAD_REQUEST', 400); return; }
+
+      if (!(await checkListingOwnership(req, res, listingId))) return;
+
       const { photoIds } = req.body; // ordered array of photo IDs
 
-      if (!Array.isArray(photoIds)) {
-        sendError(res, 'photoIds must be an array', 'VALIDATION_ERROR', 400);
+      if (!Array.isArray(photoIds) || !photoIds.every((id: unknown) => Number.isInteger(id) && (id as number) > 0)) {
+        sendError(res, 'photoIds must be an array of positive integers', 'VALIDATION_ERROR', 400);
+        return;
+      }
+
+      // Verify no duplicates and all photoIds cover every photo on this listing
+      if (new Set(photoIds).size !== photoIds.length) {
+        sendError(res, 'photoIds must not contain duplicates', 'VALIDATION_ERROR', 400);
+        return;
+      }
+
+      const [photos, totalCount] = await Promise.all([
+        prisma.listingPhoto.findMany({
+          where: { id: { in: photoIds }, listing_id: listingId },
+          select: { id: true },
+        }),
+        prisma.listingPhoto.count({ where: { listing_id: listingId } }),
+      ]);
+      if (photos.length !== photoIds.length || photoIds.length !== totalCount) {
+        sendError(res, 'photoIds must include every photo for the listing exactly once', 'VALIDATION_ERROR', 400);
         return;
       }
 
@@ -316,10 +382,14 @@ router.delete(
   requireRole('HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'),
   async (req: Request, res: Response) => {
     try {
-      const photoId = parseInt(req.params.photoId as string);
+      const listingId = parseId(req.params.id as string);
+      const photoId = parseId(req.params.photoId as string);
+      if (!listingId || !photoId) { sendError(res, 'Invalid ID', 'BAD_REQUEST', 400); return; }
+
+      if (!(await checkListingOwnership(req, res, listingId))) return;
 
       const photo = await prisma.listingPhoto.findUnique({ where: { id: photoId } });
-      if (!photo) {
+      if (!photo || photo.listing_id !== listingId) {
         sendError(res, 'Photo not found', 'NOT_FOUND', 404);
         return;
       }
