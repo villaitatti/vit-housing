@@ -334,8 +334,8 @@ router.patch(
 
       const { photoIds } = req.body; // ordered array of photo IDs
 
-      if (!Array.isArray(photoIds)) {
-        sendError(res, 'photoIds must be an array', 'VALIDATION_ERROR', 400);
+      if (!Array.isArray(photoIds) || !photoIds.every((id: unknown) => Number.isInteger(id) && (id as number) > 0)) {
+        sendError(res, 'photoIds must be an array of positive integers', 'VALIDATION_ERROR', 400);
         return;
       }
 
