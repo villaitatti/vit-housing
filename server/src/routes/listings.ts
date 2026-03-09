@@ -11,6 +11,11 @@ import { geocodeAddress } from '../services/geocoding.service.js';
 
 const router = Router();
 
+function parseId(value: string): number | null {
+  const id = parseInt(value, 10);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
 async function checkListingOwnership(req: Request, res: Response, listingId: number): Promise<boolean> {
   const listing = await prisma.listing.findUnique({ where: { id: listingId } });
   if (!listing) {
@@ -99,7 +104,8 @@ router.get('/', authenticate, validate(listingFiltersSchema, 'query'), async (re
 // GET /api/v1/listings/:id — Single listing detail
 router.get('/:id', authenticate, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id as string);
+    const id = parseId(req.params.id as string);
+    if (!id) { sendError(res, 'Invalid ID', 'BAD_REQUEST', 400); return; }
     const listing = await prisma.listing.findUnique({
       where: { id },
       include: {
@@ -183,7 +189,8 @@ router.patch(
   validate(updateListingSchema),
   async (req: Request, res: Response) => {
     try {
-      const id = parseInt(req.params.id as string);
+      const id = parseId(req.params.id as string);
+      if (!id) { sendError(res, 'Invalid ID', 'BAD_REQUEST', 400); return; }
 
       if (!(await checkListingOwnership(req, res, id))) return;
 
@@ -243,7 +250,8 @@ router.delete(
   requireRole('HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'),
   async (req: Request, res: Response) => {
     try {
-      const id = parseInt(req.params.id as string);
+      const id = parseId(req.params.id as string);
+      if (!id) { sendError(res, 'Invalid ID', 'BAD_REQUEST', 400); return; }
 
       if (!(await checkListingOwnership(req, res, id))) return;
 
@@ -273,7 +281,8 @@ router.post(
   uploadMiddleware.single('photo'),
   async (req: Request, res: Response) => {
     try {
-      const listingId = parseInt(req.params.id as string);
+      const listingId = parseId(req.params.id as string);
+      if (!listingId) { sendError(res, 'Invalid ID', 'BAD_REQUEST', 400); return; }
 
       if (!(await checkListingOwnership(req, res, listingId))) return;
 
@@ -318,7 +327,8 @@ router.patch(
   requireRole('HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'),
   async (req: Request, res: Response) => {
     try {
-      const listingId = parseInt(req.params.id as string);
+      const listingId = parseId(req.params.id as string);
+      if (!listingId) { sendError(res, 'Invalid ID', 'BAD_REQUEST', 400); return; }
 
       if (!(await checkListingOwnership(req, res, listingId))) return;
 
@@ -362,8 +372,9 @@ router.delete(
   requireRole('HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'),
   async (req: Request, res: Response) => {
     try {
-      const listingId = parseInt(req.params.id as string);
-      const photoId = parseInt(req.params.photoId as string);
+      const listingId = parseId(req.params.id as string);
+      const photoId = parseId(req.params.photoId as string);
+      if (!listingId || !photoId) { sendError(res, 'Invalid ID', 'BAD_REQUEST', 400); return; }
 
       if (!(await checkListingOwnership(req, res, listingId))) return;
 
