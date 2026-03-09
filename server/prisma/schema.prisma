@@ -91,6 +91,7 @@ model Listing {
   feature_wired_internet  Boolean         @default(false)
   feature_parking         Boolean         @default(false)
   feature_pets_allowed    Boolean         @default(false)
+  published               Boolean         @default(true)
   created_at              DateTime        @default(now())
   updated_at              DateTime        @updatedAt
   owner_id                Int

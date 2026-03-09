@@ -45,7 +45,30 @@ export const createListingSchema = z.object({
   available_dates: z.array(availableDateSchema).optional(),
 });
 
-export const updateListingSchema = createListingSchema.partial();
+export const updateListingSchema = createListingSchema.partial().extend({
+  utility_electricity: z.boolean().optional(),
+  utility_gas: z.boolean().optional(),
+  utility_water: z.boolean().optional(),
+  utility_telephone: z.boolean().optional(),
+  utility_internet: z.boolean().optional(),
+  feature_storage_room: z.boolean().optional(),
+  feature_basement: z.boolean().optional(),
+  feature_garden: z.boolean().optional(),
+  feature_balcony: z.boolean().optional(),
+  feature_air_con: z.boolean().optional(),
+  feature_washing_machine: z.boolean().optional(),
+  feature_dryer: z.boolean().optional(),
+  feature_fireplace: z.boolean().optional(),
+  feature_dishwasher: z.boolean().optional(),
+  feature_elevator: z.boolean().optional(),
+  feature_tv: z.boolean().optional(),
+  feature_telephone: z.boolean().optional(),
+  feature_wifi: z.boolean().optional(),
+  feature_wired_internet: z.boolean().optional(),
+  feature_parking: z.boolean().optional(),
+  feature_pets_allowed: z.boolean().optional(),
+  published: z.boolean().optional(),
+});
 
 export const listingFiltersSchema = z.object({
   minBathrooms: z.coerce.number().int().min(0).optional(),

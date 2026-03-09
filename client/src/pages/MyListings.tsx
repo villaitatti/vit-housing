@@ -6,14 +6,6 @@ import api from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { Button } from '@/components/ui/button';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -23,25 +15,34 @@ import {
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Pencil, Trash2, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { MyListingCard } from '@/components/listings/MyListingCard';
 import type { PaginatedData } from '@vithousing/shared';
 
 interface MyListing {
   id: number;
   title: string;
+  address_1: string;
   city: string;
+  province: string;
   monthly_rent: number | string;
+  bedrooms: number;
+  bathrooms: number;
+  published: boolean;
   created_at: string;
+  photos?: { url: string }[];
 }
 
 export function MyListingsPage() {
   const { t } = useTranslation();
-  const { lang } = useParams();
+  const { lang: rawLang } = useParams();
+  const lang = rawLang || 'en';
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
   const [page, setPage] = useState(1);
 
-  const filters = { owner: 'me' as const, limit: 50, page };
+  const filters = { owner: 'me' as const, limit: 12, page };
 
   const { data, isLoading, isError, error } = useQuery<PaginatedData<MyListing>>({
     queryKey: queryKeys.listings.mine(filters),
@@ -57,7 +58,7 @@ export function MyListingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['listings'] });
-      toast.success(t('common.delete'));
+      toast.success(t('myListings.deleteSuccess'));
       setDeleteId(null);
     },
     onError: (err: Error) => {
@@ -65,13 +66,44 @@ export function MyListingsPage() {
     },
   });
 
+  const togglePublishMutation = useMutation({
+    mutationFn: async ({ id, published }: { id: number; published: boolean }) => {
+      await api.patch(`/api/v1/listings/${id}`, { published });
+    },
+    onMutate: ({ id }) => {
+      setTogglingIds((prev) => new Set(prev).add(id));
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+      toast.success(
+        variables.published ? t('myListings.publishSuccess') : t('myListings.unpublishSuccess'),
+      );
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
+    },
+    onSettled: (_data, _error, variables) => {
+      setTogglingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(variables.id);
+        return next;
+      });
+    },
+  });
+
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 space-y-3">
-        <Skeleton className="h-8 w-48" />
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full" />
-        ))}
+      <div className="container mx-auto px-4 py-8">
+        <Skeleton className="h-8 w-48 mb-6" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="space-y-3">
+              <Skeleton className="aspect-[4/3] w-full rounded-lg" />
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -112,52 +144,20 @@ export function MyListingsPage() {
         </div>
       ) : (
         <>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('listingForm.postingTitle')}</TableHead>
-                <TableHead>{t('listingForm.city')}</TableHead>
-                <TableHead>{t('listingForm.monthlyRent')}</TableHead>
-                <TableHead>{t('admin.userColumns.createdAt')}</TableHead>
-                <TableHead>{t('admin.userColumns.actions')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((listing) => (
-                <TableRow key={listing.id}>
-                  <TableCell>
-                    <Link
-                      to={`/${lang}/listings/${listing.id}`}
-                      className="text-primary hover:underline"
-                    >
-                      {listing.title}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{listing.city}</TableCell>
-                  <TableCell>€{Number(listing.monthly_rent).toLocaleString()}</TableCell>
-                  <TableCell>{new Date(listing.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link to={`/${lang}/listings/${listing.id}/edit`} aria-label={`${t('common.edit')} - ${listing.title}`}>
-                          <Pencil className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDeleteId(listing.id)}
-                        className="text-destructive hover:text-destructive"
-                        aria-label={`${t('common.delete')} - ${listing.title}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {items.map((listing) => (
+              <MyListingCard
+                key={listing.id}
+                listing={listing}
+                lang={lang}
+                onTogglePublish={(id, currentPublished) =>
+                  togglePublishMutation.mutate({ id, published: !currentPublished })
+                }
+                onDelete={(id) => setDeleteId(id)}
+                isToggling={togglingIds.has(listing.id)}
+              />
+            ))}
+          </div>
 
           {totalPages > 1 && (
             <div className="flex justify-center gap-2 mt-6">
@@ -177,8 +177,9 @@ export function MyListingsPage() {
                 size="sm"
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
+                aria-label={t('common.next', 'Next page')}
               >
-                →
+                &rarr;
               </Button>
             </div>
           )}
@@ -188,8 +189,8 @@ export function MyListingsPage() {
       <Dialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('admin.deleteConfirmTitle')}</DialogTitle>
-            <DialogDescription>{t('admin.deleteConfirmMessage')}</DialogDescription>
+            <DialogTitle>{t('myListings.deleteConfirmTitle')}</DialogTitle>
+            <DialogDescription>{t('myListings.deleteConfirmMessage')}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteId(null)}>

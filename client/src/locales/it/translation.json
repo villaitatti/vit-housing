@@ -16,7 +16,8 @@
     "no": "No",
     "or": "OPPURE",
     "required": "Obbligatorio",
-    "optional": "Facoltativo"
+    "optional": "Facoltativo",
+    "next": "Pagina successiva"
   },
   "nav": {
     "home": "Home",
@@ -217,7 +218,17 @@
     "title": "I Miei Annunci",
     "noListings": "Non hai ancora creato annunci",
     "noListingsDescription": "Crea il tuo primo annuncio per iniziare.",
-    "createFirst": "Crea Annuncio"
+    "createFirst": "Crea Annuncio",
+    "published": "Pubblicato",
+    "unpublished": "Non pubblicato",
+    "publish": "Pubblica",
+    "unpublish": "Nascondi",
+    "publishSuccess": "Annuncio pubblicato con successo",
+    "unpublishSuccess": "Annuncio nascosto con successo",
+    "unpublishedPreviewHint": "Questo annuncio non è visibile agli altri utenti.",
+    "deleteSuccess": "Annuncio eliminato con successo",
+    "deleteConfirmTitle": "Elimina Annuncio",
+    "deleteConfirmMessage": "Sei sicuro di voler eliminare questo annuncio? Questa azione non può essere annullata."
   },
   "admin": {
     "title": "Amministrazione",
