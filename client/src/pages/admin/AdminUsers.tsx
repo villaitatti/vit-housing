@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
@@ -99,16 +99,40 @@ export function AdminUsersPage() {
     },
   });
 
+  // Clamp page when totalPages shrinks (e.g., after search/filter)
+  useEffect(() => {
+    if (data && data.totalPages > 0 && page > data.totalPages) {
+      setPage(data.totalPages);
+    }
+  }, [data, page]);
+
   const updateRolesMutation = useMutation({
     mutationFn: async ({ id, roles }: { id: number; roles: Role[] }) => {
       await api.patch(`/api/v1/users/${id}`, { roles });
     },
+    onMutate: async ({ id, roles: newRoles }) => {
+      const queryKey = queryKeys.users.list(filters);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<PaginatedData<AdminUser>>(queryKey);
+      if (previous) {
+        queryClient.setQueryData<PaginatedData<AdminUser>>(queryKey, {
+          ...previous,
+          items: previous.items.map(u => u.id === id ? { ...u, roles: newRoles } : u),
+        });
+      }
+      return { previous, queryKey };
+    },
+    onError: (err: Error, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(context.queryKey, context.previous);
+      }
+      toast.error(err.message);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success(t('admin.rolesUpdated'));
     },
-    onError: (err: Error) => {
-      toast.error(err.message);
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
     },
   });
 

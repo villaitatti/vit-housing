@@ -19,9 +19,11 @@ export interface PaginatedData<T> {
   totalPages: number;
 }
 
+import type { Role } from '../constants/roles';
+
 export interface JwtPayload {
   userId: number;
   email: string;
-  roles: ('HOUSE_USER' | 'HOUSE_LANDLORD' | 'HOUSE_ADMIN' | 'HOUSE_IT_ADMIN')[];
+  roles: Role[];
   preferred_language: 'EN' | 'IT';
 }

@@ -154,7 +154,7 @@ router.post('/vit-id/callback', validate(vitIdCallbackSchema), async (req: Reque
     });
 
     // Resolve local roles from Auth0 roles via mappings
-    let resolvedRoles: PrismaRole[] = [PrismaRole.HOUSE_USER];
+    let resolvedRoles: PrismaRole[] = [];
     try {
       const auth0Roles = await getUserAuth0Roles(auth0Payload.sub);
       if (auth0Roles.length > 0) {
@@ -162,32 +162,35 @@ router.post('/vit-id/callback', validate(vitIdCallbackSchema), async (req: Reque
           where: { auth0_role_id: { in: auth0Roles.map((r: { id: string }) => r.id) } },
         });
         if (mappings.length > 0) {
-          const mapped = [...new Set(mappings.map(m => m.local_role))];
-          resolvedRoles = mapped;
+          resolvedRoles = [...new Set(mappings.map(m => m.local_role))];
         }
       }
     } catch (err) {
-      // If Auth0 Management API is not configured, fall back to default roles
-      console.warn('Could not resolve Auth0 roles, using default:', err);
+      // If Auth0 Management API is not configured, skip role resolution
+      console.warn('Could not resolve Auth0 roles:', err);
     }
 
     if (!user) {
-      // Auto-provision new user with resolved roles
+      // Auto-provision new user; fall back to HOUSE_USER if no roles resolved
       user = await prisma.user.create({
         data: {
           email: auth0Payload.email,
           auth0_user_id: auth0Payload.sub,
           first_name: auth0Payload.given_name || '',
           last_name: auth0Payload.family_name || '',
-          roles: resolvedRoles,
+          roles: resolvedRoles.length > 0 ? resolvedRoles : [PrismaRole.HOUSE_USER],
           preferred_language: 'EN',
+          last_login: new Date(),
         },
       });
     } else {
-      // Update last login and roles (roles re-evaluated on every login)
+      // Update last login; only override roles if resolution succeeded
       user = await prisma.user.update({
         where: { id: user.id },
-        data: { last_login: new Date(), roles: resolvedRoles },
+        data: {
+          last_login: new Date(),
+          ...(resolvedRoles.length > 0 && { roles: resolvedRoles }),
+        },
       });
     }
 

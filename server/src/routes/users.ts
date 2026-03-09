@@ -80,11 +80,8 @@ router.get('/', authenticate, requireRole('HOUSE_ADMIN', 'HOUSE_IT_ADMIN'), vali
       ];
     }
 
-    if (roles) {
-      const roleList = (roles as string).split(',').filter(Boolean);
-      if (roleList.length > 0) {
-        where.roles = { hasSome: roleList };
-      }
+    if (roles && Array.isArray(roles) && roles.length > 0) {
+      where.roles = { hasSome: roles };
     }
 
     const [users, total] = await Promise.all([

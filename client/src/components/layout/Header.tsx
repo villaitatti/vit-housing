@@ -46,8 +46,8 @@ export function Header() {
     navigate(newPath + location.search);
   };
 
-  const canAddListing = user?.roles.some(r => ['HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'].includes(r));
-  const isAdmin = user?.roles.some(r => ['HOUSE_ADMIN', 'HOUSE_IT_ADMIN'].includes(r));
+  const canAddListing = user?.roles?.some(r => ['HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'].includes(r));
+  const isAdmin = user?.roles?.some(r => ['HOUSE_ADMIN', 'HOUSE_IT_ADMIN'].includes(r));
   const homePath = `/${currentLang}/home`;
   const listingsPath = `/${currentLang}/listings`;
   const newListingPath = `/${currentLang}/listings/new`;

@@ -32,7 +32,7 @@ export function ProfilePage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const showPhoneFields = user?.roles.some(r => ['HOUSE_LANDLORD', 'HOUSE_ADMIN'].includes(r));
+  const showPhoneFields = user?.roles?.some(r => ['HOUSE_LANDLORD', 'HOUSE_ADMIN'].includes(r));
 
   const form = useForm<UpdateUserInput>({
     resolver: zodResolver(updateUserSchema),
