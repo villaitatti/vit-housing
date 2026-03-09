@@ -44,7 +44,7 @@ export function MyListingCard({ listing, lang, onTogglePublish, onDelete, isTogg
             </div>
           )}
           <Badge className="absolute top-3 right-3 bg-background/90 text-foreground font-semibold">
-            &euro;{Number(listing.monthly_rent).toLocaleString()}{t('listings.perMonth')}
+            {new Intl.NumberFormat(lang, { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(Number(listing.monthly_rent))}{t('listings.perMonth')}
           </Badge>
           <Badge
             className={`absolute top-3 left-3 ${listing.published ? 'bg-green-600 hover:bg-green-600' : 'bg-amber-600 hover:bg-amber-600'} text-white`}
@@ -102,6 +102,7 @@ export function MyListingCard({ listing, lang, onTogglePublish, onDelete, isTogg
             variant="ghost"
             size="sm"
             onClick={() => onDelete(listing.id)}
+            disabled={isToggling}
             className="text-destructive hover:text-destructive ml-auto"
             aria-label={`${t('common.delete')} - ${listing.title}`}
           >

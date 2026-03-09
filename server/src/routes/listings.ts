@@ -133,7 +133,7 @@ router.get('/:id', authenticate, async (req: Request, res: Response) => {
     }
 
     if (!listing.published) {
-      const isOwner = req.user!.role === 'HOUSE_LANDLORD' && listing.owner_id === req.user!.userId;
+      const isOwner = listing.owner_id === req.user!.userId;
       const isAdmin = req.user!.role === 'HOUSE_ADMIN' || req.user!.role === 'HOUSE_IT_ADMIN';
       if (!isOwner && !isAdmin) {
         sendError(res, 'Listing not found', 'NOT_FOUND', 404);

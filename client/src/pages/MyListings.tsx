@@ -38,6 +38,7 @@ export function MyListingsPage() {
   const { lang } = useParams();
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [togglingId, setTogglingId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
 
   const filters = { owner: 'me' as const, limit: 12, page };
@@ -66,6 +67,7 @@ export function MyListingsPage() {
 
   const togglePublishMutation = useMutation({
     mutationFn: async ({ id, published }: { id: number; published: boolean }) => {
+      setTogglingId(id);
       await api.patch(`/api/v1/listings/${id}`, { published });
     },
     onSuccess: (_data, variables) => {
@@ -76,6 +78,9 @@ export function MyListingsPage() {
     },
     onError: (err: Error) => {
       toast.error(err.message);
+    },
+    onSettled: () => {
+      setTogglingId(null);
     },
   });
 
@@ -142,7 +147,7 @@ export function MyListingsPage() {
                   togglePublishMutation.mutate({ id, published: !currentPublished })
                 }
                 onDelete={(id) => setDeleteId(id)}
-                isToggling={togglePublishMutation.isPending}
+                isToggling={togglingId === listing.id}
               />
             ))}
           </div>
