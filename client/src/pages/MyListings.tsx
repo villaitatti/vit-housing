@@ -67,8 +67,10 @@ export function MyListingsPage() {
 
   const togglePublishMutation = useMutation({
     mutationFn: async ({ id, published }: { id: number; published: boolean }) => {
-      setTogglingIds((prev) => new Set(prev).add(id));
       await api.patch(`/api/v1/listings/${id}`, { published });
+    },
+    onMutate: ({ id }) => {
+      setTogglingIds((prev) => new Set(prev).add(id));
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['listings'] });
@@ -146,7 +148,7 @@ export function MyListingsPage() {
               <MyListingCard
                 key={listing.id}
                 listing={listing}
-                lang={lang!}
+                lang={lang || 'en'}
                 onTogglePublish={(id, currentPublished) =>
                   togglePublishMutation.mutate({ id, published: !currentPublished })
                 }
