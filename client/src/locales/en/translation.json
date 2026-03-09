@@ -254,6 +254,9 @@
     "rolesUpdated": "User roles updated successfully",
     "deleteConfirmTitle": "Confirm Deletion",
     "deleteConfirmMessage": "Are you sure you want to delete this? This action cannot be undone.",
+    "deleteUserTitle": "Delete User",
+    "deleteUserMessage": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+    "deleteUserWithListings": "This will also permanently delete {{count}} listing(s) owned by this user.",
     "userColumns": {
       "name": "Name",
       "email": "Email",
@@ -276,7 +279,10 @@
     "localRole": "Local Role",
     "selectAuth0Role": "Select Auth0 role...",
     "addMapping": "Add Mapping",
-    "saveMappings": "Save Mappings"
+    "saveMappings": "Save Mappings",
+    "clearAllFilters": "Clear all filters",
+    "noFilterResults": "No users match your filters",
+    "noFilterResultsDescription": "Try adjusting or clearing your search criteria."
   },
   "profile": {
     "title": "Profile",

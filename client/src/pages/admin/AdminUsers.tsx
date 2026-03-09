@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { Badge } from '@/components/ui/badge';
@@ -30,7 +30,8 @@ import {
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Trash2, ArrowUpDown, ArrowUp, ArrowDown, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2, Pencil, ArrowUpDown, ArrowUp, ArrowDown, Search, SearchX, Filter, ChevronLeft, ChevronRight, X, Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import type { PaginatedData, Role } from '@vithousing/shared';
 import { ALL_ROLES } from '@vithousing/shared';
 
@@ -65,7 +66,8 @@ const ROLE_VARIANTS: Record<Role, 'default' | 'secondary' | 'outline' | 'destruc
 export function AdminUsersPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const { user: currentUser } = useAuth();
+  const [deleteUser, setDeleteUser] = useState<AdminUser | null>(null);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filterRoles, setFilterRoles] = useState<Role[]>([]);
@@ -75,20 +77,19 @@ export function AdminUsersPage() {
   const limit = 20;
 
   // Debounce search
-  const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
-    if (debounceTimer) clearTimeout(debounceTimer);
-    const timer = setTimeout(() => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
       setDebouncedSearch(value);
       setPage(1);
     }, 300);
-    setDebounceTimer(timer);
-  }, [debounceTimer]);
+  }, []);
 
   const filters = { search: debouncedSearch, roles: filterRoles.join(','), sortBy, sortOrder, page, limit };
 
-  const { data, isLoading } = useQuery<PaginatedData<AdminUser>>({
+  const { data, isLoading, isFetching } = useQuery<PaginatedData<AdminUser>>({
     queryKey: queryKeys.users.list(filters),
     queryFn: async () => {
       const params: Record<string, string | number> = { sortBy, sortOrder, page, limit };
@@ -97,6 +98,7 @@ export function AdminUsersPage() {
       const res = await api.get('/api/v1/users', { params });
       return res.data;
     },
+    placeholderData: keepPreviousData,
   });
 
   // Clamp page when totalPages shrinks (e.g., after search/filter)
@@ -143,7 +145,7 @@ export function AdminUsersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success(t('common.delete'));
-      setDeleteId(null);
+      setDeleteUser(null);
     },
     onError: (err: Error) => {
       toast.error(err.message);
@@ -200,14 +202,24 @@ export function AdminUsersPage() {
 
       {/* Search & Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="relative w-full max-w-xl">
+          <Loader2 className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin ${isFetching ? '' : 'hidden'}`} />
+          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground ${isFetching ? 'hidden' : ''}`} />
           <Input
             placeholder={t('admin.searchPlaceholder')}
             value={search}
             onChange={e => handleSearchChange(e.target.value)}
-            className="pl-9"
+            className="pl-9 pr-9"
           />
+          {search && (
+            <button
+              type="button"
+              onClick={() => { setSearch(''); setDebouncedSearch(''); setPage(1); }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
         <Popover>
           <PopoverTrigger asChild>
@@ -243,6 +255,17 @@ export function AdminUsersPage() {
             </div>
           </PopoverContent>
         </Popover>
+        {(debouncedSearch || filterRoles.length > 0) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1 text-muted-foreground"
+            onClick={() => { setSearch(''); setDebouncedSearch(''); setFilterRoles([]); setPage(1); }}
+          >
+            <X className="h-3.5 w-3.5" />
+            {t('admin.clearAllFilters')}
+          </Button>
+        )}
       </div>
 
       <Table>
@@ -288,12 +311,13 @@ export function AdminUsersPage() {
               <TableCell>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="flex flex-wrap gap-1 cursor-pointer">
+                    <button className="flex flex-wrap gap-1 items-center cursor-pointer">
                       {user.roles.map(role => (
                         <Badge key={role} variant={ROLE_VARIANTS[role]}>
                           {t(`admin.${ROLE_LABELS[role]}`)}
                         </Badge>
                       ))}
+                      <Pencil className="h-3 w-3 text-muted-foreground ml-1" />
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-52" align="start">
@@ -323,23 +347,46 @@ export function AdminUsersPage() {
                 <Badge variant="outline">{user.preferred_language}</Badge>
               </TableCell>
               <TableCell>
-                {user.last_login ? new Date(user.last_login).toLocaleDateString() : '—'}
+                {user.last_login ? new Date(user.last_login).toLocaleString(undefined, {
+                  year: 'numeric', month: 'short', day: 'numeric',
+                  hour: 'numeric', minute: '2-digit', hour12: true
+                }) : '—'}
               </TableCell>
-              <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+              <TableCell>{new Date(user.created_at).toLocaleString(undefined, {
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: 'numeric', minute: '2-digit', hour12: true
+              })}</TableCell>
               <TableCell>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setDeleteId(user.id)}
-                  className="text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                {user.id !== currentUser?.id && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setDeleteUser(user)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      {/* Empty state when filters yield no results */}
+      {!isLoading && data?.items?.length === 0 && (debouncedSearch || filterRoles.length > 0) && (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <SearchX className="h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium">{t('admin.noFilterResults')}</h3>
+          <p className="text-sm text-muted-foreground mt-1 mb-4">{t('admin.noFilterResultsDescription')}</p>
+          <Button
+            variant="outline"
+            onClick={() => { setSearch(''); setDebouncedSearch(''); setFilterRoles([]); setPage(1); }}
+          >
+            {t('admin.clearAllFilters')}
+          </Button>
+        </div>
+      )}
 
       {/* Pagination */}
       {totalPages > 1 && (
@@ -373,19 +420,27 @@ export function AdminUsersPage() {
         </div>
       )}
 
-      <Dialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
+      <Dialog open={deleteUser !== null} onOpenChange={() => setDeleteUser(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('admin.deleteConfirmTitle')}</DialogTitle>
-            <DialogDescription>{t('admin.deleteConfirmMessage')}</DialogDescription>
+            <DialogTitle>{t('admin.deleteUserTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('admin.deleteUserMessage', { name: deleteUser ? `${deleteUser.first_name} ${deleteUser.last_name}` : '' })}
+              {deleteUser && deleteUser._count.listings > 0 && (
+                <>
+                  {' '}
+                  {t('admin.deleteUserWithListings', { count: deleteUser._count.listings })}
+                </>
+              )}
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)}>
+            <Button variant="outline" onClick={() => setDeleteUser(null)}>
               {t('common.cancel')}
             </Button>
             <Button
               variant="destructive"
-              onClick={() => deleteId && deleteMutation.mutate(deleteId)}
+              onClick={() => deleteUser && deleteMutation.mutate(deleteUser.id)}
               disabled={deleteMutation.isPending}
             >
               {t('common.delete')}
