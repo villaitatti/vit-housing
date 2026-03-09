@@ -73,8 +73,8 @@ export function EditListingPage() {
   // Ownership check for landlords
   const isForbidden =
     listing &&
-    user?.role === 'HOUSE_LANDLORD' &&
-    listing.owner_id !== user.id;
+    !user?.roles.some(r => ['HOUSE_ADMIN', 'HOUSE_IT_ADMIN'].includes(r)) &&
+    listing.owner_id !== user?.id;
 
   const updateMutation = useMutation({
     mutationFn: async ({

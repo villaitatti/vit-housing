@@ -5,7 +5,7 @@ import { sendSuccess, sendError } from '../lib/response.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/requireRole.js';
 import { validate } from '../middleware/validate.js';
-import { createListingSchema, updateListingSchema, listingFiltersSchema } from '@vithousing/shared';
+import { createListingSchema, updateListingSchema, listingFiltersSchema, hasRole } from '@vithousing/shared';
 import { uploadMiddleware, processAndSaveImage, deleteLocalFile } from '../services/upload.service.js';
 import { geocodeAddress } from '../services/geocoding.service.js';
 
@@ -24,7 +24,7 @@ async function checkListingOwnership(req: Request, res: Response, listingId: num
     sendError(res, 'Listing not found', 'NOT_FOUND', 404);
     return false;
   }
-  if (req.user!.role === 'HOUSE_LANDLORD' && listing.owner_id !== req.user!.userId) {
+  if (!hasRole(req.user!.roles, 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN') && listing.owner_id !== req.user!.userId) {
     sendError(res, 'Not authorized', 'FORBIDDEN', 403);
     return false;
   }
@@ -134,8 +134,7 @@ router.get('/:id', authenticate, async (req: Request, res: Response) => {
 
     if (!listing.published) {
       const isOwner = listing.owner_id === req.user!.userId;
-      const isAdmin = req.user!.role === 'HOUSE_ADMIN' || req.user!.role === 'HOUSE_IT_ADMIN';
-      if (!isOwner && !isAdmin) {
+      if (!isOwner && !hasRole(req.user!.roles, 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN')) {
         sendError(res, 'Listing not found', 'NOT_FOUND', 404);
         return;
       }

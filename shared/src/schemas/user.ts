@@ -9,7 +9,16 @@ export const updateUserSchema = z.object({
 });
 
 export const adminUpdateUserSchema = updateUserSchema.extend({
-  role: z.enum(['HOUSE_USER', 'HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN']).optional(),
+  roles: z.array(z.enum(['HOUSE_USER', 'HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'])).min(1).optional(),
+});
+
+export const adminUserListSchema = z.object({
+  search: z.string().optional(),
+  roles: z.string().optional(),
+  sortBy: z.enum(['first_name', 'email', 'created_at', 'last_login']).default('created_at'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;

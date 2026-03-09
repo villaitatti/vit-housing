@@ -8,7 +8,7 @@ interface User {
   email: string;
   first_name: string;
   last_name: string;
-  role: 'HOUSE_USER' | 'HOUSE_LANDLORD' | 'HOUSE_ADMIN' | 'HOUSE_IT_ADMIN';
+  roles: ('HOUSE_USER' | 'HOUSE_LANDLORD' | 'HOUSE_ADMIN' | 'HOUSE_IT_ADMIN')[];
   preferred_language: 'EN' | 'IT';
   phone_number?: string | null;
   mobile_number?: string | null;

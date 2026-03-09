@@ -247,6 +247,11 @@
     "roleLandlord": "Proprietario",
     "roleAdmin": "Amministratore",
     "roleItAdmin": "Amministratore IT",
+    "searchPlaceholder": "Cerca per nome o email...",
+    "filterByRole": "Filtra per Ruolo",
+    "allRoles": "Mostra Tutti i Ruoli",
+    "listingsCount": "Annunci",
+    "rolesUpdated": "Ruoli utente aggiornati con successo",
     "deleteConfirmTitle": "Conferma Eliminazione",
     "deleteConfirmMessage": "Sei sicuro di voler eliminare questo elemento? Questa azione non può essere annullata.",
     "userColumns": {

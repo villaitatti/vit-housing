@@ -5,8 +5,7 @@ import { prisma } from '../lib/prisma.js';
 import { signToken } from '../lib/jwt.js';
 import { sendSuccess, sendError } from '../lib/response.js';
 import { validate } from '../middleware/validate.js';
-import { loginSchema, registerSchema, vitIdCallbackSchema, ROLE_PRIORITY } from '@vithousing/shared';
-import type { Role as SharedRole } from '@vithousing/shared';
+import { loginSchema, registerSchema, vitIdCallbackSchema } from '@vithousing/shared';
 import { Role as PrismaRole } from '../generated/prisma/client.js';
 import { getUserAuth0Roles } from '../services/auth0.service.js';
 
@@ -46,7 +45,7 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
     const token = signToken({
       userId: user.id,
       email: user.email,
-      role: user.role,
+      roles: user.roles,
       preferred_language: user.preferred_language,
     });
 
@@ -57,7 +56,7 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
-        role: user.role,
+        roles: user.roles,
         preferred_language: user.preferred_language,
       },
     });
@@ -103,7 +102,7 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
           password: hashedPassword,
           first_name,
           last_name,
-          role: invitation.role,
+          roles: [invitation.role],
           preferred_language,
           phone_number: phone_number || null,
           mobile_number: mobile_number || null,
@@ -154,8 +153,8 @@ router.post('/vit-id/callback', validate(vitIdCallbackSchema), async (req: Reque
       where: { auth0_user_id: auth0Payload.sub },
     });
 
-    // Resolve local role from Auth0 roles via mappings
-    let resolvedRole: PrismaRole = PrismaRole.HOUSE_USER;
+    // Resolve local roles from Auth0 roles via mappings
+    let resolvedRoles: PrismaRole[] = [PrismaRole.HOUSE_USER];
     try {
       const auth0Roles = await getUserAuth0Roles(auth0Payload.sub);
       if (auth0Roles.length > 0) {
@@ -163,36 +162,32 @@ router.post('/vit-id/callback', validate(vitIdCallbackSchema), async (req: Reque
           where: { auth0_role_id: { in: auth0Roles.map((r: { id: string }) => r.id) } },
         });
         if (mappings.length > 0) {
-          // Pick the highest-privilege role from matching mappings
-          resolvedRole = mappings.reduce<PrismaRole>((highest, m) => {
-            const currentPriority = ROLE_PRIORITY[highest as SharedRole] ?? 0;
-            const mappingPriority = ROLE_PRIORITY[m.local_role as SharedRole] ?? 0;
-            return mappingPriority > currentPriority ? m.local_role : highest;
-          }, PrismaRole.HOUSE_USER);
+          const mapped = [...new Set(mappings.map(m => m.local_role))];
+          resolvedRoles = mapped;
         }
       }
     } catch (err) {
-      // If Auth0 Management API is not configured, fall back to default role
+      // If Auth0 Management API is not configured, fall back to default roles
       console.warn('Could not resolve Auth0 roles, using default:', err);
     }
 
     if (!user) {
-      // Auto-provision new user with resolved role
+      // Auto-provision new user with resolved roles
       user = await prisma.user.create({
         data: {
           email: auth0Payload.email,
           auth0_user_id: auth0Payload.sub,
           first_name: auth0Payload.given_name || '',
           last_name: auth0Payload.family_name || '',
-          role: resolvedRole,
+          roles: resolvedRoles,
           preferred_language: 'EN',
         },
       });
     } else {
-      // Update last login and role (role re-evaluated on every login)
+      // Update last login and roles (roles re-evaluated on every login)
       user = await prisma.user.update({
         where: { id: user.id },
-        data: { last_login: new Date(), role: resolvedRole },
+        data: { last_login: new Date(), roles: resolvedRoles },
       });
     }
 
@@ -200,7 +195,7 @@ router.post('/vit-id/callback', validate(vitIdCallbackSchema), async (req: Reque
     const token = signToken({
       userId: user.id,
       email: user.email,
-      role: user.role,
+      roles: user.roles,
       preferred_language: user.preferred_language,
     });
 
@@ -211,7 +206,7 @@ router.post('/vit-id/callback', validate(vitIdCallbackSchema), async (req: Reque
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
-        role: user.role,
+        roles: user.roles,
         preferred_language: user.preferred_language,
       },
     });

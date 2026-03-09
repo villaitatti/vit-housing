@@ -247,6 +247,11 @@
     "roleLandlord": "Landlord",
     "roleAdmin": "Admin",
     "roleItAdmin": "IT Admin",
+    "searchPlaceholder": "Search by name or email...",
+    "filterByRole": "Filter by Role",
+    "allRoles": "Show All Roles",
+    "listingsCount": "Listings",
+    "rolesUpdated": "User roles updated successfully",
     "deleteConfirmTitle": "Confirm Deletion",
     "deleteConfirmMessage": "Are you sure you want to delete this? This action cannot be undone.",
     "userColumns": {

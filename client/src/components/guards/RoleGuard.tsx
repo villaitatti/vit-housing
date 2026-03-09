@@ -12,7 +12,7 @@ export function RoleGuard({ roles, children }: RoleGuardProps) {
   const { user } = useAuth();
   const { t } = useTranslation();
 
-  if (!user || !roles.includes(user.role)) {
+  if (!user || !roles.some(r => user.roles.includes(r))) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">

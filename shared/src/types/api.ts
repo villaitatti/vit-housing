@@ -22,6 +22,6 @@ export interface PaginatedData<T> {
 export interface JwtPayload {
   userId: number;
   email: string;
-  role: 'HOUSE_USER' | 'HOUSE_LANDLORD' | 'HOUSE_ADMIN' | 'HOUSE_IT_ADMIN';
+  roles: ('HOUSE_USER' | 'HOUSE_LANDLORD' | 'HOUSE_ADMIN' | 'HOUSE_IT_ADMIN')[];
   preferred_language: 'EN' | 'IT';
 }

@@ -99,13 +99,13 @@ async function migrateUsers(drupal: Connection) {
         update: {
           first_name: firstName,
           last_name: lastName,
-          role,
+          roles: [role],
         },
         create: {
           email: row.mail,
           first_name: firstName,
           last_name: lastName,
-          role,
+          roles: [role],
           // No password — users will authenticate via Auth0 or invitation
           created_at: new Date(row.created * 1000),
           last_login: row.login > 0 ? new Date(row.login * 1000) : null,
