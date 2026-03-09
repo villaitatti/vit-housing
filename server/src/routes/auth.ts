@@ -171,18 +171,40 @@ router.post('/vit-id/callback', validate(vitIdCallbackSchema), async (req: Reque
     }
 
     if (!user) {
-      // Auto-provision new user; fall back to HOUSE_USER if no roles resolved
-      user = await prisma.user.create({
-        data: {
-          email: auth0Payload.email,
-          auth0_user_id: auth0Payload.sub,
-          first_name: auth0Payload.given_name || '',
-          last_name: auth0Payload.family_name || '',
-          roles: resolvedRoles.length > 0 ? resolvedRoles : [PrismaRole.HOUSE_USER],
-          preferred_language: 'EN',
-          last_login: new Date(),
-        },
+      // Check if a user with this email already exists (e.g., created via invitation)
+      const existingByEmail = await prisma.user.findUnique({
+        where: { email: auth0Payload.email },
       });
+
+      if (existingByEmail) {
+        // Link Auth0 identity to existing account and merge roles
+        const mergedRoles = resolvedRoles.length > 0
+          ? [...new Set([...existingByEmail.roles, ...resolvedRoles])]
+          : existingByEmail.roles;
+        user = await prisma.user.update({
+          where: { id: existingByEmail.id },
+          data: {
+            auth0_user_id: auth0Payload.sub,
+            first_name: auth0Payload.given_name || existingByEmail.first_name,
+            last_name: auth0Payload.family_name || existingByEmail.last_name,
+            last_login: new Date(),
+            roles: mergedRoles,
+          },
+        });
+      } else {
+        // Auto-provision new user; fall back to HOUSE_USER if no roles resolved
+        user = await prisma.user.create({
+          data: {
+            email: auth0Payload.email,
+            auth0_user_id: auth0Payload.sub,
+            first_name: auth0Payload.given_name || '',
+            last_name: auth0Payload.family_name || '',
+            roles: resolvedRoles.length > 0 ? resolvedRoles : [PrismaRole.HOUSE_USER],
+            preferred_language: 'EN',
+            last_login: new Date(),
+          },
+        });
+      }
     } else {
       // Update last login; only override roles if resolution succeeded
       user = await prisma.user.update({

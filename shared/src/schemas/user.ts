@@ -16,13 +16,18 @@ const ROLE_VALUES = ['HOUSE_USER', 'HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_AD
 
 export const adminUserListSchema = z.object({
   search: z.string().optional(),
-  roles: z.string().optional().transform((val) => {
+  roles: z.string().optional().transform((val, ctx) => {
     if (!val) return undefined;
     const items = val.split(',').filter(Boolean);
-    const valid = items.filter((r): r is typeof ROLE_VALUES[number] =>
-      (ROLE_VALUES as readonly string[]).includes(r),
-    );
-    return valid.length > 0 ? valid : undefined;
+    const invalid = items.filter(r => !(ROLE_VALUES as readonly string[]).includes(r));
+    if (invalid.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Invalid role(s): ${invalid.join(', ')}`,
+      });
+      return z.NEVER;
+    }
+    return items as unknown as typeof ROLE_VALUES[number][];
   }),
   sortBy: z.enum(['first_name', 'email', 'created_at', 'last_login']).default('created_at'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),

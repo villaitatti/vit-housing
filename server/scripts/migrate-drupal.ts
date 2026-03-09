@@ -81,6 +81,10 @@ async function migrateUsers(drupal: Connection) {
 
       // Determine roles from Drupal role IDs
       const roleIds = row.role_ids ? row.role_ids.split(',').map(Number) : [2];
+      const unmappedRids = roleIds.filter((rid: number) => rid !== 1 && !(rid in DRUPAL_ROLE_MAP));
+      if (unmappedRids.length > 0) {
+        log(`WARN user uid=${row.uid} has unmapped Drupal RIDs: ${unmappedRids.join(',')}`);
+      }
       const mappedRoles = [...new Set(
         roleIds.map((rid: number) => DRUPAL_ROLE_MAP[rid]).filter(Boolean),
       )] as Role[];
@@ -97,7 +101,6 @@ async function migrateUsers(drupal: Connection) {
         update: {
           first_name: firstName,
           last_name: lastName,
-          roles,
         },
         create: {
           email: row.mail,
