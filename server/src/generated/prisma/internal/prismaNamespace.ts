@@ -1041,6 +1041,7 @@ export const ListingScalarFieldEnum = {
   feature_wired_internet: 'feature_wired_internet',
   feature_parking: 'feature_parking',
   feature_pets_allowed: 'feature_pets_allowed',
+  published: 'published',
   created_at: 'created_at',
   updated_at: 'updated_at',
   owner_id: 'owner_id'

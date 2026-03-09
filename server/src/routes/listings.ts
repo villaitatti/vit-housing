@@ -48,6 +48,8 @@ router.get('/', authenticate, validate(listingFiltersSchema, 'query'), async (re
 
     if (owner === 'me') {
       where.owner_id = req.user!.userId;
+    } else {
+      where.published = true;
     }
 
     if (minBathrooms !== undefined || maxBathrooms !== undefined) {
@@ -128,6 +130,15 @@ router.get('/:id', authenticate, async (req: Request, res: Response) => {
     if (!listing) {
       sendError(res, 'Listing not found', 'NOT_FOUND', 404);
       return;
+    }
+
+    if (!listing.published) {
+      const isOwner = req.user!.role === 'HOUSE_LANDLORD' && listing.owner_id === req.user!.userId;
+      const isAdmin = req.user!.role === 'HOUSE_ADMIN' || req.user!.role === 'HOUSE_IT_ADMIN';
+      if (!isOwner && !isAdmin) {
+        sendError(res, 'Listing not found', 'NOT_FOUND', 404);
+        return;
+      }
     }
 
     sendSuccess(res, { listing });

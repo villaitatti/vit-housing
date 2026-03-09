@@ -45,7 +45,9 @@ export const createListingSchema = z.object({
   available_dates: z.array(availableDateSchema).optional(),
 });
 
-export const updateListingSchema = createListingSchema.partial();
+export const updateListingSchema = createListingSchema.partial().extend({
+  published: z.boolean().optional(),
+});
 
 export const listingFiltersSchema = z.object({
   minBathrooms: z.coerce.number().int().min(0).optional(),

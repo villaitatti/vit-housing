@@ -7,8 +7,10 @@ import {
   Warehouse, TreePine, Sun, Wind, WashingMachine, Flame, Tv, Wifi, Car, PawPrint,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import api from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -80,6 +82,8 @@ interface ListingDetail {
   feature_wired_internet: boolean;
   feature_parking: boolean;
   feature_pets_allowed: boolean;
+  published: boolean;
+  owner_id: number;
   photos: ListingPhoto[];
   available_dates: ListingAvailableDate[];
   owner: ListingOwner | null;
@@ -107,6 +111,7 @@ const featureIcons: Record<string, LucideIcon> = {
 export function ListingDetailPage() {
   const { t } = useTranslation();
   const { id } = useParams();
+  const { user } = useAuth();
 
   const { data, isLoading } = useQuery<ListingDetail>({
     queryKey: queryKeys.listings.detail(Number(id)),
@@ -156,6 +161,14 @@ export function ListingDetailPage() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
+      {/* Unpublished banner */}
+      {!listing.published && user && listing.owner_id === user.id && (
+        <div className="mb-6 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+          <AlertTriangle className="h-5 w-5 flex-shrink-0" />
+          <p className="text-sm font-medium">{t('myListings.unpublishedPreviewHint')}</p>
+        </div>
+      )}
+
       {/* Photo Gallery */}
       {listing.photos?.length > 0 && (
         <div className="mb-8 rounded-lg overflow-hidden">

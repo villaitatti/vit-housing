@@ -217,7 +217,14 @@
     "title": "My Listings",
     "noListings": "You haven't created any listings yet",
     "noListingsDescription": "Create your first listing to get started.",
-    "createFirst": "Create Listing"
+    "createFirst": "Create Listing",
+    "published": "Published",
+    "unpublished": "Unpublished",
+    "publish": "Publish",
+    "unpublish": "Unpublish",
+    "publishSuccess": "Listing published successfully",
+    "unpublishSuccess": "Listing unpublished successfully",
+    "unpublishedPreviewHint": "This listing is not visible to other users."
   },
   "admin": {
     "title": "Administration",

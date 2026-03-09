@@ -92,6 +92,7 @@ export type ListingMinAggregateOutputType = {
   feature_wired_internet: boolean | null
   feature_parking: boolean | null
   feature_pets_allowed: boolean | null
+  published: boolean | null
   created_at: Date | null
   updated_at: Date | null
   owner_id: number | null
@@ -137,6 +138,7 @@ export type ListingMaxAggregateOutputType = {
   feature_wired_internet: boolean | null
   feature_parking: boolean | null
   feature_pets_allowed: boolean | null
+  published: boolean | null
   created_at: Date | null
   updated_at: Date | null
   owner_id: number | null
@@ -182,6 +184,7 @@ export type ListingCountAggregateOutputType = {
   feature_wired_internet: number
   feature_parking: number
   feature_pets_allowed: number
+  published: number
   created_at: number
   updated_at: number
   owner_id: number
@@ -255,6 +258,7 @@ export type ListingMinAggregateInputType = {
   feature_wired_internet?: true
   feature_parking?: true
   feature_pets_allowed?: true
+  published?: true
   created_at?: true
   updated_at?: true
   owner_id?: true
@@ -300,6 +304,7 @@ export type ListingMaxAggregateInputType = {
   feature_wired_internet?: true
   feature_parking?: true
   feature_pets_allowed?: true
+  published?: true
   created_at?: true
   updated_at?: true
   owner_id?: true
@@ -345,6 +350,7 @@ export type ListingCountAggregateInputType = {
   feature_wired_internet?: true
   feature_parking?: true
   feature_pets_allowed?: true
+  published?: true
   created_at?: true
   updated_at?: true
   owner_id?: true
@@ -477,6 +483,7 @@ export type ListingGroupByOutputType = {
   feature_wired_internet: boolean
   feature_parking: boolean
   feature_pets_allowed: boolean
+  published: boolean
   created_at: Date
   updated_at: Date
   owner_id: number
@@ -545,6 +552,7 @@ export type ListingWhereInput = {
   feature_wired_internet?: Prisma.BoolFilter<"Listing"> | boolean
   feature_parking?: Prisma.BoolFilter<"Listing"> | boolean
   feature_pets_allowed?: Prisma.BoolFilter<"Listing"> | boolean
+  published?: Prisma.BoolFilter<"Listing"> | boolean
   created_at?: Prisma.DateTimeFilter<"Listing"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"Listing"> | Date | string
   owner_id?: Prisma.IntFilter<"Listing"> | number
@@ -593,6 +601,7 @@ export type ListingOrderByWithRelationInput = {
   feature_wired_internet?: Prisma.SortOrder
   feature_parking?: Prisma.SortOrder
   feature_pets_allowed?: Prisma.SortOrder
+  published?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   owner_id?: Prisma.SortOrder
@@ -644,6 +653,7 @@ export type ListingWhereUniqueInput = Prisma.AtLeast<{
   feature_wired_internet?: Prisma.BoolFilter<"Listing"> | boolean
   feature_parking?: Prisma.BoolFilter<"Listing"> | boolean
   feature_pets_allowed?: Prisma.BoolFilter<"Listing"> | boolean
+  published?: Prisma.BoolFilter<"Listing"> | boolean
   created_at?: Prisma.DateTimeFilter<"Listing"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"Listing"> | Date | string
   owner_id?: Prisma.IntFilter<"Listing"> | number
@@ -692,6 +702,7 @@ export type ListingOrderByWithAggregationInput = {
   feature_wired_internet?: Prisma.SortOrder
   feature_parking?: Prisma.SortOrder
   feature_pets_allowed?: Prisma.SortOrder
+  published?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   owner_id?: Prisma.SortOrder
@@ -745,6 +756,7 @@ export type ListingScalarWhereWithAggregatesInput = {
   feature_wired_internet?: Prisma.BoolWithAggregatesFilter<"Listing"> | boolean
   feature_parking?: Prisma.BoolWithAggregatesFilter<"Listing"> | boolean
   feature_pets_allowed?: Prisma.BoolWithAggregatesFilter<"Listing"> | boolean
+  published?: Prisma.BoolWithAggregatesFilter<"Listing"> | boolean
   created_at?: Prisma.DateTimeWithAggregatesFilter<"Listing"> | Date | string
   updated_at?: Prisma.DateTimeWithAggregatesFilter<"Listing"> | Date | string
   owner_id?: Prisma.IntWithAggregatesFilter<"Listing"> | number
@@ -789,6 +801,7 @@ export type ListingCreateInput = {
   feature_wired_internet?: boolean
   feature_parking?: boolean
   feature_pets_allowed?: boolean
+  published?: boolean
   created_at?: Date | string
   updated_at?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutListingsInput
@@ -836,6 +849,7 @@ export type ListingUncheckedCreateInput = {
   feature_wired_internet?: boolean
   feature_parking?: boolean
   feature_pets_allowed?: boolean
+  published?: boolean
   created_at?: Date | string
   updated_at?: Date | string
   owner_id: number
@@ -882,6 +896,7 @@ export type ListingUpdateInput = {
   feature_wired_internet?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_parking?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_pets_allowed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutListingsNestedInput
@@ -929,6 +944,7 @@ export type ListingUncheckedUpdateInput = {
   feature_wired_internet?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_parking?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_pets_allowed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner_id?: Prisma.IntFieldUpdateOperationsInput | number
@@ -976,6 +992,7 @@ export type ListingCreateManyInput = {
   feature_wired_internet?: boolean
   feature_parking?: boolean
   feature_pets_allowed?: boolean
+  published?: boolean
   created_at?: Date | string
   updated_at?: Date | string
   owner_id: number
@@ -1020,6 +1037,7 @@ export type ListingUpdateManyMutationInput = {
   feature_wired_internet?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_parking?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_pets_allowed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1064,6 +1082,7 @@ export type ListingUncheckedUpdateManyInput = {
   feature_wired_internet?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_parking?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_pets_allowed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner_id?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1119,6 +1138,7 @@ export type ListingCountOrderByAggregateInput = {
   feature_wired_internet?: Prisma.SortOrder
   feature_parking?: Prisma.SortOrder
   feature_pets_allowed?: Prisma.SortOrder
+  published?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   owner_id?: Prisma.SortOrder
@@ -1177,6 +1197,7 @@ export type ListingMaxOrderByAggregateInput = {
   feature_wired_internet?: Prisma.SortOrder
   feature_parking?: Prisma.SortOrder
   feature_pets_allowed?: Prisma.SortOrder
+  published?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   owner_id?: Prisma.SortOrder
@@ -1222,6 +1243,7 @@ export type ListingMinOrderByAggregateInput = {
   feature_wired_internet?: Prisma.SortOrder
   feature_parking?: Prisma.SortOrder
   feature_pets_allowed?: Prisma.SortOrder
+  published?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   owner_id?: Prisma.SortOrder
@@ -1386,6 +1408,7 @@ export type ListingCreateWithoutOwnerInput = {
   feature_wired_internet?: boolean
   feature_parking?: boolean
   feature_pets_allowed?: boolean
+  published?: boolean
   created_at?: Date | string
   updated_at?: Date | string
   available_dates?: Prisma.AvailableDateCreateNestedManyWithoutListingInput
@@ -1432,6 +1455,7 @@ export type ListingUncheckedCreateWithoutOwnerInput = {
   feature_wired_internet?: boolean
   feature_parking?: boolean
   feature_pets_allowed?: boolean
+  published?: boolean
   created_at?: Date | string
   updated_at?: Date | string
   available_dates?: Prisma.AvailableDateUncheckedCreateNestedManyWithoutListingInput
@@ -1507,6 +1531,7 @@ export type ListingScalarWhereInput = {
   feature_wired_internet?: Prisma.BoolFilter<"Listing"> | boolean
   feature_parking?: Prisma.BoolFilter<"Listing"> | boolean
   feature_pets_allowed?: Prisma.BoolFilter<"Listing"> | boolean
+  published?: Prisma.BoolFilter<"Listing"> | boolean
   created_at?: Prisma.DateTimeFilter<"Listing"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"Listing"> | Date | string
   owner_id?: Prisma.IntFilter<"Listing"> | number
@@ -1551,6 +1576,7 @@ export type ListingCreateWithoutAvailable_datesInput = {
   feature_wired_internet?: boolean
   feature_parking?: boolean
   feature_pets_allowed?: boolean
+  published?: boolean
   created_at?: Date | string
   updated_at?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutListingsInput
@@ -1597,6 +1623,7 @@ export type ListingUncheckedCreateWithoutAvailable_datesInput = {
   feature_wired_internet?: boolean
   feature_parking?: boolean
   feature_pets_allowed?: boolean
+  published?: boolean
   created_at?: Date | string
   updated_at?: Date | string
   owner_id: number
@@ -1658,6 +1685,7 @@ export type ListingUpdateWithoutAvailable_datesInput = {
   feature_wired_internet?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_parking?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_pets_allowed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutListingsNestedInput
@@ -1704,6 +1732,7 @@ export type ListingUncheckedUpdateWithoutAvailable_datesInput = {
   feature_wired_internet?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_parking?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_pets_allowed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner_id?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1749,6 +1778,7 @@ export type ListingCreateWithoutPhotosInput = {
   feature_wired_internet?: boolean
   feature_parking?: boolean
   feature_pets_allowed?: boolean
+  published?: boolean
   created_at?: Date | string
   updated_at?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutListingsInput
@@ -1795,6 +1825,7 @@ export type ListingUncheckedCreateWithoutPhotosInput = {
   feature_wired_internet?: boolean
   feature_parking?: boolean
   feature_pets_allowed?: boolean
+  published?: boolean
   created_at?: Date | string
   updated_at?: Date | string
   owner_id: number
@@ -1856,6 +1887,7 @@ export type ListingUpdateWithoutPhotosInput = {
   feature_wired_internet?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_parking?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_pets_allowed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutListingsNestedInput
@@ -1902,6 +1934,7 @@ export type ListingUncheckedUpdateWithoutPhotosInput = {
   feature_wired_internet?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_parking?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_pets_allowed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner_id?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1948,6 +1981,7 @@ export type ListingCreateManyOwnerInput = {
   feature_wired_internet?: boolean
   feature_parking?: boolean
   feature_pets_allowed?: boolean
+  published?: boolean
   created_at?: Date | string
   updated_at?: Date | string
 }
@@ -1991,6 +2025,7 @@ export type ListingUpdateWithoutOwnerInput = {
   feature_wired_internet?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_parking?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_pets_allowed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   available_dates?: Prisma.AvailableDateUpdateManyWithoutListingNestedInput
@@ -2037,6 +2072,7 @@ export type ListingUncheckedUpdateWithoutOwnerInput = {
   feature_wired_internet?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_parking?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_pets_allowed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   available_dates?: Prisma.AvailableDateUncheckedUpdateManyWithoutListingNestedInput
@@ -2083,6 +2119,7 @@ export type ListingUncheckedUpdateManyWithoutOwnerInput = {
   feature_wired_internet?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_parking?: Prisma.BoolFieldUpdateOperationsInput | boolean
   feature_pets_allowed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2167,6 +2204,7 @@ export type ListingSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   feature_wired_internet?: boolean
   feature_parking?: boolean
   feature_pets_allowed?: boolean
+  published?: boolean
   created_at?: boolean
   updated_at?: boolean
   owner_id?: boolean
@@ -2216,6 +2254,7 @@ export type ListingSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   feature_wired_internet?: boolean
   feature_parking?: boolean
   feature_pets_allowed?: boolean
+  published?: boolean
   created_at?: boolean
   updated_at?: boolean
   owner_id?: boolean
@@ -2262,6 +2301,7 @@ export type ListingSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   feature_wired_internet?: boolean
   feature_parking?: boolean
   feature_pets_allowed?: boolean
+  published?: boolean
   created_at?: boolean
   updated_at?: boolean
   owner_id?: boolean
@@ -2308,12 +2348,13 @@ export type ListingSelectScalar = {
   feature_wired_internet?: boolean
   feature_parking?: boolean
   feature_pets_allowed?: boolean
+  published?: boolean
   created_at?: boolean
   updated_at?: boolean
   owner_id?: boolean
 }
 
-export type ListingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "address_1" | "address_2" | "postal_code" | "city" | "province" | "latitude" | "longitude" | "monthly_rent" | "deposit" | "condominium_expenses" | "utility_electricity" | "utility_gas" | "utility_water" | "utility_telephone" | "utility_internet" | "accommodation_type" | "floor" | "bathrooms" | "bedrooms" | "floor_space" | "feature_storage_room" | "feature_basement" | "feature_garden" | "feature_balcony" | "feature_air_con" | "feature_washing_machine" | "feature_dryer" | "feature_fireplace" | "feature_dishwasher" | "feature_elevator" | "feature_tv" | "feature_telephone" | "feature_wifi" | "feature_wired_internet" | "feature_parking" | "feature_pets_allowed" | "created_at" | "updated_at" | "owner_id", ExtArgs["result"]["listing"]>
+export type ListingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "address_1" | "address_2" | "postal_code" | "city" | "province" | "latitude" | "longitude" | "monthly_rent" | "deposit" | "condominium_expenses" | "utility_electricity" | "utility_gas" | "utility_water" | "utility_telephone" | "utility_internet" | "accommodation_type" | "floor" | "bathrooms" | "bedrooms" | "floor_space" | "feature_storage_room" | "feature_basement" | "feature_garden" | "feature_balcony" | "feature_air_con" | "feature_washing_machine" | "feature_dryer" | "feature_fireplace" | "feature_dishwasher" | "feature_elevator" | "feature_tv" | "feature_telephone" | "feature_wifi" | "feature_wired_internet" | "feature_parking" | "feature_pets_allowed" | "published" | "created_at" | "updated_at" | "owner_id", ExtArgs["result"]["listing"]>
 export type ListingInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   available_dates?: boolean | Prisma.Listing$available_datesArgs<ExtArgs>
@@ -2374,6 +2415,7 @@ export type $ListingPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     feature_wired_internet: boolean
     feature_parking: boolean
     feature_pets_allowed: boolean
+    published: boolean
     created_at: Date
     updated_at: Date
     owner_id: number
@@ -2842,6 +2884,7 @@ export interface ListingFieldRefs {
   readonly feature_wired_internet: Prisma.FieldRef<"Listing", 'Boolean'>
   readonly feature_parking: Prisma.FieldRef<"Listing", 'Boolean'>
   readonly feature_pets_allowed: Prisma.FieldRef<"Listing", 'Boolean'>
+  readonly published: Prisma.FieldRef<"Listing", 'Boolean'>
   readonly created_at: Prisma.FieldRef<"Listing", 'DateTime'>
   readonly updated_at: Prisma.FieldRef<"Listing", 'DateTime'>
   readonly owner_id: Prisma.FieldRef<"Listing", 'Int'>
