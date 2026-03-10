@@ -25,6 +25,13 @@ test('normalizeListingTitleToSlug transliterates accents and punctuation', () =>
   );
 });
 
+test('normalizeListingTitleToSlug transliterates uppercase special characters', () => {
+  assert.equal(
+    normalizeListingTitleToSlug('ÆØŁ ẞ'),
+    'aeol-ss',
+  );
+});
+
 test('normalizeListingTitleToSlug falls back for punctuation-only titles', () => {
   assert.equal(normalizeListingTitleToSlug('!!!'), 'listing');
 });

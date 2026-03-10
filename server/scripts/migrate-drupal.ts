@@ -136,6 +136,7 @@ async function migrateListings(drupal: Connection) {
     FROM node n
     LEFT JOIN field_data_body b ON n.nid = b.entity_id AND b.entity_type = 'node'
     WHERE n.type = 'listing' AND n.status = 1
+    ORDER BY n.nid
   `) as any;
 
   let migrated = 0;
@@ -162,33 +163,43 @@ async function migrateListings(drupal: Connection) {
         continue;
       }
 
+      const existingListing = await prisma.listing.findUnique({
+        where: { id: row.nid },
+        select: { id: true },
+      });
+
       // TODO: Map these Drupal field tables to the actual field names in your DB
       // The field names below are placeholders — adjust to your Drupal schema
-      await prisma.listing.upsert({
-        where: { id: row.nid },
-        update: {
-          title: row.title || 'Untitled',
-          description: row.description || '',
-          updated_at: new Date(row.changed * 1000),
-        },
-        create: {
-          id: row.nid,
-          title: row.title || 'Untitled',
-          slug: await generateUniqueListingSlug(prisma, row.title || 'Untitled'),
-          description: row.description || '',
-          address_1: '', // TODO: Map from field_data_field_address
-          postal_code: '', // TODO: Map from field_data_field_address
-          city: '', // TODO: Map from field_data_field_address
-          province: 'Firenze', // TODO: Map from field_data_field_address
-          monthly_rent: 0, // TODO: Map from field_data_field_rent
-          accommodation_type: 'apartment', // TODO: Map from field_data_field_type
-          floor: 'ground', // TODO: Map from field_data_field_floor
-          bathrooms: 1, // TODO: Map from field_data_field_bathrooms
-          bedrooms: 1, // TODO: Map from field_data_field_bedrooms
-          owner_id: owner.id,
-          created_at: new Date(row.created * 1000),
-        },
-      });
+      if (existingListing) {
+        await prisma.listing.update({
+          where: { id: row.nid },
+          data: {
+            title: row.title || 'Untitled',
+            description: row.description || '',
+            updated_at: new Date(row.changed * 1000),
+          },
+        });
+      } else {
+        await prisma.listing.create({
+          data: {
+            id: row.nid,
+            title: row.title || 'Untitled',
+            slug: await generateUniqueListingSlug(prisma, row.title || 'Untitled'),
+            description: row.description || '',
+            address_1: '', // TODO: Map from field_data_field_address
+            postal_code: '', // TODO: Map from field_data_field_address
+            city: '', // TODO: Map from field_data_field_address
+            province: 'Firenze', // TODO: Map from field_data_field_address
+            monthly_rent: 0, // TODO: Map from field_data_field_rent
+            accommodation_type: 'apartment', // TODO: Map from field_data_field_type
+            floor: 'ground', // TODO: Map from field_data_field_floor
+            bathrooms: 1, // TODO: Map from field_data_field_bathrooms
+            bedrooms: 1, // TODO: Map from field_data_field_bedrooms
+            owner_id: owner.id,
+            created_at: new Date(row.created * 1000),
+          },
+        });
+      }
 
       log(`OK listing nid=${row.nid} title="${row.title}"`);
       migrated++;

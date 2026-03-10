@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   BedDouble, Bath, Ruler, Building2, MapPin, Euro, Phone, Mail, User,
@@ -115,6 +115,7 @@ export function ListingDetailPage() {
   const { t } = useTranslation();
   const { lang, slug } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const listingParam = slug?.trim() || '';
   const currentLang = lang || 'en';
@@ -136,9 +137,10 @@ export function ListingDetailPage() {
 
   useEffect(() => {
     if (data && isLegacyId) {
+      queryClient.setQueryData(queryKeys.listings.detailBySlug(data.slug), data);
       navigate(getListingDetailPath(currentLang, data.slug), { replace: true });
     }
-  }, [currentLang, data, isLegacyId, navigate]);
+  }, [currentLang, data, isLegacyId, navigate, queryClient]);
 
   if (isLoading) {
     return (

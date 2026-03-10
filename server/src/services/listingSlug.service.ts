@@ -42,10 +42,9 @@ function truncateSlug(input: string, maxLength: number): string {
 }
 
 export function normalizeListingTitleToSlug(title: string): string {
-  const asciiTitle = replaceSpecialCharacters(title)
+  const asciiTitle = replaceSpecialCharacters(title.toLowerCase())
     .normalize('NFKD')
-    .replace(COMBINING_MARKS_REGEX, '')
-    .toLowerCase();
+    .replace(COMBINING_MARKS_REGEX, '');
 
   const normalizedSlug = trimSlug(
     asciiTitle
