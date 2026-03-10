@@ -1,15 +1,19 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Building2, SearchX } from 'lucide-react';
+import { canUseFavoriteListings } from '@vithousing/shared';
 import api from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { ListingCard } from '@/components/listings/ListingCard';
+import { FavoriteListingDialog } from '@/components/listings/FavoriteListingDialog';
 import { ListingFilters, type FiltersState } from '@/components/listings/ListingFilters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import { useFavoriteMutations } from '@/hooks/useFavoriteMutations';
 import type { PaginatedData } from '@vithousing/shared';
 
 interface ListingsListItem {
@@ -23,16 +27,22 @@ interface ListingsListItem {
   bedrooms: number;
   bathrooms: number;
   created_at: string;
+  is_favorite: boolean;
   photos?: { url: string }[];
 }
 
 type ListingsResponse = PaginatedData<ListingsListItem>;
 type ListingQueryFilters = FiltersState & { page: string };
+type FavoriteDialogState = { mode: 'add' | 'remove'; listing: ListingsListItem } | null;
 
 export function ListingsPage() {
   const { t } = useTranslation();
   const { lang } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
+  const canFavoriteListings = canUseFavoriteListings(user?.roles ?? []);
+  const { addFavorite, removeFavorite, isAddingFavorite, isRemovingFavorite } = useFavoriteMutations();
+  const [favoriteDialog, setFavoriteDialog] = useState<FavoriteDialogState>(null);
 
   const filters = useMemo<ListingQueryFilters>(
     () => ({
@@ -88,6 +98,24 @@ export function ListingsPage() {
     params.set('page', String(page));
     setSearchParams(params);
   };
+
+  const handleFavoriteConfirm = async (note: string) => {
+    if (!favoriteDialog) {
+      return;
+    }
+
+    if (favoriteDialog.mode === 'add') {
+      await addFavorite({ listingId: favoriteDialog.listing.id, note });
+    }
+
+    if (favoriteDialog.mode === 'remove') {
+      await removeFavorite({ listingId: favoriteDialog.listing.id });
+    }
+
+    setFavoriteDialog(null);
+  };
+
+  const isFavoriteDialogPending = favoriteDialog?.mode === 'add' ? isAddingFavorite : isRemovingFavorite;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -159,7 +187,22 @@ export function ListingsPage() {
                       visible: { opacity: 1, y: 0 },
                     }}
                   >
-                    <ListingCard listing={listing} lang={lang || 'en'} />
+                    {canFavoriteListings ? (
+                      <ListingCard
+                        listing={listing}
+                        lang={lang || 'en'}
+                        showFavoriteButton
+                        onFavoriteClick={(targetListing) => setFavoriteDialog({
+                          mode: targetListing.is_favorite ? 'remove' : 'add',
+                          listing: targetListing,
+                        })}
+                      />
+                    ) : (
+                      <ListingCard
+                        listing={listing}
+                        lang={lang || 'en'}
+                      />
+                    )}
                   </motion.div>
                 ))}
               </motion.div>
@@ -184,7 +227,7 @@ export function ListingsPage() {
                     disabled={data.page >= data.totalPages}
                     onClick={() => goToPage(data.page + 1)}
                   >
-                    Next
+                    {t('common.next')}
                   </Button>
                 </div>
               )}
@@ -192,6 +235,18 @@ export function ListingsPage() {
           )}
         </div>
       </div>
+
+      {favoriteDialog ? (
+        <FavoriteListingDialog
+          key={`${favoriteDialog.mode}-${favoriteDialog.listing.id}`}
+          open
+          mode={favoriteDialog.mode}
+          listingTitle={favoriteDialog.listing.title}
+          isPending={isFavoriteDialogPending}
+          onClose={() => setFavoriteDialog(null)}
+          onConfirm={handleFavoriteConfirm}
+        />
+      ) : null}
     </div>
   );
 }
