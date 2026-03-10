@@ -8,7 +8,7 @@ import { canUseFavoriteListings } from '@vithousing/shared';
 import api from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { ListingCard } from '@/components/listings/ListingCard';
-import { FavoriteListingDialog, type FavoriteDialogMode } from '@/components/listings/FavoriteListingDialog';
+import { FavoriteListingDialog } from '@/components/listings/FavoriteListingDialog';
 import { ListingFilters, type FiltersState } from '@/components/listings/ListingFilters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,7 @@ interface ListingsListItem {
 
 type ListingsResponse = PaginatedData<ListingsListItem>;
 type ListingQueryFilters = FiltersState & { page: string };
-type FavoriteDialogState = { mode: FavoriteDialogMode; listing: ListingsListItem } | null;
+type FavoriteDialogState = { mode: 'add' | 'remove'; listing: ListingsListItem } | null;
 
 export function ListingsPage() {
   const { t } = useTranslation();
@@ -106,7 +106,9 @@ export function ListingsPage() {
 
     if (favoriteDialog.mode === 'add') {
       await addFavorite({ listingId: favoriteDialog.listing.id, note });
-    } else {
+    }
+
+    if (favoriteDialog.mode === 'remove') {
       await removeFavorite({ listingId: favoriteDialog.listing.id });
     }
 
@@ -185,15 +187,22 @@ export function ListingsPage() {
                       visible: { opacity: 1, y: 0 },
                     }}
                   >
-                    <ListingCard
-                      listing={listing}
-                      lang={lang || 'en'}
-                      showFavoriteButton={canFavoriteListings}
-                      onFavoriteClick={(targetListing) => setFavoriteDialog({
-                        mode: targetListing.is_favorite ? 'remove' : 'add',
-                        listing: targetListing,
-                      })}
-                    />
+                    {canFavoriteListings ? (
+                      <ListingCard
+                        listing={listing}
+                        lang={lang || 'en'}
+                        showFavoriteButton
+                        onFavoriteClick={(targetListing) => setFavoriteDialog({
+                          mode: targetListing.is_favorite ? 'remove' : 'add',
+                          listing: targetListing,
+                        })}
+                      />
+                    ) : (
+                      <ListingCard
+                        listing={listing}
+                        lang={lang || 'en'}
+                      />
+                    )}
                   </motion.div>
                 ))}
               </motion.div>

@@ -7,7 +7,7 @@ import { Heart, SearchX } from 'lucide-react';
 import api from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { ListingCard } from '@/components/listings/ListingCard';
-import { FavoriteListingDialog, type FavoriteDialogMode } from '@/components/listings/FavoriteListingDialog';
+import { FavoriteListingDialog } from '@/components/listings/FavoriteListingDialog';
 import { ListingFilters, type FiltersState } from '@/components/listings/ListingFilters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,7 @@ interface FavoriteListingItem {
 
 type FavoritesResponse = PaginatedData<FavoriteListingItem>;
 type FavoriteQueryFilters = FiltersState & { page: string };
-type FavoriteDialogState = { mode: FavoriteDialogMode; listing: FavoriteListingItem } | null;
+type FavoriteDialogState = { mode: 'edit' | 'remove'; listing: FavoriteListingItem } | null;
 
 export function FavoritesPage() {
   const { t } = useTranslation();
@@ -104,7 +104,9 @@ export function FavoritesPage() {
 
     if (favoriteDialog.mode === 'edit') {
       await updateFavoriteNote({ listingId: favoriteDialog.listing.id, note });
-    } else {
+    }
+
+    if (favoriteDialog.mode === 'remove') {
       await removeFavorite({ listingId: favoriteDialog.listing.id });
     }
 

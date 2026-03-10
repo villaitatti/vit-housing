@@ -20,17 +20,35 @@ interface ListingCardListing {
   photos?: { url: string }[];
 }
 
-interface ListingCardProps<TListing extends ListingCardListing> {
+type FavoriteButtonProps<TListing extends ListingCardListing> =
+  | {
+      showFavoriteButton: true;
+      onFavoriteClick: (listing: TListing) => void;
+    }
+  | {
+      showFavoriteButton?: false;
+      onFavoriteClick?: never;
+    };
+
+type FavoriteNoteSectionProps<TListing extends ListingCardListing> =
+  | {
+      showFavoriteNoteSection: true;
+      onEditNote: (listing: TListing) => void;
+      favoriteNote?: string | null;
+      noteActionLabel?: string;
+    }
+  | {
+      showFavoriteNoteSection?: false;
+      onEditNote?: never;
+      favoriteNote?: never;
+      noteActionLabel?: never;
+    };
+
+type ListingCardProps<TListing extends ListingCardListing> = {
   listing: TListing;
   lang: string;
   openInNewTab?: boolean;
-  showFavoriteButton?: boolean;
-  onFavoriteClick?: (listing: TListing) => void;
-  showFavoriteNoteSection?: boolean;
-  favoriteNote?: string | null;
-  onEditNote?: (listing: TListing) => void;
-  noteActionLabel?: string;
-}
+} & FavoriteButtonProps<TListing> & FavoriteNoteSectionProps<TListing>;
 
 export function ListingCard<TListing extends ListingCardListing>({
   listing,

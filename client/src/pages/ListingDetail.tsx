@@ -19,7 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { FavoriteListingDialog, type FavoriteDialogMode } from '@/components/listings/FavoriteListingDialog';
+import { FavoriteListingDialog } from '@/components/listings/FavoriteListingDialog';
 import { canUseFavoriteListings } from '@vithousing/shared';
 
 // Swiper
@@ -127,7 +127,7 @@ export function ListingDetailPage() {
   const listingParam = slug?.trim() || '';
   const currentLang = lang || 'en';
   const isLegacyId = isLegacyListingIdParam(listingParam);
-  const [favoriteDialogMode, setFavoriteDialogMode] = useState<FavoriteDialogMode | null>(null);
+  const [favoriteDialogMode, setFavoriteDialogMode] = useState<'add' | 'remove' | null>(null);
 
   const { data, isLoading } = useQuery<ListingDetail>({
     queryKey: isLegacyId
@@ -190,7 +190,9 @@ export function ListingDetailPage() {
 
     if (favoriteDialogMode === 'add') {
       await addFavorite({ listingId: listing.id, note });
-    } else {
+    }
+
+    if (favoriteDialogMode === 'remove') {
       await removeFavorite({ listingId: listing.id });
     }
 
