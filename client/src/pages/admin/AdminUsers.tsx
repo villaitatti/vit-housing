@@ -64,7 +64,7 @@ const ROLE_VARIANTS: Record<Role, 'default' | 'secondary' | 'outline' | 'destruc
 };
 
 export function AdminUsersPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
   const [deleteUser, setDeleteUser] = useState<AdminUser | null>(null);
@@ -78,14 +78,20 @@ export function AdminUsersPage() {
 
   // Debounce search
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelPendingSearch = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+  }, []);
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
-    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    cancelPendingSearch();
     debounceTimerRef.current = setTimeout(() => {
       setDebouncedSearch(value);
       setPage(1);
     }, 300);
-  }, []);
+  }, [cancelPendingSearch]);
 
   const filters = { search: debouncedSearch, roles: filterRoles.join(','), sortBy, sortOrder, page, limit };
 
@@ -214,10 +220,11 @@ export function AdminUsersPage() {
           {search && (
             <button
               type="button"
-              onClick={() => { setSearch(''); setDebouncedSearch(''); setPage(1); }}
+              onClick={() => { cancelPendingSearch(); setSearch(''); setDebouncedSearch(''); setPage(1); }}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label={t('admin.clearSearch')}
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4" aria-hidden />
             </button>
           )}
         </div>
@@ -260,7 +267,7 @@ export function AdminUsersPage() {
             variant="ghost"
             size="sm"
             className="gap-1 text-muted-foreground"
-            onClick={() => { setSearch(''); setDebouncedSearch(''); setFilterRoles([]); setPage(1); }}
+            onClick={() => { cancelPendingSearch(); setSearch(''); setDebouncedSearch(''); setFilterRoles([]); setPage(1); }}
           >
             <X className="h-3.5 w-3.5" />
             {t('admin.clearAllFilters')}
@@ -347,24 +354,25 @@ export function AdminUsersPage() {
                 <Badge variant="outline">{user.preferred_language}</Badge>
               </TableCell>
               <TableCell>
-                {user.last_login ? new Date(user.last_login).toLocaleString(undefined, {
+                {user.last_login ? new Date(user.last_login).toLocaleString(i18n.language, {
                   year: 'numeric', month: 'short', day: 'numeric',
-                  hour: 'numeric', minute: '2-digit', hour12: true
+                  hour: 'numeric', minute: '2-digit',
                 }) : '—'}
               </TableCell>
-              <TableCell>{new Date(user.created_at).toLocaleString(undefined, {
+              <TableCell>{new Date(user.created_at).toLocaleString(i18n.language, {
                 year: 'numeric', month: 'short', day: 'numeric',
-                hour: 'numeric', minute: '2-digit', hour12: true
+                hour: 'numeric', minute: '2-digit',
               })}</TableCell>
               <TableCell>
-                {user.id !== currentUser?.id && (
+                {currentUser && user.id !== currentUser.id && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setDeleteUser(user)}
                     className="text-destructive hover:text-destructive"
+                    aria-label={t('admin.deleteUser')}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" aria-hidden />
                   </Button>
                 )}
               </TableCell>
@@ -381,7 +389,7 @@ export function AdminUsersPage() {
           <p className="text-sm text-muted-foreground mt-1 mb-4">{t('admin.noFilterResultsDescription')}</p>
           <Button
             variant="outline"
-            onClick={() => { setSearch(''); setDebouncedSearch(''); setFilterRoles([]); setPage(1); }}
+            onClick={() => { cancelPendingSearch(); setSearch(''); setDebouncedSearch(''); setFilterRoles([]); setPage(1); }}
           >
             {t('admin.clearAllFilters')}
           </Button>

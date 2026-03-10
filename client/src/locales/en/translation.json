@@ -254,6 +254,8 @@
     "rolesUpdated": "User roles updated successfully",
     "deleteConfirmTitle": "Confirm Deletion",
     "deleteConfirmMessage": "Are you sure you want to delete this? This action cannot be undone.",
+    "clearSearch": "Clear search",
+    "deleteUser": "Delete user",
     "deleteUserTitle": "Delete User",
     "deleteUserMessage": "Are you sure you want to delete {{name}}? This action cannot be undone.",
     "deleteUserWithListings": "This will also permanently delete {{count}} listing(s) owned by this user.",

@@ -254,6 +254,8 @@
     "rolesUpdated": "Ruoli utente aggiornati con successo",
     "deleteConfirmTitle": "Conferma Eliminazione",
     "deleteConfirmMessage": "Sei sicuro di voler eliminare questo elemento? Questa azione non può essere annullata.",
+    "clearSearch": "Cancella ricerca",
+    "deleteUser": "Elimina utente",
     "deleteUserTitle": "Elimina Utente",
     "deleteUserMessage": "Sei sicuro di voler eliminare {{name}}? Questa azione non può essere annullata.",
     "deleteUserWithListings": "Verranno eliminati anche {{count}} annuncio/i di proprietà di questo utente.",
