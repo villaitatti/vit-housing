@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -41,6 +41,15 @@ export function FavoritesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [favoriteDialog, setFavoriteDialog] = useState<FavoriteDialogState>(null);
   const { updateFavoriteNote, removeFavorite, isUpdatingFavoriteNote, isRemovingFavorite } = useFavoriteMutations();
+  const requestedPage = useMemo(() => {
+    const parsedPage = Number(searchParams.get('page') || '1');
+
+    if (!Number.isInteger(parsedPage) || parsedPage < 1) {
+      return 1;
+    }
+
+    return parsedPage;
+  }, [searchParams]);
 
   const filters = useMemo<FavoriteQueryFilters>(
     () => ({
@@ -54,9 +63,9 @@ export function FavoritesPage() {
       maxFloorSpace: searchParams.get('maxFloorSpace') || undefined,
       sortBy: searchParams.get('sortBy') || 'favorited_at',
       sortOrder: searchParams.get('sortOrder') || 'desc',
-      page: searchParams.get('page') || '1',
+      page: String(requestedPage),
     }),
-    [searchParams],
+    [requestedPage, searchParams],
   );
 
   const hasActiveFilters = useMemo(() => {
@@ -125,6 +134,32 @@ export function FavoritesPage() {
     : isRemovingFavorite;
   const shouldShowQueryError = isError || (!isLoading && !data);
   const queryErrorMessage = error instanceof Error ? error.message : t('common.error');
+  const totalPages = Math.max(1, data?.totalPages || 1);
+  const normalizedPage = Math.min(Math.max(1, requestedPage), totalPages);
+  const shouldRedirectToNormalizedPage = Boolean(
+    data
+      && data.total > 0
+      && data.items.length === 0
+      && requestedPage !== normalizedPage,
+  );
+
+  useEffect(() => {
+    if (!shouldRedirectToNormalizedPage) {
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams);
+    params.set('page', String(normalizedPage));
+    setSearchParams(params, { replace: true });
+  }, [normalizedPage, searchParams, setSearchParams, shouldRedirectToNormalizedPage]);
+
+  const handleFavoriteDialogClose = () => {
+    if (isFavoriteDialogPending) {
+      return;
+    }
+
+    setFavoriteDialog(null);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -144,6 +179,16 @@ export function FavoritesPage() {
           {isLoading ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="space-y-3">
+                  <Skeleton className="h-48 w-full rounded-lg" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              ))}
+            </div>
+          ) : shouldRedirectToNormalizedPage ? (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, index) => (
                 <div key={index} className="space-y-3">
                   <Skeleton className="h-48 w-full rounded-lg" />
                   <Skeleton className="h-4 w-3/4" />
@@ -227,19 +272,19 @@ export function FavoritesPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={data.page <= 1}
-                    onClick={() => goToPage(data.page - 1)}
+                    disabled={normalizedPage <= 1}
+                    onClick={() => goToPage(normalizedPage - 1)}
                   >
                     {t('common.back')}
                   </Button>
                   <span className="text-sm text-muted-foreground">
-                    {data.page} / {data.totalPages}
+                    {normalizedPage} / {totalPages}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={data.page >= data.totalPages}
-                    onClick={() => goToPage(data.page + 1)}
+                    disabled={normalizedPage >= totalPages}
+                    onClick={() => goToPage(normalizedPage + 1)}
                   >
                     {t('common.next')}
                   </Button>
@@ -258,7 +303,7 @@ export function FavoritesPage() {
           listingTitle={favoriteDialog.listing.title}
           initialNote={favoriteDialog.listing.note}
           isPending={isFavoriteDialogPending}
-          onClose={() => setFavoriteDialog(null)}
+          onClose={handleFavoriteDialogClose}
           onConfirm={handleFavoriteConfirm}
         />
       ) : null}
