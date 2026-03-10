@@ -34,12 +34,17 @@ export function createRateLimitMiddleware(options: RateLimitOptions) {
   };
 
   process.once('exit', stopCleanupTimer);
-  process.once('SIGINT', stopCleanupTimer);
-  process.once('SIGTERM', stopCleanupTimer);
 
   return function rateLimitMiddleware(req: Request, res: Response, next: NextFunction): void {
     const now = Date.now();
     const key = req.ip || 'unknown';
+    if (!req.ip) {
+      console.warn('Rate limit middleware received request without req.ip', {
+        method: req.method,
+        url: req.originalUrl,
+        forwardedFor: req.headers['x-forwarded-for'],
+      });
+    }
     const current = entries.get(key);
 
     if (!current || current.resetAt <= now) {

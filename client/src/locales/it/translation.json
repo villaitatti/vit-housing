@@ -76,8 +76,8 @@
     "passwordStrengthStrong": "Ottima",
     "passwordHint": "Usa una passphrase lunga tra {{min}} e {{max}} caratteri. Più è lunga, meglio è.",
     "passwordChecklist": {
-      "length-min": "Almeno 15 caratteri",
-      "length-max": "Non più di 128 caratteri",
+      "length-min": "Almeno {{min}} caratteri",
+      "length-max": "Non più di {{max}} caratteri",
       "common": "Non una password molto comune",
       "confirm": "Le password coincidono"
     }

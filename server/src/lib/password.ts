@@ -9,6 +9,9 @@ import {
 
 const SCRYPT_PREFIX = 'scrypt';
 const SCRYPT_KEY_LENGTH = 64;
+const SCRYPT_MIN_N = 2;
+const SCRYPT_MIN_R = 1;
+const SCRYPT_MIN_P = 1;
 const SCRYPT_PARAMS = {
   N: 16384,
   r: 8,
@@ -25,6 +28,39 @@ interface ScryptConfig {
   r: number;
   p: number;
   maxmem: number;
+}
+
+function isPowerOfTwo(value: number): boolean {
+  return value > 0 && (value & (value - 1)) === 0;
+}
+
+function parseStoredScryptParams(nRaw: string, rRaw: string, pRaw: string): ScryptConfig | null {
+  const N = Number(nRaw);
+  const r = Number(rRaw);
+  const p = Number(pRaw);
+
+  if (!Number.isInteger(N) || !Number.isInteger(r) || !Number.isInteger(p)) {
+    return null;
+  }
+
+  if (!isPowerOfTwo(N) || N < SCRYPT_MIN_N || N > SCRYPT_PARAMS.N) {
+    return null;
+  }
+
+  if (r < SCRYPT_MIN_R || r > SCRYPT_PARAMS.r) {
+    return null;
+  }
+
+  if (p < SCRYPT_MIN_P || p > SCRYPT_PARAMS.p) {
+    return null;
+  }
+
+  return {
+    N,
+    r,
+    p,
+    maxmem: SCRYPT_PARAMS.maxmem,
+  };
 }
 
 async function deriveScryptKey(
@@ -82,14 +118,14 @@ export async function verifyPassword(password: string, storedHash: string): Prom
       return false;
     }
 
+    const parsedParams = parseStoredScryptParams(nRaw, rRaw, pRaw);
+    if (!parsedParams) {
+      return false;
+    }
+
     const salt = Buffer.from(saltRaw, 'base64url');
     const expectedKey = Buffer.from(keyRaw, 'base64url');
-    const derivedKey = await deriveScryptKey(password, salt, expectedKey.length, {
-      N: Number(nRaw),
-      r: Number(rRaw),
-      p: Number(pRaw),
-      maxmem: SCRYPT_PARAMS.maxmem,
-    });
+    const derivedKey = await deriveScryptKey(password, salt, expectedKey.length, parsedParams);
 
     return timingSafeEqual(expectedKey, derivedKey);
   }

@@ -89,9 +89,20 @@ export function RegisterPage() {
   const { t } = useTranslation();
   const { lang } = useParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get('token')?.trim() || '';
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [inviteToken] = useState(() => searchParams.get('token')?.trim() || '');
   const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [submissionErrorCode, setSubmissionErrorCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!searchParams.has('token')) {
+      return;
+    }
+
+    const nextSearchParams = new URLSearchParams(searchParams);
+    nextSearchParams.delete('token');
+    setSearchParams(nextSearchParams, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const {
     data: invitation,
@@ -99,19 +110,22 @@ export function RegisterPage() {
     isError,
     error,
   } = useQuery<InvitationValidationResponse>({
-    queryKey: queryKeys.invitations.validate(token),
+    queryKey: queryKeys.invitations.validate(inviteToken),
     queryFn: async () => {
-      const res = await api.get(`/api/v1/invitations/validate/${token}`);
+      const res = await api.get(`/api/v1/invitations/validate/${inviteToken}`);
       return res.data;
     },
-    enabled: !!token,
+    enabled: !!inviteToken,
     retry: false,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      token,
+      token: inviteToken,
       first_name: '',
       last_name: '',
       password: '',
@@ -128,7 +142,7 @@ export function RegisterPage() {
     }
 
     form.reset({
-      token,
+      token: inviteToken,
       first_name: invitation.first_name ?? '',
       last_name: invitation.last_name ?? '',
       password: '',
@@ -137,11 +151,7 @@ export function RegisterPage() {
       phone_number: '',
       mobile_number: '',
     });
-
-    if (window.location.search.includes('token=')) {
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, [form, invitation, token]);
+  }, [form, invitation, inviteToken]);
 
   useEffect(() => {
     if (!registrationComplete) {
@@ -159,11 +169,28 @@ export function RegisterPage() {
     mutationFn: async (data: RegisterInput) => {
       await api.post('/api/v1/auth/register', data);
     },
+    onMutate: () => {
+      setSubmissionErrorCode(null);
+    },
     onSuccess: () => {
       toast.success(t('auth.registrationSuccess'));
       setRegistrationComplete(true);
     },
     onError: (err: Error) => {
+      if (err instanceof ApiError) {
+        switch (err.code) {
+          case 'INVALID_TOKEN':
+          case 'TOKEN_USED':
+          case 'TOKEN_EXPIRED':
+          case 'TOKEN_REVOKED':
+          case 'TOKEN_UNAVAILABLE':
+            setSubmissionErrorCode(err.code);
+            return;
+          default:
+            break;
+        }
+      }
+
       toast.error(err.message);
     },
   });
@@ -173,7 +200,7 @@ export function RegisterPage() {
   const checklist = getPasswordChecklist(password, passwordConfirm);
   const strengthPresentation = getStrengthPresentation(getPasswordStrength(password));
 
-  if (!token) {
+  if (!inviteToken) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <p className="text-muted-foreground">{t('auth.invalidToken')}</p>
@@ -205,6 +232,22 @@ export function RegisterPage() {
           </CardHeader>
           <CardContent className="space-y-3 p-8 text-center">
             <p className="text-destructive">{t(getInvitationErrorKey(errorCode))}</p>
+            <p className="text-sm text-muted-foreground">{t('auth.invitationContactAdmin')}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (submissionErrorCode) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">{t('auth.invitationStatusTitle')}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 p-8 text-center">
+            <p className="text-destructive">{t(getInvitationErrorKey(submissionErrorCode))}</p>
             <p className="text-sm text-muted-foreground">{t('auth.invitationContactAdmin')}</p>
           </CardContent>
         </Card>
@@ -252,7 +295,7 @@ export function RegisterPage() {
           <CardContent>
             <Form {...form}>
               <form
-                onSubmit={form.handleSubmit((data) => registerMutation.mutate({ ...data, token }))}
+                onSubmit={form.handleSubmit((data) => registerMutation.mutate({ ...data, token: inviteToken }))}
                 className="space-y-5"
               >
                 <div>
@@ -335,7 +378,10 @@ export function RegisterPage() {
                         key={item.id}
                         className={item.passed ? 'text-emerald-700' : 'text-muted-foreground'}
                       >
-                        {item.passed ? '✓' : '•'} {t(`auth.passwordChecklist.${item.id}`)}
+                        {item.passed ? '✓' : '•'} {t(`auth.passwordChecklist.${item.id}`, {
+                          min: PASSWORD_MIN_LENGTH,
+                          max: PASSWORD_MAX_LENGTH,
+                        })}
                       </li>
                     ))}
                   </ul>

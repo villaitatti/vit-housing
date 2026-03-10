@@ -26,6 +26,13 @@ const registrationRateLimit = createRateLimitMiddleware({
   message: 'Too many registration attempts. Please try again later.',
 });
 
+class InvitationUnavailableError extends Error {
+  constructor() {
+    super('This invitation is no longer available');
+    this.name = 'InvitationUnavailableError';
+  }
+}
+
 // POST /api/v1/auth/login — Local email/password login
 router.post('/login', validate(loginSchema), async (req: Request, res: Response) => {
   try {
@@ -131,7 +138,7 @@ router.post('/register', registrationRateLimit, validate(registerSchema), async 
       });
 
       if (markInvitationUsed.count !== 1) {
-        throw new Error('Invitation is no longer available');
+        throw new InvitationUnavailableError();
       }
 
       await tx.user.create({
@@ -150,7 +157,7 @@ router.post('/register', registrationRateLimit, validate(registerSchema), async 
 
     sendSuccess(res, { message: 'Registration successful' }, 201);
   } catch (err) {
-    if (err instanceof Error && err.message === 'Invitation is no longer available') {
+    if (err instanceof InvitationUnavailableError) {
       sendError(res, 'This invitation is no longer available', 'TOKEN_UNAVAILABLE', 409);
       return;
     }

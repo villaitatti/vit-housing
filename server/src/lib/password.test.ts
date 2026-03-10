@@ -39,3 +39,12 @@ test('needsPasswordRehash returns true for bcrypt-style hashes', () => {
 test('verifyPassword returns false for malformed hashes', async () => {
   assert.equal(await verifyPassword('any password', 'not-a-hash'), false);
 });
+
+test('verifyPassword remains compatible with legacy bcrypt hashes', async () => {
+  const bcrypt = await import('bcrypt');
+  const legacyHash = await bcrypt.hash('legacy password', 10);
+
+  assert.equal(await verifyPassword('legacy password', legacyHash), true);
+  assert.equal(await verifyPassword('wrong password', legacyHash), false);
+  assert.equal(needsPasswordRehash(legacyHash), true);
+});
