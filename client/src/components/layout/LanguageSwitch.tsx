@@ -13,14 +13,14 @@ function LanguageFlag({ lang }: { lang: 'en' | 'it' }) {
   if (lang === 'it') {
     return (
       <span
-        aria-hidden
+        aria-hidden="true"
         className="h-3.5 w-5 rounded-[2px] border border-black/15 bg-[linear-gradient(to_right,#009246_33.33%,#ffffff_33.33%,#ffffff_66.66%,#ce2b37_66.66%)]"
       />
     );
   }
 
   return (
-    <span aria-hidden className="relative h-3.5 w-5 overflow-hidden rounded-[2px] border border-black/15">
+    <span aria-hidden="true" className="relative h-3.5 w-5 overflow-hidden rounded-[2px] border border-black/15">
       <span className="absolute inset-0 bg-[repeating-linear-gradient(to_bottom,#b22234_0_7.69%,#ffffff_7.69%_15.38%)]" />
       <span className="absolute left-0 top-0 h-[53.85%] w-2/5 bg-[#3c3b6e]" />
     </span>
