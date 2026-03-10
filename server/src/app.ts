@@ -8,11 +8,29 @@ import apiRouter from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
+const configuredClientUrls = (process.env.CLIENT_URL || '')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean);
+const allowedOrigins = new Set(
+  process.env.NODE_ENV === 'production'
+    ? configuredClientUrls.length > 0
+      ? configuredClientUrls
+      : ['http://localhost:5173']
+    : ['http://localhost:5173', 'http://localhost:5174', ...configuredClientUrls],
+);
 
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.has(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
     credentials: true,
   }),
 );
