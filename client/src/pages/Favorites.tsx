@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Heart, SearchX } from 'lucide-react';
+import { AlertTriangle, Heart, SearchX } from 'lucide-react';
 import api from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { ListingCard } from '@/components/listings/ListingCard';
@@ -67,7 +67,7 @@ export function FavoritesPage() {
     return filterKeys.some((key) => searchParams.has(key));
   }, [searchParams]);
 
-  const { data, isLoading } = useQuery<FavoritesResponse>({
+  const { data, error, isError, isLoading, refetch } = useQuery<FavoritesResponse>({
     queryKey: queryKeys.favorites.list(filters),
     queryFn: async () => {
       const params: Record<string, string> = {};
@@ -123,6 +123,8 @@ export function FavoritesPage() {
   const isFavoriteDialogPending = favoriteDialog?.mode === 'edit'
     ? isUpdatingFavoriteNote
     : isRemovingFavorite;
+  const shouldShowQueryError = isError || (!isLoading && !data);
+  const queryErrorMessage = error instanceof Error ? error.message : t('common.error');
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -148,6 +150,19 @@ export function FavoritesPage() {
                   <Skeleton className="h-4 w-1/2" />
                 </div>
               ))}
+            </div>
+          ) : shouldShowQueryError ? (
+            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-6 py-14">
+              <div className="mx-auto flex max-w-md flex-col items-center text-center">
+                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 ring-8 ring-destructive/5">
+                  <AlertTriangle className="h-8 w-8 text-destructive" />
+                </div>
+                <h3 className="text-xl font-semibold tracking-tight">{t('common.error')}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{queryErrorMessage}</p>
+                <Button variant="outline" className="mt-6" onClick={() => void refetch()}>
+                  {t('common.retry')}
+                </Button>
+              </div>
             </div>
           ) : data?.items?.length === 0 ? (
             hasActiveFilters ? (

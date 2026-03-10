@@ -17,7 +17,8 @@
     "or": "OR",
     "required": "Required",
     "optional": "Optional",
-    "next": "Next page"
+    "next": "Next page",
+    "retry": "Try again"
   },
   "nav": {
     "home": "Home",
