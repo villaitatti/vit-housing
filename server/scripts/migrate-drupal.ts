@@ -165,16 +165,21 @@ async function migrateListings(drupal: Connection) {
 
       const existingListing = await prisma.listing.findUnique({
         where: { id: row.nid },
-        select: { id: true },
+        select: { id: true, slug: true },
       });
 
       // TODO: Map these Drupal field tables to the actual field names in your DB
       // The field names below are placeholders — adjust to your Drupal schema
       if (existingListing) {
+        const generatedSlug = existingListing.slug
+          ? undefined
+          : await generateUniqueListingSlug(prisma, row.title || 'Untitled');
+
         await prisma.listing.update({
           where: { id: row.nid },
           data: {
             title: row.title || 'Untitled',
+            ...(generatedSlug ? { slug: generatedSlug } : {}),
             description: row.description || '',
             updated_at: new Date(row.changed * 1000),
           },
