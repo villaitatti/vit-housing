@@ -229,6 +229,7 @@ export function ListingsPage() {
 
       {favoriteDialog ? (
         <FavoriteListingDialog
+          key={`${favoriteDialog.mode}-${favoriteDialog.listing.id}`}
           open
           mode={favoriteDialog.mode}
           listingTitle={favoriteDialog.listing.title}

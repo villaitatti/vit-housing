@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { listingFiltersSchema } from './listing';
 
 const favoriteNoteSchema = z.string().max(1000).optional().nullable();
+const requiredFavoriteNoteSchema = z.string().max(1000).nullable();
 
 export const createFavoriteSchema = z.object({
   listing_id: z.number().int().positive(),
@@ -9,7 +10,7 @@ export const createFavoriteSchema = z.object({
 });
 
 export const updateFavoriteSchema = z.object({
-  note: favoriteNoteSchema,
+  note: requiredFavoriteNoteSchema,
 });
 
 export const favoriteFiltersSchema = listingFiltersSchema.omit({

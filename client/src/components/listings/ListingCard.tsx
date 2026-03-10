@@ -70,10 +70,28 @@ export function ListingCard<TListing extends ListingCardListing>({
     onFavoriteClick?.(listing);
   };
 
+  const handleFavoriteKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onFavoriteClick?.(listing);
+    }
+  };
+
   const handleEditNoteClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
     onEditNote?.(listing);
+  };
+
+  const handleEditNoteKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onEditNote?.(listing);
+    }
   };
 
   return (
@@ -104,6 +122,7 @@ export function ListingCard<TListing extends ListingCardListing>({
             size="icon"
             className="absolute top-3 right-3 h-10 w-10 rounded-full bg-background/90 backdrop-blur"
             onClick={handleFavoriteClick}
+            onKeyDown={handleFavoriteKeyDown}
             aria-label={listing.is_favorite ? t('favorites.removeAction') : t('favorites.addAction')}
           >
             <Heart
@@ -155,6 +174,7 @@ export function ListingCard<TListing extends ListingCardListing>({
                 size="sm"
                 className="mt-2 -ml-3"
                 onClick={handleEditNoteClick}
+                onKeyDown={handleEditNoteKeyDown}
               >
                 {noteActionLabel || t('favorites.editNote')}
               </Button>
