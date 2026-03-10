@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { Eye, EyeOff } from 'lucide-react';
 import { loginSchema, type LoginInput } from '@vithousing/shared';
 import loginHeroImage from '@/assets/auth/20221104_133003.jpg';
+import { LanguageSwitch } from '@/components/layout/LanguageSwitch';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -66,19 +67,30 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#f3f0eb] text-foreground">
-      <div className="grid min-h-screen lg:grid-cols-[minmax(0,1.05fr)_minmax(460px,0.95fr)]">
-        <div className="relative min-h-[240px] overflow-hidden sm:min-h-[320px] lg:min-h-screen">
+      <div className="flex justify-end px-4 pt-4 sm:px-6 sm:pt-6 lg:px-10">
+        <LanguageSwitch
+          buttonClassName="rounded-full border border-[#c8d0d6] bg-[#fcfbf8]/90 px-4 text-[color:var(--brand-anthracite)] shadow-sm backdrop-blur-sm hover:bg-white"
+        />
+      </div>
+
+      <div className="grid min-h-[calc(100vh-4.5rem)] lg:grid-cols-[minmax(0,1.05fr)_minmax(460px,0.95fr)] lg:min-h-[calc(100vh-5.5rem)]">
+        <motion.div
+          initial={{ opacity: 0, scale: 1.02 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.55, ease: 'easeOut' }}
+          className="relative min-h-[240px] overflow-hidden sm:min-h-[320px] lg:min-h-full"
+        >
           <img
             src={loginHeroImage}
             alt=""
             className="absolute inset-0 h-full w-full object-cover"
           />
-        </div>
+        </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, x: 24 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.35, ease: 'easeOut' }}
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.14, ease: 'easeOut' }}
           className="flex w-full items-center justify-center bg-[#fcfbf8] px-6 py-10 sm:px-10 lg:px-16"
         >
           <Card className="w-full max-w-[460px] gap-0 border-none bg-transparent py-0 shadow-none">
@@ -201,8 +213,7 @@ export function LoginPage() {
                   </p>
 
                   <Button
-                    variant="outline"
-                    className="h-12 w-full rounded-xl border-[#c8d0d6] bg-white text-base font-semibold text-[color:var(--brand-anthracite)] shadow-none hover:bg-[#f7f9fa]"
+                    className="h-12 w-full rounded-xl bg-[color:var(--brand-crimson)] text-base font-semibold text-white shadow-sm hover:bg-[color:var(--brand-crimson)]/90 focus-visible:ring-[color:var(--brand-crimson)]/50"
                     onClick={handleVitIdLogin}
                   >
                     {t('auth.vitIdLogin')}

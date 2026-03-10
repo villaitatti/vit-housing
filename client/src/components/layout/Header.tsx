@@ -1,4 +1,4 @@
-import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -12,39 +12,15 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Home, Building2, Plus, List, Shield, User, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-function LanguageFlag({ lang }: { lang: 'en' | 'it' }) {
-  if (lang === 'it') {
-    return (
-      <span
-        aria-hidden
-        className="h-3.5 w-5 rounded-[2px] border border-black/15 bg-[linear-gradient(to_right,#009246_33.33%,#ffffff_33.33%,#ffffff_66.66%,#ce2b37_66.66%)]"
-      />
-    );
-  }
-
-  return (
-    <span aria-hidden className="relative h-3.5 w-5 overflow-hidden rounded-[2px] border border-black/15">
-      <span className="absolute inset-0 bg-[repeating-linear-gradient(to_bottom,#b22234_0_7.69%,#ffffff_7.69%_15.38%)]" />
-      <span className="absolute left-0 top-0 h-[53.85%] w-2/5 bg-[#3c3b6e]" />
-    </span>
-  );
-}
+import { LanguageSwitch } from './LanguageSwitch';
 
 export function Header() {
   const { lang } = useParams();
   const { t } = useTranslation();
   const { user, isAuthenticated, logout } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
 
   const currentLang: 'en' | 'it' = lang === 'it' ? 'it' : 'en';
-  const otherLang: 'en' | 'it' = currentLang === 'en' ? 'it' : 'en';
-
-  const switchLanguage = () => {
-    const newPath = location.pathname.replace(`/${currentLang}`, `/${otherLang}`);
-    navigate(newPath + location.search);
-  };
 
   const canAddListing = user?.roles?.some(r => ['HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'].includes(r));
   const isAdmin = user?.roles?.some(r => ['HOUSE_ADMIN', 'HOUSE_IT_ADMIN'].includes(r));
@@ -133,10 +109,7 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={switchLanguage} className="gap-1.5">
-            <LanguageFlag lang={otherLang} />
-            {otherLang.toUpperCase()}
-          </Button>
+          <LanguageSwitch />
 
           {isAuthenticated && user ? (
             <DropdownMenu>
