@@ -24,20 +24,26 @@ export interface FiltersState {
   sortOrder: string;
 }
 
+interface SortOption {
+  value: string;
+  label: string;
+}
+
 interface ListingFiltersProps {
   filters: FiltersState;
   onChange: (filters: FiltersState) => void;
   onClear: () => void;
+  sortOptions?: SortOption[];
 }
 
-export function ListingFilters({ filters, onChange, onClear }: ListingFiltersProps) {
+export function ListingFilters({ filters, onChange, onClear, sortOptions }: ListingFiltersProps) {
   const { t } = useTranslation();
 
   const updateFilter = (key: keyof FiltersState, value: string) => {
     onChange({ ...filters, [key]: value || undefined });
   };
 
-  const sortOptions = [
+  const resolvedSortOptions = sortOptions ?? [
     { value: 'created_at-desc', label: t('listings.dateDesc') },
     { value: 'created_at-asc', label: t('listings.dateAsc') },
     { value: 'monthly_rent-asc', label: t('listings.rentAsc') },
@@ -69,7 +75,7 @@ export function ListingFilters({ filters, onChange, onClear }: ListingFiltersPro
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {sortOptions.map((opt) => (
+            {resolvedSortOptions.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>
                 {opt.label}
               </SelectItem>

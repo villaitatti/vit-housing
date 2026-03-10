@@ -10,6 +10,10 @@ export const queryKeys = {
     mine: (filters: object) => ['listings', 'mine', filters] as const,
     latest: ['listings', 'latest'] as const,
   },
+  favorites: {
+    all: ['favorites'] as const,
+    list: (filters: object) => ['favorites', 'list', filters] as const,
+  },
   users: {
     all: ['users'] as const,
     list: (filters: object) => ['users', 'list', filters] as const,

@@ -1,6 +1,7 @@
 export const ALL_ROLES = ['HOUSE_USER', 'HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'] as const;
 export const ADMIN_ROLES = ['HOUSE_ADMIN', 'HOUSE_IT_ADMIN'] as const;
 export const IT_ADMIN_ROLES = ['HOUSE_IT_ADMIN'] as const;
+export const FAVORITE_LISTING_ROLES = ['HOUSE_USER', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'] as const;
 
 export type Role = (typeof ALL_ROLES)[number];
 
@@ -11,8 +12,12 @@ export const ROLE_PRIORITY: Record<Role, number> = {
   HOUSE_IT_ADMIN: 3,
 };
 
-export function hasRole(userRoles: Role[], ...check: Role[]): boolean {
+export function hasRole(userRoles: readonly Role[], ...check: Role[]): boolean {
   return check.some(r => userRoles.includes(r));
+}
+
+export function canUseFavoriteListings(userRoles: readonly Role[]): boolean {
+  return hasRole(userRoles, ...FAVORITE_LISTING_ROLES);
 }
 
 export function highestRole(roles: Role[]): Role {

@@ -8,6 +8,7 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 import { ProtectedRoute } from '@/components/guards/ProtectedRoute';
 import { RoleGuard } from '@/components/guards/RoleGuard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { FAVORITE_LISTING_ROLES } from '@vithousing/shared';
 import './lib/i18n';
 
 // Lazy-loaded pages for code splitting
@@ -17,6 +18,7 @@ const RegisterPage = lazy(() => import('@/pages/Register').then((m) => ({ defaul
 const ListingsPage = lazy(() => import('@/pages/Listings').then((m) => ({ default: m.ListingsPage })));
 const ListingDetailPage = lazy(() => import('@/pages/ListingDetail').then((m) => ({ default: m.ListingDetailPage })));
 const MapSearchPage = lazy(() => import('@/pages/MapSearch').then((m) => ({ default: m.MapSearchPage })));
+const FavoritesPage = lazy(() => import('@/pages/Favorites').then((m) => ({ default: m.FavoritesPage })));
 const NewListingPage = lazy(() => import('@/pages/NewListing').then((m) => ({ default: m.NewListingPage })));
 const EditListingPage = lazy(() => import('@/pages/EditListing').then((m) => ({ default: m.EditListingPage })));
 const MyListingsPage = lazy(() => import('@/pages/MyListings').then((m) => ({ default: m.MyListingsPage })));
@@ -89,6 +91,16 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Suspense fallback={<PageLoader />}><MapSearchPage /></Suspense>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="favorites"
+                element={
+                  <ProtectedRoute>
+                    <RoleGuard roles={[...FAVORITE_LISTING_ROLES]}>
+                      <Suspense fallback={<PageLoader />}><FavoritesPage /></Suspense>
+                    </RoleGuard>
                   </ProtectedRoute>
                 }
               />
