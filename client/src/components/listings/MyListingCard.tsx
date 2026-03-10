@@ -4,10 +4,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { BedDouble, Bath, Building2, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
+import { getListingDetailPath, getListingEditPath } from '@/lib/listingPaths';
 
 interface MyListingCardProps {
   listing: {
     id: number;
+    slug: string;
     title: string;
     address_1: string;
     city: string;
@@ -30,7 +32,7 @@ export function MyListingCard({ listing, lang, onTogglePublish, onDelete, isTogg
 
   return (
     <Card className="overflow-hidden h-full flex flex-col">
-      <Link to={`/${lang}/listings/${listing.id}`} className="block">
+      <Link to={getListingDetailPath(lang, listing.slug)} className="block">
         <div className="relative aspect-[4/3] overflow-hidden bg-muted">
           {coverPhoto ? (
             <img
@@ -54,7 +56,7 @@ export function MyListingCard({ listing, lang, onTogglePublish, onDelete, isTogg
         </div>
       </Link>
       <CardContent className="p-4 flex flex-col flex-1">
-        <Link to={`/${lang}/listings/${listing.id}`} className="block mb-1">
+        <Link to={getListingDetailPath(lang, listing.slug)} className="block mb-1">
           <h3 className="font-semibold text-lg truncate hover:text-primary transition-colors">
             {listing.title}
           </h3>
@@ -74,7 +76,7 @@ export function MyListingCard({ listing, lang, onTogglePublish, onDelete, isTogg
         </div>
         <div className="flex items-center gap-2 mt-auto pt-3 border-t">
           <Button variant="ghost" size="sm" asChild>
-            <Link to={`/${lang}/listings/${listing.id}/edit`} aria-label={`${t('common.edit')} - ${listing.title}`}>
+            <Link to={getListingEditPath(lang, listing.slug)} aria-label={`${t('common.edit')} - ${listing.title}`}>
               <Pencil className="h-4 w-4 mr-1" />
               {t('common.edit')}
             </Link>

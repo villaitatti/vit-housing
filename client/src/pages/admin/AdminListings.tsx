@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import api from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
+import { getListingDetailPath, getListingEditPath } from '@/lib/listingPaths';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -28,6 +29,7 @@ import type { PaginatedData } from '@vithousing/shared';
 
 interface AdminListing {
   id: number;
+  slug: string;
   title: string;
   city: string;
   monthly_rent: number | string;
@@ -93,7 +95,7 @@ export function AdminListingsPage() {
               <TableCell>{listing.id}</TableCell>
               <TableCell>
                 <Link
-                  to={`/${lang}/listings/${listing.id}`}
+                  to={getListingDetailPath(lang || 'en', listing.slug)}
                   className="text-primary hover:underline"
                 >
                   {listing.title}
@@ -105,7 +107,7 @@ export function AdminListingsPage() {
               <TableCell>
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="sm" asChild>
-                    <Link to={`/${lang}/listings/${listing.id}/edit`}>
+                    <Link to={getListingEditPath(lang || 'en', listing.slug)}>
                       <Pencil className="h-4 w-4" />
                     </Link>
                   </Button>

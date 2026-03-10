@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BedDouble, Bath, Building2 } from 'lucide-react';
+import { getListingDetailPath } from '@/lib/listingPaths';
 
 interface ListingCardProps {
   listing: {
     id: number;
+    slug: string;
     title: string;
     address_1: string;
     city: string;
@@ -24,7 +26,7 @@ export function ListingCard({ listing, lang }: ListingCardProps) {
   const coverPhoto = listing.photos?.[0]?.url;
 
   return (
-    <Link to={`/${lang}/listings/${listing.id}`}>
+    <Link to={getListingDetailPath(lang, listing.slug)}>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-200 group cursor-pointer h-full">
         <div className="relative aspect-[4/3] overflow-hidden bg-muted">
           {coverPhoto ? (

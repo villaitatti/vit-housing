@@ -103,7 +103,7 @@ function App() {
                 }
               />
               <Route
-                path="listings/:id/edit"
+                path="listings/:slug/edit"
                 element={
                   <ProtectedRoute>
                     <RoleGuard roles={['HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN']}>
@@ -113,7 +113,7 @@ function App() {
                 }
               />
               <Route
-                path="listings/:id"
+                path="listings/:slug"
                 element={
                   <ProtectedRoute>
                     <Suspense fallback={<PageLoader />}><ListingDetailPage /></Suspense>

@@ -54,6 +54,7 @@ model Invitation {
 model Listing {
   id                      Int             @id @default(autoincrement())
   title                   String
+  slug                    String          @unique
   description             String
   address_1               String
   address_2               String?

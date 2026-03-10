@@ -1,5 +1,6 @@
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
@@ -10,6 +11,7 @@ import type { LucideIcon } from 'lucide-react';
 import { AlertTriangle } from 'lucide-react';
 import api from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
+import { getListingDetailPath, isLegacyListingIdParam } from '@/lib/listingPaths';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +46,7 @@ interface ListingOwner {
 
 interface ListingDetail {
   id: number;
+  slug: string;
   title: string;
   description: string;
   address_1: string;
@@ -110,17 +113,32 @@ const featureIcons: Record<string, LucideIcon> = {
 
 export function ListingDetailPage() {
   const { t } = useTranslation();
-  const { id } = useParams();
+  const { lang, slug } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
+  const listingParam = slug?.trim() || '';
+  const currentLang = lang || 'en';
+  const isLegacyId = isLegacyListingIdParam(listingParam);
 
   const { data, isLoading } = useQuery<ListingDetail>({
-    queryKey: queryKeys.listings.detail(Number(id)),
+    queryKey: isLegacyId
+      ? queryKeys.listings.detailById(Number(listingParam))
+      : queryKeys.listings.detailBySlug(listingParam),
     queryFn: async () => {
-      const res = await api.get(`/api/v1/listings/${id}`);
+      const endpoint = isLegacyId
+        ? `/api/v1/listings/${listingParam}`
+        : `/api/v1/listings/by-slug/${listingParam}`;
+      const res = await api.get(endpoint);
       return res.data.listing;
     },
-    enabled: !!id,
+    enabled: !!listingParam,
   });
+
+  useEffect(() => {
+    if (data && isLegacyId) {
+      navigate(getListingDetailPath(currentLang, data.slug), { replace: true });
+    }
+  }, [currentLang, data, isLegacyId, navigate]);
 
   if (isLoading) {
     return (

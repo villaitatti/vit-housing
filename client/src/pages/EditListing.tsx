@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -5,6 +6,7 @@ import { motion } from 'framer-motion';
 import type { CreateListingInput } from '@vithousing/shared';
 import api from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
+import { getListingDetailPath, getListingEditPath, isLegacyListingIdParam } from '@/lib/listingPaths';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,6 +14,7 @@ import { ListingForm, type PhotoFile, type ExistingPhoto } from '@/components/li
 
 interface ListingDetail {
   id: number;
+  slug: string;
   owner_id: number;
   title: string;
   description: string;
@@ -55,20 +58,33 @@ interface ListingDetail {
 
 export function EditListingPage() {
   const { t } = useTranslation();
-  const { lang, id } = useParams();
+  const { lang, slug } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const listingId = Number(id);
+  const listingParam = slug?.trim() || '';
+  const currentLang = lang || 'en';
+  const isLegacyId = isLegacyListingIdParam(listingParam);
 
   const { data: listing, isLoading, error } = useQuery<ListingDetail>({
-    queryKey: queryKeys.listings.detail(listingId),
+    queryKey: isLegacyId
+      ? queryKeys.listings.detailById(Number(listingParam))
+      : queryKeys.listings.detailBySlug(listingParam),
     queryFn: async () => {
-      const res = await api.get(`/api/v1/listings/${listingId}`);
+      const endpoint = isLegacyId
+        ? `/api/v1/listings/${listingParam}`
+        : `/api/v1/listings/by-slug/${listingParam}`;
+      const res = await api.get(endpoint);
       return res.data.listing;
     },
-    enabled: Number.isInteger(listingId) && listingId > 0,
+    enabled: !!listingParam,
   });
+
+  useEffect(() => {
+    if (listing && isLegacyId) {
+      navigate(getListingEditPath(currentLang, listing.slug), { replace: true });
+    }
+  }, [currentLang, isLegacyId, listing, navigate]);
 
   // Ownership check for landlords
   const isForbidden =
@@ -86,6 +102,12 @@ export function EditListingPage() {
       newPhotos: PhotoFile[];
       deletedPhotoIds: number[];
     }) => {
+      if (!listing) {
+        throw new Error(t('errors.notFound'));
+      }
+
+      const listingId = listing.id;
+
       // 1. Update listing data
       await api.patch(`/api/v1/listings/${listingId}`, formData);
 
@@ -101,13 +123,14 @@ export function EditListingPage() {
         await api.post(`/api/v1/listings/${listingId}/photos`, fd);
       }
 
-      return listingId;
+      return { id: listingId, slug: listing.slug };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.listings.detail(listingId) });
+    onSuccess: ({ id, slug: listingSlug }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.listings.detailById(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.listings.detailBySlug(listingSlug) });
       queryClient.invalidateQueries({ queryKey: queryKeys.listings.all });
       toast.success(t('common.save'));
-      navigate(`/${lang}/listings/${listingId}`);
+      navigate(getListingDetailPath(currentLang, listingSlug));
     },
     onError: (err: Error) => {
       toast.error(err.message);
@@ -204,7 +227,7 @@ export function EditListingPage() {
       <h1 className="text-3xl font-bold mb-8">{t('listingForm.editTitle')}</h1>
 
       <ListingForm
-        key={listingId}
+        key={listing.id}
         mode="edit"
         initialData={initialData}
         existingPhotos={existingPhotos}

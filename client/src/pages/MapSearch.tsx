@@ -7,6 +7,7 @@ import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF } from '@react-google-m
 import { SearchX, MapIcon } from 'lucide-react';
 import api from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
+import { getListingDetailPath } from '@/lib/listingPaths';
 import { ListingCard } from '@/components/listings/ListingCard';
 import { ListingFilters, type FiltersState } from '@/components/listings/ListingFilters';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,6 +18,7 @@ import type { PaginatedData } from '@vithousing/shared';
 
 interface ListingsListItem {
   id: number;
+  slug: string;
   title: string;
   address_1: string;
   city: string;
@@ -47,6 +49,7 @@ const DEFAULT_CENTER = {
 export function MapSearchPage() {
   const { t } = useTranslation();
   const { lang } = useParams();
+  const currentLang = lang || 'en';
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeListing, setActiveListing] = useState<ListingsListItem | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -265,7 +268,11 @@ export function MapSearchPage() {
                       <p className="text-primary font-medium text-sm mb-2 hover:underline">
                         €{activeListing.monthly_rent} <span className="text-muted-foreground font-normal text-xs">{t('listings.perMonth')}</span>
                       </p>
-                      <Button size="sm" className="w-full text-xs" onClick={() => window.open(`/${lang}/listings/${activeListing.id}`, '_blank')}>
+                      <Button
+                        size="sm"
+                        className="w-full text-xs"
+                        onClick={() => window.open(getListingDetailPath(currentLang, activeListing.slug), '_blank')}
+                      >
                          {t('listings.viewListing')}
                       </Button>
                     </div>
@@ -323,7 +330,7 @@ export function MapSearchPage() {
                      onMouseLeave={() => setActiveListing(null)}
                      className={`cursor-pointer transition-all duration-200 ${activeListing?.id === listing.id ? 'ring-2 ring-primary rounded-xl scale-[1.02] shadow-md z-10 relative' : ''}`}
                      onClick={() => {
-                        window.open(`/${lang}/listings/${listing.id}`, '_blank');
+                        window.open(getListingDetailPath(currentLang, listing.slug), '_blank');
                      }}
                    >
                      <ListingCard listing={listing} lang={lang || 'en'} />

@@ -18,6 +18,7 @@ import { PrismaClient, Role } from '@prisma/client';
 import { createConnection, Connection } from 'mysql2/promise';
 import { writeFileSync, appendFileSync, mkdirSync } from 'fs';
 import { processAndSaveImage } from '../src/services/upload.service.js';
+import { generateUniqueListingSlug } from '../src/services/listingSlug.service.js';
 
 const prisma = new PrismaClient();
 const LOG_FILE = 'server/scripts/migration-log.txt';
@@ -173,6 +174,7 @@ async function migrateListings(drupal: Connection) {
         create: {
           id: row.nid,
           title: row.title || 'Untitled',
+          slug: await generateUniqueListingSlug(prisma, row.title || 'Untitled'),
           description: row.description || '',
           address_1: '', // TODO: Map from field_data_field_address
           postal_code: '', // TODO: Map from field_data_field_address
