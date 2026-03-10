@@ -16,9 +16,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 interface AdminInvitation {
   id: number;
   email: string;
+  first_name: string | null;
+  last_name: string | null;
   role: 'HOUSE_USER' | 'HOUSE_LANDLORD';
   language: 'EN' | 'IT';
   used: boolean;
+  revoked_at: string | null;
   created_at: string;
   expires_at: string;
   inviter?: {
@@ -59,26 +62,35 @@ export function AdminInvitationsPage() {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>{t('admin.userColumns.name')}</TableHead>
             <TableHead>{t('admin.userColumns.email')}</TableHead>
             <TableHead>{t('admin.userColumns.role')}</TableHead>
             <TableHead>{t('admin.userColumns.language')}</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>{t('admin.invitationStatus')}</TableHead>
             <TableHead>{t('admin.userColumns.createdAt')}</TableHead>
-            <TableHead>Invited By</TableHead>
+            <TableHead>{t('admin.invitedBy')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data?.invitations?.map((inv) => {
             const isExpired = new Date(inv.expires_at) < new Date();
-            const status = inv.used ? 'Used' : isExpired ? 'Expired' : 'Pending';
+            const invitedName = [inv.first_name, inv.last_name].filter(Boolean).join(' ');
+            const status = inv.revoked_at
+              ? 'revoked'
+              : inv.used
+                ? 'used'
+                : isExpired
+                  ? 'expired'
+                  : 'pending';
             const statusVariant = inv.used
               ? ('secondary' as const)
-              : isExpired
+              : inv.revoked_at || isExpired
                 ? ('destructive' as const)
                 : ('default' as const);
 
             return (
               <TableRow key={inv.id}>
+                <TableCell>{invitedName || '—'}</TableCell>
                 <TableCell>{inv.email}</TableCell>
                 <TableCell>
                   <Badge variant="outline">
@@ -87,11 +99,11 @@ export function AdminInvitationsPage() {
                 </TableCell>
                 <TableCell>{inv.language}</TableCell>
                 <TableCell>
-                  <Badge variant={statusVariant}>{status}</Badge>
+                  <Badge variant={statusVariant}>{t(`admin.status.${status}`)}</Badge>
                 </TableCell>
                 <TableCell>{new Date(inv.created_at).toLocaleDateString()}</TableCell>
                 <TableCell>
-                  {inv.inviter?.first_name} {inv.inviter?.last_name}
+                  {[inv.inviter?.first_name, inv.inviter?.last_name].filter(Boolean).join(' ') || '—'}
                 </TableCell>
               </TableRow>
             );

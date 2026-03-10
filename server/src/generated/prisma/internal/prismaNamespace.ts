@@ -989,10 +989,13 @@ export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof User
 export const InvitationScalarFieldEnum = {
   id: 'id',
   email: 'email',
+  first_name: 'first_name',
+  last_name: 'last_name',
   role: 'role',
   language: 'language',
-  token: 'token',
+  token_hash: 'token_hash',
   used: 'used',
+  revoked_at: 'revoked_at',
   created_at: 'created_at',
   expires_at: 'expires_at',
   invited_by: 'invited_by'

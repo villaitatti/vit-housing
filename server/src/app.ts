@@ -20,7 +20,13 @@ const allowedOrigins = new Set(
     : ['http://localhost:5173', 'http://localhost:5174', ...configuredClientUrls],
 );
 
-app.use(helmet());
+app.use(
+  helmet({
+    referrerPolicy: {
+      policy: 'no-referrer',
+    },
+  }),
+);
 app.use(
   cors({
     origin(origin, callback) {

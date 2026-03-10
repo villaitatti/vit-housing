@@ -41,10 +41,13 @@ model User {
 model Invitation {
   id         Int      @id @default(autoincrement())
   email      String
+  first_name String?
+  last_name  String?
   role       Role
   language   Language
-  token      String   @unique
+  token_hash String   @unique
   used       Boolean  @default(false)
+  revoked_at DateTime?
   created_at DateTime @default(now())
   expires_at DateTime
   invited_by Int?
