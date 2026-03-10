@@ -47,8 +47,8 @@ model Invitation {
   used       Boolean  @default(false)
   created_at DateTime @default(now())
   expires_at DateTime
-  invited_by Int
-  inviter    User     @relation(fields: [invited_by], references: [id])
+  invited_by Int?
+  inviter    User?    @relation(fields: [invited_by], references: [id], onDelete: SetNull)
 }
 
 model Listing {
@@ -95,7 +95,7 @@ model Listing {
   created_at              DateTime        @default(now())
   updated_at              DateTime        @updatedAt
   owner_id                Int
-  owner                   User            @relation(fields: [owner_id], references: [id])
+  owner                   User            @relation(fields: [owner_id], references: [id], onDelete: Cascade)
   available_dates         AvailableDate[]
   photos                  ListingPhoto[]
 }

@@ -254,6 +254,11 @@
     "rolesUpdated": "Ruoli utente aggiornati con successo",
     "deleteConfirmTitle": "Conferma Eliminazione",
     "deleteConfirmMessage": "Sei sicuro di voler eliminare questo elemento? Questa azione non può essere annullata.",
+    "clearSearch": "Cancella ricerca",
+    "deleteUser": "Elimina utente",
+    "deleteUserTitle": "Elimina Utente",
+    "deleteUserMessage": "Sei sicuro di voler eliminare {{name}}? Questa azione non può essere annullata.",
+    "deleteUserWithListings": "Verranno eliminati anche {{count}} annuncio/i di proprietà di questo utente.",
     "userColumns": {
       "name": "Nome",
       "email": "Email",
@@ -276,7 +281,10 @@
     "localRole": "Ruolo Locale",
     "selectAuth0Role": "Seleziona ruolo Auth0...",
     "addMapping": "Aggiungi Mappatura",
-    "saveMappings": "Salva Mappature"
+    "saveMappings": "Salva Mappature",
+    "clearAllFilters": "Cancella tutti i filtri",
+    "noFilterResults": "Nessun utente corrisponde ai filtri",
+    "noFilterResultsDescription": "Prova a modificare o cancellare i criteri di ricerca."
   },
   "profile": {
     "title": "Profilo",
