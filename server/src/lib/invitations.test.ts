@@ -41,3 +41,13 @@ test('getInvitationStatus prioritizes revoked and used over expiry', () => {
     'expired',
   );
 });
+
+test('getInvitationStatus returns pending for active invitations', () => {
+  const now = new Date('2026-03-10T12:00:00.000Z');
+  const expiresAt = new Date('2026-03-11T12:00:00.000Z');
+
+  assert.equal(
+    getInvitationStatus({ used: false, revoked_at: null, expires_at: expiresAt }, now),
+    'pending',
+  );
+});

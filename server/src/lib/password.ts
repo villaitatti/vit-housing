@@ -16,7 +16,9 @@ const SCRYPT_PARAMS = {
   maxmem: 64 * 1024 * 1024,
 } as const;
 
-const COMMON_PASSWORD_SET = new Set<string>(COMMON_PASSWORDS);
+const COMMON_PASSWORD_SET = new Set<string>(
+  COMMON_PASSWORDS.map((password) => normalizeCommonPasswordCandidate(password)),
+);
 
 interface ScryptConfig {
   N: number;

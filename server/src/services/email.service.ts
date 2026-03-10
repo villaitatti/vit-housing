@@ -100,7 +100,7 @@ export async function sendInvitationEmail({
   const ctaLabel = isEnglish ? 'Complete Registration' : 'Completa la registrazione';
   const expiryCopy = isEnglish
     ? `This invitation is single use and expires on ${formattedExpiry} (Europe/Rome), ${INVITATION_EXPIRY_DAYS} days after it was sent.`
-    : `Questo invito e monouso e scade il ${formattedExpiry} (Europa/Roma), ${INVITATION_EXPIRY_DAYS} giorni dopo l'invio.`;
+    : `Questo invito è monouso e scade il ${formattedExpiry} (Europa/Roma), ${INVITATION_EXPIRY_DAYS} giorni dopo l'invio.`;
   const ignoreCopy = isEnglish
     ? 'If you were not expecting this invitation, you can ignore this email.'
     : "Se non ti aspettavi questo invito, puoi ignorare questa email.";

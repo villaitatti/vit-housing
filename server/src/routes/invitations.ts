@@ -95,6 +95,11 @@ router.post(
           expiresAt,
         });
       } catch (emailError) {
+        console.error('Invitation email send error:', {
+          invitationId: invitation.id,
+          email: normalizedEmail,
+          error: emailError,
+        });
         await prisma.invitation.update({
           where: { id: invitation.id },
           data: { revoked_at: new Date() },

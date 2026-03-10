@@ -53,6 +53,8 @@ function getInvitationErrorKey(code?: string): string {
       return 'auth.tokenExpired';
     case 'TOKEN_REVOKED':
       return 'auth.tokenRevoked';
+    case 'TOKEN_UNAVAILABLE':
+      return 'auth.tokenUnavailable';
     default:
       return 'auth.invalidToken';
   }
@@ -88,8 +90,7 @@ export function RegisterPage() {
   const { lang } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const initialToken = searchParams.get('token')?.trim() || '';
-  const [token] = useState(initialToken);
+  const token = searchParams.get('token')?.trim() || '';
   const [registrationComplete, setRegistrationComplete] = useState(false);
 
   const {

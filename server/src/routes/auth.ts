@@ -151,7 +151,7 @@ router.post('/register', registrationRateLimit, validate(registerSchema), async 
     sendSuccess(res, { message: 'Registration successful' }, 201);
   } catch (err) {
     if (err instanceof Error && err.message === 'Invitation is no longer available') {
-      sendError(res, 'This invitation is no longer available', 'TOKEN_USED', 409);
+      sendError(res, 'This invitation is no longer available', 'TOKEN_UNAVAILABLE', 409);
       return;
     }
 

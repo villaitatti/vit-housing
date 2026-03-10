@@ -65,6 +65,7 @@
     "invalidToken": "Questo link di invito non è valido o è scaduto.",
     "tokenUsed": "Questo invito è già stato utilizzato.",
     "tokenExpired": "Questo invito è scaduto.",
+    "tokenUnavailable": "Questo invito non è più disponibile.",
     "tokenRevoked": "Questo link di invito è stato sostituito da un invito più recente.",
     "invitationStatusTitle": "Problema con l'invito",
     "invitationContactAdmin": "Contatta un amministratore per richiedere un nuovo invito.",

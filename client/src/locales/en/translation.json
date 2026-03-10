@@ -65,6 +65,7 @@
     "invalidToken": "This invitation link is invalid or has expired.",
     "tokenUsed": "This invitation has already been used.",
     "tokenExpired": "This invitation has expired.",
+    "tokenUnavailable": "This invitation is no longer available.",
     "tokenRevoked": "This invitation link has been replaced by a newer invitation.",
     "invitationStatusTitle": "Invitation issue",
     "invitationContactAdmin": "Please contact an administrator to request a new invitation.",

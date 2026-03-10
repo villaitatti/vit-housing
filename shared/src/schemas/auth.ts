@@ -36,12 +36,16 @@ export function normalizeCommonPasswordCandidate(password: string): string {
   return password.normalize('NFKC').toLowerCase();
 }
 
+const COMMON_PASSWORDS_SET = new Set<string>(
+  COMMON_PASSWORDS.map((password) => normalizeCommonPasswordCandidate(password)),
+);
+
 export const passwordSchema = z
   .string()
   .min(PASSWORD_MIN_LENGTH, `Password must be at least ${PASSWORD_MIN_LENGTH} characters`)
   .max(PASSWORD_MAX_LENGTH, `Password must be at most ${PASSWORD_MAX_LENGTH} characters`)
   .refine(
-    (value) => !COMMON_PASSWORDS.includes(normalizeCommonPasswordCandidate(value) as (typeof COMMON_PASSWORDS)[number]),
+    (value) => !COMMON_PASSWORDS_SET.has(normalizeCommonPasswordCandidate(value)),
     'Choose a less common password',
   );
 

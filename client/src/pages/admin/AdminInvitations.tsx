@@ -82,9 +82,9 @@ export function AdminInvitationsPage() {
                 : isExpired
                   ? 'expired'
                   : 'pending';
-            const statusVariant = inv.used
+            const statusVariant = status === 'used'
               ? ('secondary' as const)
-              : inv.revoked_at || isExpired
+              : status === 'revoked' || status === 'expired'
                 ? ('destructive' as const)
                 : ('default' as const);
 
