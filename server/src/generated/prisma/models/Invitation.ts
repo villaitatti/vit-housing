@@ -216,7 +216,7 @@ export type InvitationGroupByOutputType = {
   used: boolean
   created_at: Date
   expires_at: Date
-  invited_by: number
+  invited_by: number | null
   _count: InvitationCountAggregateOutputType | null
   _avg: InvitationAvgAggregateOutputType | null
   _sum: InvitationSumAggregateOutputType | null
@@ -251,8 +251,8 @@ export type InvitationWhereInput = {
   used?: Prisma.BoolFilter<"Invitation"> | boolean
   created_at?: Prisma.DateTimeFilter<"Invitation"> | Date | string
   expires_at?: Prisma.DateTimeFilter<"Invitation"> | Date | string
-  invited_by?: Prisma.IntFilter<"Invitation"> | number
-  inviter?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  invited_by?: Prisma.IntNullableFilter<"Invitation"> | number | null
+  inviter?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }
 
 export type InvitationOrderByWithRelationInput = {
@@ -264,7 +264,7 @@ export type InvitationOrderByWithRelationInput = {
   used?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   expires_at?: Prisma.SortOrder
-  invited_by?: Prisma.SortOrder
+  invited_by?: Prisma.SortOrderInput | Prisma.SortOrder
   inviter?: Prisma.UserOrderByWithRelationInput
 }
 
@@ -280,8 +280,8 @@ export type InvitationWhereUniqueInput = Prisma.AtLeast<{
   used?: Prisma.BoolFilter<"Invitation"> | boolean
   created_at?: Prisma.DateTimeFilter<"Invitation"> | Date | string
   expires_at?: Prisma.DateTimeFilter<"Invitation"> | Date | string
-  invited_by?: Prisma.IntFilter<"Invitation"> | number
-  inviter?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  invited_by?: Prisma.IntNullableFilter<"Invitation"> | number | null
+  inviter?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }, "id" | "token">
 
 export type InvitationOrderByWithAggregationInput = {
@@ -293,7 +293,7 @@ export type InvitationOrderByWithAggregationInput = {
   used?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   expires_at?: Prisma.SortOrder
-  invited_by?: Prisma.SortOrder
+  invited_by?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.InvitationCountOrderByAggregateInput
   _avg?: Prisma.InvitationAvgOrderByAggregateInput
   _max?: Prisma.InvitationMaxOrderByAggregateInput
@@ -313,7 +313,7 @@ export type InvitationScalarWhereWithAggregatesInput = {
   used?: Prisma.BoolWithAggregatesFilter<"Invitation"> | boolean
   created_at?: Prisma.DateTimeWithAggregatesFilter<"Invitation"> | Date | string
   expires_at?: Prisma.DateTimeWithAggregatesFilter<"Invitation"> | Date | string
-  invited_by?: Prisma.IntWithAggregatesFilter<"Invitation"> | number
+  invited_by?: Prisma.IntNullableWithAggregatesFilter<"Invitation"> | number | null
 }
 
 export type InvitationCreateInput = {
@@ -324,7 +324,7 @@ export type InvitationCreateInput = {
   used?: boolean
   created_at?: Date | string
   expires_at: Date | string
-  inviter: Prisma.UserCreateNestedOneWithoutInvitations_sentInput
+  inviter?: Prisma.UserCreateNestedOneWithoutInvitations_sentInput
 }
 
 export type InvitationUncheckedCreateInput = {
@@ -336,7 +336,7 @@ export type InvitationUncheckedCreateInput = {
   used?: boolean
   created_at?: Date | string
   expires_at: Date | string
-  invited_by: number
+  invited_by?: number | null
 }
 
 export type InvitationUpdateInput = {
@@ -347,7 +347,7 @@ export type InvitationUpdateInput = {
   used?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expires_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  inviter?: Prisma.UserUpdateOneRequiredWithoutInvitations_sentNestedInput
+  inviter?: Prisma.UserUpdateOneWithoutInvitations_sentNestedInput
 }
 
 export type InvitationUncheckedUpdateInput = {
@@ -359,7 +359,7 @@ export type InvitationUncheckedUpdateInput = {
   used?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expires_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invited_by?: Prisma.IntFieldUpdateOperationsInput | number
+  invited_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type InvitationCreateManyInput = {
@@ -371,7 +371,7 @@ export type InvitationCreateManyInput = {
   used?: boolean
   created_at?: Date | string
   expires_at: Date | string
-  invited_by: number
+  invited_by?: number | null
 }
 
 export type InvitationUpdateManyMutationInput = {
@@ -393,7 +393,7 @@ export type InvitationUncheckedUpdateManyInput = {
   used?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expires_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invited_by?: Prisma.IntFieldUpdateOperationsInput | number
+  invited_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type InvitationListRelationFilter = {
@@ -502,6 +502,14 @@ export type BoolFieldUpdateOperationsInput = {
   set?: boolean
 }
 
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type InvitationCreateWithoutInviterInput = {
   email: string
   role: $Enums.Role
@@ -561,7 +569,7 @@ export type InvitationScalarWhereInput = {
   used?: Prisma.BoolFilter<"Invitation"> | boolean
   created_at?: Prisma.DateTimeFilter<"Invitation"> | Date | string
   expires_at?: Prisma.DateTimeFilter<"Invitation"> | Date | string
-  invited_by?: Prisma.IntFilter<"Invitation"> | number
+  invited_by?: Prisma.IntNullableFilter<"Invitation"> | number | null
 }
 
 export type InvitationCreateManyInviterInput = {
@@ -619,7 +627,7 @@ export type InvitationSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   created_at?: boolean
   expires_at?: boolean
   invited_by?: boolean
-  inviter?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  inviter?: boolean | Prisma.Invitation$inviterArgs<ExtArgs>
 }, ExtArgs["result"]["invitation"]>
 
 export type InvitationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -632,7 +640,7 @@ export type InvitationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   created_at?: boolean
   expires_at?: boolean
   invited_by?: boolean
-  inviter?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  inviter?: boolean | Prisma.Invitation$inviterArgs<ExtArgs>
 }, ExtArgs["result"]["invitation"]>
 
 export type InvitationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -645,7 +653,7 @@ export type InvitationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   created_at?: boolean
   expires_at?: boolean
   invited_by?: boolean
-  inviter?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  inviter?: boolean | Prisma.Invitation$inviterArgs<ExtArgs>
 }, ExtArgs["result"]["invitation"]>
 
 export type InvitationSelectScalar = {
@@ -662,19 +670,19 @@ export type InvitationSelectScalar = {
 
 export type InvitationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "role" | "language" | "token" | "used" | "created_at" | "expires_at" | "invited_by", ExtArgs["result"]["invitation"]>
 export type InvitationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  inviter?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  inviter?: boolean | Prisma.Invitation$inviterArgs<ExtArgs>
 }
 export type InvitationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  inviter?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  inviter?: boolean | Prisma.Invitation$inviterArgs<ExtArgs>
 }
 export type InvitationIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  inviter?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  inviter?: boolean | Prisma.Invitation$inviterArgs<ExtArgs>
 }
 
 export type $InvitationPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Invitation"
   objects: {
-    inviter: Prisma.$UserPayload<ExtArgs>
+    inviter: Prisma.$UserPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -685,7 +693,7 @@ export type $InvitationPayload<ExtArgs extends runtime.Types.Extensions.Internal
     used: boolean
     created_at: Date
     expires_at: Date
-    invited_by: number
+    invited_by: number | null
   }, ExtArgs["result"]["invitation"]>
   composites: {}
 }
@@ -1080,7 +1088,7 @@ readonly fields: InvitationFieldRefs;
  */
 export interface Prisma__InvitationClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  inviter<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  inviter<T extends Prisma.Invitation$inviterArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Invitation$inviterArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1512,6 +1520,25 @@ export type InvitationDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.In
    * Limit how many Invitations to delete.
    */
   limit?: number
+}
+
+/**
+ * Invitation.inviter
+ */
+export type Invitation$inviterArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
 }
 
 /**

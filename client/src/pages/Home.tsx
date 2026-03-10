@@ -13,6 +13,7 @@ import type { PaginatedData } from '@vithousing/shared';
 
 interface HomeListing {
   id: number;
+  slug: string;
   title: string;
   address_1: string;
   city: string;

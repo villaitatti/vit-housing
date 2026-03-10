@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
+import { Prisma } from '../generated/prisma/client.js';
 import { sendSuccess, sendError } from '../lib/response.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/requireRole.js';
@@ -8,14 +9,43 @@ import { validate } from '../middleware/validate.js';
 import { createListingSchema, updateListingSchema, listingFiltersSchema, hasRole } from '@vithousing/shared';
 import { uploadMiddleware, processAndSaveImage, deleteLocalFile } from '../services/upload.service.js';
 import { geocodeAddress } from '../services/geocoding.service.js';
+import { generateUniqueListingSlug } from '../services/listingSlug.service.js';
 
 const router = Router();
+
+const listingDetailInclude = {
+  photos: { orderBy: { sort_order: 'asc' as const } },
+  available_dates: { orderBy: { available_from: 'asc' as const } },
+  owner: {
+    select: {
+      first_name: true,
+      last_name: true,
+      email: true,
+      phone_number: true,
+      mobile_number: true,
+    },
+  },
+};
 
 function parseId(value: string): number | null {
   const trimmed = value.trim();
   if (!/^\d+$/.test(trimmed)) return null;
   const id = Number(trimmed);
   return id > 0 ? id : null;
+}
+
+function isSlugUniqueConstraintError(err: unknown): boolean {
+  if (!(err instanceof Prisma.PrismaClientKnownRequestError) || err.code !== 'P2002') {
+    return false;
+  }
+
+  const targets = Array.isArray(err.meta?.target)
+    ? err.meta.target
+    : err.meta?.target
+      ? [err.meta.target]
+      : [];
+
+  return targets.some((target) => String(target).includes('slug'));
 }
 
 async function checkListingOwnership(req: Request, res: Response, listingId: number): Promise<boolean> {
@@ -29,6 +59,40 @@ async function checkListingOwnership(req: Request, res: Response, listingId: num
     return false;
   }
   return true;
+}
+
+async function fetchListingDetail(where: { id: number } | { slug: string }) {
+  return prisma.listing.findUnique({
+    where,
+    include: listingDetailInclude,
+  });
+}
+
+async function sendListingDetailResponse(
+  req: Request,
+  res: Response,
+  where: { id: number } | { slug: string },
+) {
+  try {
+    const listing = await fetchListingDetail(where);
+
+    if (!listing) {
+      sendError(res, 'Listing not found', 'NOT_FOUND', 404);
+      return;
+    }
+
+    if (!listing.published) {
+      const isOwner = listing.owner_id === req.user!.userId;
+      if (!isOwner && !hasRole(req.user!.roles, 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN')) {
+        sendError(res, 'Listing not found', 'NOT_FOUND', 404);
+        return;
+      }
+    }
+
+    sendSuccess(res, { listing });
+  } catch (err) {
+    sendError(res, 'Failed to fetch listing', 'FETCH_ERROR', 500);
+  }
 }
 
 // GET /api/v1/listings — Browse listings (all authenticated users)
@@ -105,45 +169,23 @@ router.get('/', authenticate, validate(listingFiltersSchema, 'query'), async (re
   }
 });
 
+// GET /api/v1/listings/by-slug/:slug — Single listing detail by slug
+router.get('/by-slug/:slug', authenticate, async (req: Request, res: Response) => {
+  const slug = (req.params.slug as string)?.trim();
+  if (!slug) {
+    sendError(res, 'Invalid slug', 'BAD_REQUEST', 400);
+    return;
+  }
+
+  await sendListingDetailResponse(req, res, { slug });
+});
+
 // GET /api/v1/listings/:id — Single listing detail
 router.get('/:id', authenticate, async (req: Request, res: Response) => {
-  try {
-    const id = parseId(req.params.id as string);
-    if (!id) { sendError(res, 'Invalid ID', 'BAD_REQUEST', 400); return; }
-    const listing = await prisma.listing.findUnique({
-      where: { id },
-      include: {
-        photos: { orderBy: { sort_order: 'asc' } },
-        available_dates: { orderBy: { available_from: 'asc' } },
-        owner: {
-          select: {
-            first_name: true,
-            last_name: true,
-            email: true,
-            phone_number: true,
-            mobile_number: true,
-          },
-        },
-      },
-    });
+  const id = parseId(req.params.id as string);
+  if (!id) { sendError(res, 'Invalid ID', 'BAD_REQUEST', 400); return; }
 
-    if (!listing) {
-      sendError(res, 'Listing not found', 'NOT_FOUND', 404);
-      return;
-    }
-
-    if (!listing.published) {
-      const isOwner = listing.owner_id === req.user!.userId;
-      if (!isOwner && !hasRole(req.user!.roles, 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN')) {
-        sendError(res, 'Listing not found', 'NOT_FOUND', 404);
-        return;
-      }
-    }
-
-    sendSuccess(res, { listing });
-  } catch (err) {
-    sendError(res, 'Failed to fetch listing', 'FETCH_ERROR', 500);
-  }
+  await sendListingDetailResponse(req, res, { id });
 });
 
 // POST /api/v1/listings — Create listing (landlord + admin)
@@ -164,28 +206,44 @@ router.post(
         listingData.postal_code,
       );
 
-      const listing = await prisma.listing.create({
-        data: {
-          ...listingData,
-          latitude: geo?.latitude || null,
-          longitude: geo?.longitude || null,
-          owner_id: req.user!.userId,
-          available_dates: available_dates
-            ? {
-                create: available_dates.map((d: any) => ({
-                  available_from: new Date(d.available_from),
-                  available_to: d.available_to ? new Date(d.available_to) : null,
-                })),
-              }
-            : undefined,
-        },
-        include: {
-          available_dates: true,
-          photos: true,
-        },
-      });
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        const slug = await generateUniqueListingSlug(prisma, listingData.title);
 
-      sendSuccess(res, { listing }, 201);
+        try {
+          const listing = await prisma.listing.create({
+            data: {
+              ...listingData,
+              slug,
+              latitude: geo?.latitude || null,
+              longitude: geo?.longitude || null,
+              owner_id: req.user!.userId,
+              available_dates: available_dates
+                ? {
+                    create: available_dates.map((d: any) => ({
+                      available_from: new Date(d.available_from),
+                      available_to: d.available_to ? new Date(d.available_to) : null,
+                    })),
+                  }
+                : undefined,
+            },
+            include: {
+              available_dates: true,
+              photos: true,
+            },
+          });
+
+          sendSuccess(res, { listing }, 201);
+          return;
+        } catch (err) {
+          if (isSlugUniqueConstraintError(err) && attempt < 4) {
+            continue;
+          }
+
+          throw err;
+        }
+      }
+
+      sendError(res, 'Failed to create listing', 'CREATE_ERROR', 500);
     } catch (err) {
       console.error('Create listing error:', err);
       sendError(res, 'Failed to create listing', 'CREATE_ERROR', 500);

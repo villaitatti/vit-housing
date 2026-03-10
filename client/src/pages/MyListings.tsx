@@ -21,6 +21,7 @@ import type { PaginatedData } from '@vithousing/shared';
 
 interface MyListing {
   id: number;
+  slug: string;
   title: string;
   address_1: string;
   city: string;

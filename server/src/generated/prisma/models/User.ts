@@ -545,14 +545,14 @@ export type UserSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
 }
 
-export type UserScalarRelationFilter = {
-  is?: Prisma.UserWhereInput
-  isNot?: Prisma.UserWhereInput
-}
-
 export type UserNullableScalarRelationFilter = {
   is?: Prisma.UserWhereInput | null
   isNot?: Prisma.UserWhereInput | null
+}
+
+export type UserScalarRelationFilter = {
+  is?: Prisma.UserWhereInput
+  isNot?: Prisma.UserWhereInput
 }
 
 export type UserCreaterolesInput = {
@@ -598,10 +598,12 @@ export type UserCreateNestedOneWithoutInvitations_sentInput = {
   connect?: Prisma.UserWhereUniqueInput
 }
 
-export type UserUpdateOneRequiredWithoutInvitations_sentNestedInput = {
+export type UserUpdateOneWithoutInvitations_sentNestedInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutInvitations_sentInput, Prisma.UserUncheckedCreateWithoutInvitations_sentInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutInvitations_sentInput
   upsert?: Prisma.UserUpsertWithoutInvitations_sentInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutInvitations_sentInput, Prisma.UserUpdateWithoutInvitations_sentInput>, Prisma.UserUncheckedUpdateWithoutInvitations_sentInput>
 }
