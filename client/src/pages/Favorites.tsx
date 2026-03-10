@@ -41,15 +41,16 @@ export function FavoritesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [favoriteDialog, setFavoriteDialog] = useState<FavoriteDialogState>(null);
   const { updateFavoriteNote, removeFavorite, isUpdatingFavoriteNote, isRemovingFavorite } = useFavoriteMutations();
+  const rawPageParam = searchParams.get('page');
   const requestedPage = useMemo(() => {
-    const parsedPage = Number(searchParams.get('page') || '1');
+    const parsedPage = Number(rawPageParam || '1');
 
     if (!Number.isInteger(parsedPage) || parsedPage < 1) {
       return 1;
     }
 
     return parsedPage;
-  }, [searchParams]);
+  }, [rawPageParam]);
 
   const filters = useMemo<FavoriteQueryFilters>(
     () => ({
@@ -136,22 +137,25 @@ export function FavoritesPage() {
   const queryErrorMessage = error instanceof Error ? error.message : t('common.error');
   const totalPages = Math.max(1, data?.totalPages || 1);
   const normalizedPage = Math.min(Math.max(1, requestedPage), totalPages);
+  const canonicalPage = data && data.total > 0 ? normalizedPage : requestedPage;
+  const shouldCanonicalizePageParam = rawPageParam !== null && rawPageParam !== String(canonicalPage);
   const shouldRedirectToNormalizedPage = Boolean(
     data
       && data.total > 0
       && data.items.length === 0
+      && rawPageParam === String(requestedPage)
       && requestedPage !== normalizedPage,
   );
 
   useEffect(() => {
-    if (!shouldRedirectToNormalizedPage) {
+    if (!shouldCanonicalizePageParam) {
       return;
     }
 
     const params = new URLSearchParams(searchParams);
-    params.set('page', String(normalizedPage));
+    params.set('page', String(canonicalPage));
     setSearchParams(params, { replace: true });
-  }, [normalizedPage, searchParams, setSearchParams, shouldRedirectToNormalizedPage]);
+  }, [canonicalPage, searchParams, setSearchParams, shouldCanonicalizePageParam]);
 
   const handleFavoriteDialogClose = () => {
     if (isFavoriteDialogPending) {
