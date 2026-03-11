@@ -18,6 +18,7 @@
     "required": "Obbligatorio",
     "optional": "Facoltativo",
     "next": "Avanti",
+    "retry": "Riprova",
     "met": "Soddisfatto",
     "notMet": "Non soddisfatto"
   },
