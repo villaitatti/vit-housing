@@ -154,9 +154,12 @@
     "sectionGeneral": "Generale",
     "sectionAddress": "Indirizzo",
     "sectionCost": "Costo",
+    "sectionCostDescription": "Imposta i costi mensili",
     "sectionDates": "Date Disponibili",
+    "sectionDatesDescription": "Aggiungi periodi di disponibilità",
     "sectionDetails": "Dettagli Annuncio",
     "sectionFeatures": "Caratteristiche",
+    "sectionFeaturesDescription": "Seleziona i servizi disponibili",
     "sectionPhotos": "Foto",
     "postingTitle": "Titolo Annuncio",
     "description": "Descrizione",
@@ -242,6 +245,16 @@
       "photoLabel": "Foto {{index}}",
       "removePhoto": "Rimuovi foto {{index}}"
     },
+    "steps": {
+      "propertyDetails": "Dettagli Immobile",
+      "address": "Indirizzo",
+      "cost": "Costo",
+      "features": "Caratteristiche",
+      "availability": "Disponibilità e Foto"
+    },
+    "stepOf": "Passaggio {{current}} di {{total}}",
+    "next": "Avanti",
+    "back": "Indietro",
     "saveListing": "Salva Annuncio",
     "updateListing": "Aggiorna Annuncio"
   },
