@@ -57,16 +57,17 @@ export function LanguageSwitch({
       <Popover open={open}>
         <PopoverAnchor asChild>
           <div
-            onMouseEnter={() => setOpen(true)}
-            onMouseLeave={() => setOpen(false)}
-            onFocus={() => setOpen(true)}
-            onBlur={() => setOpen(false)}
+            tabIndex={-1}
+            onPointerEnter={() => setOpen(true)}
+            onPointerLeave={() => setOpen(false)}
           >
             <Button
               type="button"
               variant="ghost"
               size={size}
               onClick={handleLanguageSwitch}
+              onFocus={() => setOpen(true)}
+              onBlur={() => setOpen(false)}
               aria-label={`${t('nav.language')}: ${otherLang.toUpperCase()}`}
               className={cn('gap-1.5', buttonClassName)}
             >

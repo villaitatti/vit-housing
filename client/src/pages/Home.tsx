@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ListingCard } from '@/components/listings/ListingCard';
+import { MANAGED_LISTING_ROLES } from '@vithousing/shared';
 import api from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { queryKeys } from '@/lib/queryKeys';
@@ -30,7 +31,7 @@ export function HomePage() {
   const { lang } = useParams();
   const { user } = useAuth();
   const canAddListing = user?.roles?.some((role) =>
-    ['HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'].includes(role),
+    MANAGED_LISTING_ROLES.includes(role),
   );
 
   const { data, isLoading } = useQuery<PaginatedData<HomeListing>>({
