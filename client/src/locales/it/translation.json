@@ -36,7 +36,9 @@
     "profile": "Profilo",
     "login": "Accedi",
     "logout": "Esci",
-    "language": "Lingua"
+    "language": "Lingua",
+    "switchToItalian": "Passa all'italiano",
+    "switchToEnglish": "Passa all'inglese"
   },
   "shell": {
     "logoSubtitle": "Offerte Immobiliari",
@@ -47,7 +49,7 @@
       "itAdmin": "IT Admin"
     },
     "nav": {
-      "allListings": "Tutti gli annunci",
+      "allListings": "Sfoglia annunci",
       "viewMyListings": "Vedi i miei annunci",
       "addNewListing": "Aggiungi annuncio",
       "viewListings": "Vedi annunci",
@@ -65,6 +67,8 @@
   },
   "home": {
     "welcome": "Benvenuto",
+    "welcomeTo": "Benvenuto su",
+    "portalTitle": "Portale Offerte Alloggi I Tatti",
     "latestListings": "Ultimi Annunci",
     "viewAll": "Vedi Tutti gli Annunci",
     "disclaimer": "Il database immobiliare di Villa I Tatti è destinato esclusivamente come servizio alla Comunità di I Tatti. Villa I Tatti non approva né raccomanda alcun proprietario specifico, proprietario individuale di immobili, società di gestione immobiliare o persona individuale. Villa I Tatti non ispeziona nessuna delle proprietà elencate e non garantisce né assicura, né espressamente né implicitamente, l'accuratezza, la completezza, l'idoneità o l'affidabilità di qualsiasi proprietà elencata o delle informazioni ad essa associate. Villa I Tatti declina espressamente ogni responsabilità per eventuali problemi attuali o futuri che possano sorgere in relazione a tali proprietà, unità in affitto o annunci di coinquilini, o in relazione a controversie tra proprietari e inquilini riguardanti tali proprietà o unità in affitto. Tutti i potenziali inquilini sono incoraggiati a esercitare il proprio buon senso nella valutazione di una potenziale unità in affitto o di un proprietario.\n\nVilla I Tatti non conduce indagini di background per determinare l'affidabilità creditizia o l'assenza di precedenti penali di qualsiasi persona che utilizzi il sistema allo scopo di assicurarsi una proprietà residenziale in affitto o una stanza in tale proprietà o di qualsiasi persona o persone che pubblicizzino una proprietà residenziale in affitto o una stanza in tale proprietà. Villa I Tatti non garantisce né assicura, né espressamente né implicitamente, l'idoneità all'affitto di qualsiasi persona né la compatibilità di qualsiasi persona o persone che cerchino un coinquilino o che cerchino una stanza all'interno di una proprietà residenziale in affitto. Tali indagini di background sono di esclusiva responsabilità del proprietario, del proprietario individuale dell'immobile, della società di gestione immobiliare o della persona individuale che cerca di assicurarsi un inquilino o un coinquilino e Villa I Tatti non sarà responsabile in alcun modo per gli atti o la condotta criminale di tale inquilino, coinquilino, proprietario o altra persona semplicemente in virtù del loro utilizzo del database immobiliare di Villa I Tatti."

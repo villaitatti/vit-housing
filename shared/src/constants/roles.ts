@@ -1,4 +1,5 @@
 export const ALL_ROLES = ['HOUSE_USER', 'HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'] as const;
+export const MANAGED_LISTING_ROLES = ['HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'] as const;
 export const ADMIN_ROLES = ['HOUSE_ADMIN', 'HOUSE_IT_ADMIN'] as const;
 export const IT_ADMIN_ROLES = ['HOUSE_IT_ADMIN'] as const;
 export const FAVORITE_LISTING_ROLES = ['HOUSE_USER', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'] as const;

@@ -5,7 +5,7 @@ import {
   LogOut,
   User as UserIcon,
 } from 'lucide-react';
-import { Fragment, useEffect, useMemo } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, Outlet, useLocation, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
@@ -27,15 +27,8 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +38,45 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const BROWSER_APP_NAME = 'I Tatti Housing Offers';
+
+function CollapsedSidebarLabel({
+  enabled,
+  label,
+  children,
+}: {
+  enabled: boolean;
+  label: string;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+
+  if (!enabled) {
+    return <>{children}</>;
+  }
+
+  return (
+    <Popover open={open}>
+      <PopoverAnchor asChild>
+        <div
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setOpen(false)}
+        >
+          {children}
+        </div>
+      </PopoverAnchor>
+      <PopoverContent
+        side="right"
+        align="center"
+        sideOffset={14}
+        className="relative w-auto rounded-[1.15rem] border-0 bg-foreground px-4 py-2 text-sm font-medium text-background shadow-xl before:absolute before:left-0 before:top-1/2 before:h-3 before:w-3 before:-translate-x-1/2 before:-translate-y-1/2 before:rotate-45 before:bg-foreground"
+      >
+        <span className="whitespace-nowrap">{label}</span>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 function SidebarNavigation() {
   const { t } = useTranslation();
@@ -66,12 +98,12 @@ function SidebarNavigation() {
 
   return (
     <>
-      <SidebarHeader className="px-4 py-5">
+      <SidebarHeader className="px-4 py-3 lg:py-2.5">
         <Link
           to={`/${currentLang}/home`}
           onClick={closeMobileSidebar}
           className={cn(
-            'group flex gap-2 rounded-2xl border border-transparent p-2 transition-colors hover:border-sidebar-border hover:bg-sidebar-accent/70',
+            'group flex gap-1.5 rounded-2xl border border-transparent p-1.5 transition-colors hover:border-sidebar-border hover:bg-sidebar-accent/70',
             collapsed && !isMobile ? 'justify-center' : 'flex-col items-start',
           )}
         >
@@ -90,37 +122,42 @@ function SidebarNavigation() {
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="space-y-6 px-3 py-4">
-        {sections.map((section) => (
-          <div key={section.id} className="space-y-2">
+      <SidebarContent className="space-y-7 px-3 pt-4 pb-4">
+        {sections.map((section, index) => (
+          <div key={section.id} className={cn('space-y-3', index === 0 ? 'pt-1' : '')}>
             {collapsed && !isMobile ? null : (
-              <div className="px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              <div className="px-3 text-sm font-semibold tracking-tight text-sidebar-foreground/65">
                 {t(section.labelKey)}
               </div>
             )}
 
-            <nav className="space-y-1.5">
+            <nav className="space-y-1">
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const isActive = isNavigationItemActive(item, location.pathname);
+                const itemLabel = t(item.labelKey);
 
                 return (
-                  <Link
+                  <CollapsedSidebarLabel
                     key={item.id}
-                    to={item.href(currentLang)}
-                    onClick={closeMobileSidebar}
-                    title={collapsed && !isMobile ? t(item.labelKey) : undefined}
-                    className={cn(
-                      'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
-                      collapsed && !isMobile ? 'justify-center' : '',
-                      isActive
-                        ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm'
-                        : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                    )}
+                    enabled={collapsed && !isMobile}
+                    label={itemLabel}
                   >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    {collapsed && !isMobile ? null : <span className="truncate">{t(item.labelKey)}</span>}
-                  </Link>
+                    <Link
+                      to={item.href(currentLang)}
+                      onClick={closeMobileSidebar}
+                      className={cn(
+                        'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+                        collapsed && !isMobile ? 'justify-center' : '',
+                        isActive
+                          ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm'
+                          : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                      )}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      {collapsed && !isMobile ? null : <span className="truncate">{itemLabel}</span>}
+                    </Link>
+                  </CollapsedSidebarLabel>
                 );
               })}
             </nav>
@@ -129,30 +166,23 @@ function SidebarNavigation() {
       </SidebarContent>
 
       <SidebarFooter className="space-y-3 px-3 py-3">
-        <div
-          className={cn(
-            'rounded-2xl border border-sidebar-border bg-sidebar-accent/60 p-3',
-            collapsed && !isMobile ? 'flex justify-center p-2.5' : 'space-y-3',
-          )}
-        >
-          <div className={cn('flex items-start gap-3', collapsed && !isMobile ? 'justify-center' : '')}>
-            <div className="rounded-xl bg-background p-2 text-primary shadow-sm">
-              <HelpCircle className="h-4 w-4" />
-            </div>
-            {collapsed && !isMobile ? null : (
-              <div className="space-y-1">
-                <div className="font-medium">{t('shell.support.title')}</div>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {t('shell.support.body')}
-                </p>
-              </div>
-            )}
-          </div>
-          {collapsed && !isMobile ? null : (
-            <Button type="button" variant="outline" className="w-full" disabled>
-              {t('shell.support.cta')}
-            </Button>
-          )}
+        <div className="space-y-1 px-1">
+          <CollapsedSidebarLabel
+            enabled={collapsed && !isMobile}
+            label={t('shell.support.title')}
+          >
+            <button
+              type="button"
+              disabled
+              className={cn(
+                'flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left text-sm font-medium text-sidebar-foreground/80 transition-colors',
+                collapsed && !isMobile ? 'justify-center px-1.5' : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+              )}
+            >
+              <HelpCircle className="h-4 w-4 shrink-0" />
+              {collapsed && !isMobile ? null : <span>{t('shell.support.title')}</span>}
+            </button>
+          </CollapsedSidebarLabel>
         </div>
 
         {user ? (
@@ -217,9 +247,7 @@ function SidebarNavigation() {
 function ProtectedShellFrame() {
   const { t } = useTranslation();
   const location = useLocation();
-  const { lang } = useParams();
   const { setMobileOpen } = useSidebar();
-  const currentLang = lang === 'it' ? 'it' : 'en';
   const routeMetadata = getRouteMetadata(location.pathname);
 
   useEffect(() => {
@@ -233,48 +261,19 @@ function ProtectedShellFrame() {
     document.title = routeMetadata ? `${title} | ${BROWSER_APP_NAME}` : BROWSER_APP_NAME;
   }, [routeMetadata, title]);
 
-  const breadcrumbItems = useMemo(
-    () =>
-      (routeMetadata?.breadcrumbs ?? []).map((item) => ({
-        label: t(item.labelKey),
-        href: item.href ? item.href(currentLang) : undefined,
-      })),
-    [currentLang, routeMetadata, t],
-  );
-
   return (
-    <div className="flex min-h-screen bg-[linear-gradient(180deg,rgba(229,234,236,0.35),rgba(255,255,255,0)_220px)]">
+    <div className="flex min-h-screen bg-[linear-gradient(180deg,rgba(229,234,236,0.35),rgba(255,255,255,0)_220px)] lg:h-screen lg:overflow-hidden">
       <Sidebar>
         <SidebarNavigation />
       </Sidebar>
 
-      <SidebarInset className="bg-background">
-        <header className="sticky top-0 z-30 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
-          <div className="flex items-start justify-between gap-4 px-4 py-4 lg:px-6">
+      <SidebarInset className="bg-background lg:overflow-hidden">
+        <header className="sticky top-0 z-30 shrink-0 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+          <div className="flex items-start justify-between gap-4 px-4 pt-8 pb-4 lg:px-6">
             <div className="flex min-w-0 items-start gap-3">
               <SidebarTrigger className="mt-1" />
               <div className="min-w-0">
-                {breadcrumbItems.length > 0 ? (
-                  <Breadcrumb>
-                    <BreadcrumbList>
-                      {breadcrumbItems.map((item, index) => (
-                        <Fragment key={`${item.label}-${index}`}>
-                          <BreadcrumbItem>
-                            {item.href && index !== breadcrumbItems.length - 1 ? (
-                              <Link to={item.href} className="transition-colors hover:text-foreground">
-                                {item.label}
-                              </Link>
-                            ) : (
-                              <BreadcrumbPage>{item.label}</BreadcrumbPage>
-                            )}
-                          </BreadcrumbItem>
-                          {index < breadcrumbItems.length - 1 ? <BreadcrumbSeparator /> : null}
-                        </Fragment>
-                      ))}
-                    </BreadcrumbList>
-                  </Breadcrumb>
-                ) : null}
-                <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>
+                <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
               </div>
             </div>
 
@@ -285,13 +284,22 @@ function ProtectedShellFrame() {
         <AnimatePresence mode="wait">
           <motion.main
             key={location.pathname}
-            className={cn('flex min-h-0 flex-1 flex-col', isMapRoute ? 'overflow-hidden' : '')}
+            className={cn(
+              'flex min-h-0 flex-1 flex-col lg:overflow-y-auto',
+              isMapRoute ? 'overflow-hidden' : 'overflow-visible',
+            )}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18 }}
           >
-            <Outlet />
+            {isMapRoute ? (
+              <Outlet />
+            ) : (
+              <div className="flex min-h-full flex-1 flex-col px-4 pt-6 pb-4 lg:px-6 lg:pt-7 lg:pb-5">
+                <Outlet />
+              </div>
+            )}
           </motion.main>
         </AnimatePresence>
       </SidebarInset>

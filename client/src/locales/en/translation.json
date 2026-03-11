@@ -36,7 +36,9 @@
     "profile": "Profile",
     "login": "Log In",
     "logout": "Log Out",
-    "language": "Language"
+    "language": "Language",
+    "switchToItalian": "Switch to Italian",
+    "switchToEnglish": "Switch to English"
   },
   "shell": {
     "logoSubtitle": "Housing Offers",
@@ -47,7 +49,7 @@
       "itAdmin": "IT Admin"
     },
     "nav": {
-      "allListings": "All Listings",
+      "allListings": "Browse Listings",
       "viewMyListings": "View my listings",
       "addNewListing": "Add new listing",
       "viewListings": "View listings",
@@ -65,6 +67,8 @@
   },
   "home": {
     "welcome": "Welcome",
+    "welcomeTo": "Welcome to",
+    "portalTitle": "I Tatti Housing Offers Portal",
     "latestListings": "Latest Listings",
     "viewAll": "View All Listings",
     "disclaimer": "The Villa I Tatti housing database is solely intended as a service to the I Tatti Community. Villa I Tatti does not endorse or recommend any specific landlord, individual property owner, property management company, or individual person. Villa I Tatti does not inspect any of the properties listed and does not guarantee nor warranty, either express or implied, the accuracy, completeness, suitability, or reliability of any listed property or information associated therewith. Villa I Tatti expressly disclaims any and all responsibility for any current or future problems that may arise with regard to such property, rental units or roommate postings, or with regard to disputes between landlords and tenants concerning such property or rental units. All prospective tenants are encouraged to exercise their own good judgment when evaluating a prospective rental unit or landlord.\n\nVilla I Tatti does not conduct background investigations to determine the credit-worthiness or absence of any criminal history of any person using the system for purposes of seeking to secure a residential rental property or a room in such a property or any person or persons advertising a residential rental property or room in such a property. Villa I Tatti does not guarantee nor warranty, either express or implied, the suitability for tenancy of any person nor the compatibility of any person or persons either seeking a roommate or seeking a room within a residential rental property. Any such background investigations are the sole obligation and responsibility of the landlord, individual property owner, property management company, or individual person seeking to secure a tenant or roommate and Villa I Tatti shall not be liable in any manner for the acts or criminal conduct of any such tenant, roommate, landlord, or other person simply by virtue of their use of the Villa I Tatti housing database."

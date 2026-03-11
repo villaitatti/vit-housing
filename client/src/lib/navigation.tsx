@@ -39,22 +39,15 @@ export type NavigationItem = {
   excludeMatches?: string[];
 };
 
-type BreadcrumbDefinition = {
-  labelKey: string;
-  href?: (lang: string) => string;
-};
-
 type RouteMetadataDefinition = {
   id: string;
   pattern: string;
   titleKey: string | ((params: Record<string, string>) => string);
-  breadcrumbs: (params: Record<string, string>) => BreadcrumbDefinition[];
 };
 
 type RouteMetadataMatch = {
   id: string;
   titleKey: string;
-  breadcrumbs: BreadcrumbDefinition[];
 };
 
 const MANAGED_LISTING_ROLES: Role[] = ['HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'];
@@ -201,109 +194,71 @@ const routeMetadata: RouteMetadataDefinition[] = [
     id: 'home',
     pattern: '/:lang/home',
     titleKey: 'nav.home',
-    breadcrumbs: () => [{ labelKey: 'nav.home' }],
   },
   {
     id: 'listings',
     pattern: '/:lang/listings',
-    titleKey: 'listings.title',
-    breadcrumbs: () => [{ labelKey: 'listings.title' }],
+    titleKey: 'shell.nav.allListings',
   },
   {
     id: 'new-listing',
     pattern: '/:lang/listings/new',
     titleKey: 'listingForm.createTitle',
-    breadcrumbs: () => [
-      { labelKey: 'myListings.title', href: (lang) => `/${lang}/my-listings` },
-      { labelKey: 'listingForm.createTitle' },
-    ],
   },
   {
     id: 'edit-listing',
     pattern: '/:lang/listings/:slug/edit',
     titleKey: 'listingForm.editTitle',
-    breadcrumbs: () => [
-      { labelKey: 'myListings.title', href: (lang) => `/${lang}/my-listings` },
-      { labelKey: 'listingForm.editTitle' },
-    ],
   },
   {
     id: 'listing-detail',
     pattern: '/:lang/listings/:slug',
     titleKey: 'shell.pages.listingDetails',
-    breadcrumbs: () => [
-      { labelKey: 'listings.title', href: (lang) => `/${lang}/listings` },
-      { labelKey: 'shell.pages.listingDetails' },
-    ],
   },
   {
     id: 'map',
     pattern: '/:lang/map',
     titleKey: 'nav.map',
-    breadcrumbs: () => [{ labelKey: 'nav.map' }],
   },
   {
     id: 'favorites',
     pattern: '/:lang/favorites',
     titleKey: 'favorites.title',
-    breadcrumbs: () => [{ labelKey: 'favorites.title' }],
   },
   {
     id: 'my-listings',
     pattern: '/:lang/my-listings',
     titleKey: 'myListings.title',
-    breadcrumbs: () => [{ labelKey: 'myListings.title' }],
   },
   {
     id: 'profile',
     pattern: '/:lang/profile',
     titleKey: 'profile.title',
-    breadcrumbs: () => [{ labelKey: 'profile.title' }],
   },
   {
     id: 'admin-listings',
     pattern: '/:lang/admin/listings',
     titleKey: 'admin.listings',
-    breadcrumbs: () => [
-      { labelKey: 'shell.sections.admin', href: (lang) => `/${lang}/admin/listings` },
-      { labelKey: 'admin.listings' },
-    ],
   },
   {
     id: 'admin-users',
     pattern: '/:lang/admin/users',
     titleKey: 'admin.users',
-    breadcrumbs: () => [
-      { labelKey: 'shell.sections.admin', href: (lang) => `/${lang}/admin/listings` },
-      { labelKey: 'admin.users' },
-    ],
   },
   {
     id: 'admin-invitations',
     pattern: '/:lang/admin/invitations',
     titleKey: 'admin.invitations',
-    breadcrumbs: () => [
-      { labelKey: 'shell.sections.admin', href: (lang) => `/${lang}/admin/listings` },
-      { labelKey: 'admin.invitations' },
-    ],
   },
   {
     id: 'admin-invite-user',
     pattern: '/:lang/admin/invite-user',
     titleKey: 'admin.inviteTitle',
-    breadcrumbs: () => [
-      { labelKey: 'shell.sections.admin', href: (lang) => `/${lang}/admin/listings` },
-      { labelKey: 'admin.inviteUser' },
-    ],
   },
   {
     id: 'admin-service',
     pattern: '/:lang/admin/services/:service',
     titleKey: (params) => serviceTitleKey(params.service ?? ''),
-    breadcrumbs: (params) => [
-      { labelKey: 'shell.sections.itAdmin' },
-      { labelKey: serviceTitleKey(params.service ?? '') },
-    ],
   },
 ];
 
@@ -344,7 +299,6 @@ export function getRouteMetadata(pathname: string): RouteMetadataMatch | null {
       id: definition.id,
       titleKey:
         typeof definition.titleKey === 'function' ? definition.titleKey(params) : definition.titleKey,
-      breadcrumbs: definition.breadcrumbs(params),
     };
   }
 
