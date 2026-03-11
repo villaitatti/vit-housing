@@ -49,6 +49,7 @@ export function LanguageSwitch({
     segments[1] = otherLang;
     const nextPath = segments.join('/') || `/${otherLang}`;
 
+    setOpen(false);
     navigate(`${nextPath}${location.search}${location.hash}`);
   };
 
@@ -80,6 +81,7 @@ export function LanguageSwitch({
           side="bottom"
           align="end"
           sideOffset={10}
+          onOpenAutoFocus={(event) => event.preventDefault()}
           className="relative w-auto rounded-[1.15rem] border-0 bg-foreground px-4 py-2 text-sm font-medium text-background shadow-xl before:absolute before:right-5 before:top-0 before:h-3 before:w-3 before:-translate-y-1/2 before:rotate-45 before:bg-foreground"
         >
           <span className="whitespace-nowrap">{hoverLabel}</span>
