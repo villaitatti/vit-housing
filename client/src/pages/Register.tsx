@@ -60,27 +60,33 @@ function getInvitationErrorKey(code?: string): string {
   }
 }
 
-function getStrengthPresentation(strength: PasswordStrength): { labelKey: string; barClassName: string } {
+function getStrengthPresentation(
+  strength: PasswordStrength,
+): { labelKey: string; barClassName: string; value: number } {
   switch (strength) {
     case 'strong':
       return {
         labelKey: 'auth.passwordStrengthStrong',
         barClassName: 'w-full bg-emerald-600',
+        value: 100,
       };
     case 'good':
       return {
         labelKey: 'auth.passwordStrengthGood',
         barClassName: 'w-3/4 bg-sky-600',
+        value: 75,
       };
     case 'fair':
       return {
         labelKey: 'auth.passwordStrengthFair',
         barClassName: 'w-1/2 bg-amber-500',
+        value: 50,
       };
     default:
       return {
         labelKey: 'auth.passwordStrengthWeak',
         barClassName: 'w-1/4 bg-rose-600',
+        value: 25,
       };
   }
 }
@@ -125,7 +131,6 @@ export function RegisterPage() {
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      token: inviteToken,
       first_name: '',
       last_name: '',
       password: '',
@@ -142,7 +147,6 @@ export function RegisterPage() {
     }
 
     form.reset({
-      token: inviteToken,
       first_name: invitation.first_name ?? '',
       last_name: invitation.last_name ?? '',
       password: '',
@@ -364,10 +368,23 @@ export function RegisterPage() {
                 <div className="rounded-xl border bg-muted/30 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-medium">{t('auth.passwordStrength')}</p>
-                    <p className="text-sm text-muted-foreground">{t(strengthPresentation.labelKey)}</p>
+                    <p
+                      className="text-sm text-muted-foreground"
+                      aria-live="polite"
+                      aria-atomic="true"
+                    >
+                      {t(strengthPresentation.labelKey)}
+                    </p>
                   </div>
                   <div className="mt-3 h-2 rounded-full bg-muted">
-                    <div className={`h-2 rounded-full transition-all ${strengthPresentation.barClassName}`} />
+                    <div
+                      className={`h-2 rounded-full transition-all ${strengthPresentation.barClassName}`}
+                      role="progressbar"
+                      aria-label={t('auth.passwordStrength')}
+                      aria-valuenow={strengthPresentation.value}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                    />
                   </div>
                   <p className="mt-3 text-xs text-muted-foreground">
                     {t('auth.passwordHint', { min: PASSWORD_MIN_LENGTH, max: PASSWORD_MAX_LENGTH })}
@@ -378,7 +395,8 @@ export function RegisterPage() {
                         key={item.id}
                         className={item.passed ? 'text-emerald-700' : 'text-muted-foreground'}
                       >
-                        {item.passed ? '✓' : '•'} {t(`auth.passwordChecklist.${item.id}`, {
+                        <span aria-hidden="true">{item.passed ? '✓' : '•'}</span>{' '}
+                        {t(`auth.passwordChecklist.${item.id}`, {
                           min: PASSWORD_MIN_LENGTH,
                           max: PASSWORD_MAX_LENGTH,
                         })}

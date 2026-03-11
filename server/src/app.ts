@@ -8,6 +8,7 @@ import apiRouter from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
+app.set('trust proxy', 1);
 const configuredClientUrls = (process.env.CLIENT_URL || '')
   .split(',')
   .map((value) => value.trim())

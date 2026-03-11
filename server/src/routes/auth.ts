@@ -126,11 +126,13 @@ router.post('/register', registrationRateLimit, validate(registerSchema), async 
     const hashedPassword = await hashPassword(password);
 
     await prisma.$transaction(async (tx) => {
+      const transactionNow = new Date();
       const markInvitationUsed = await tx.invitation.updateMany({
         where: {
           id: invitation.id,
           used: false,
           revoked_at: null,
+          expires_at: { gt: transactionNow },
         },
         data: {
           used: true,
