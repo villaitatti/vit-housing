@@ -65,8 +65,6 @@ export function InviteUserPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-6">{t('admin.inviteTitle')}</h2>
-
       <Card className="max-w-2xl">
         <CardContent className="pt-6">
           <Form {...form}>

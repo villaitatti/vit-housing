@@ -65,12 +65,10 @@ export function ProfilePage() {
 
   return (
     <motion.div
-      className="container mx-auto px-4 py-8 max-w-lg"
+      className="container mx-auto max-w-lg px-4 py-6"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <h1 className="text-3xl font-bold mb-8">{t('profile.title')}</h1>
-
       <Card>
         <CardHeader>
           <CardTitle>{t('profile.personalInfo')}</CardTitle>

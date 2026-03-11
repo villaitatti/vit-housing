@@ -76,8 +76,6 @@ export function AdminListingsPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-6">{t('admin.listings')}</h2>
-
       <Table>
         <TableHeader>
           <TableRow>

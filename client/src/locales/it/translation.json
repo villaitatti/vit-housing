@@ -38,6 +38,31 @@
     "logout": "Esci",
     "language": "Lingua"
   },
+  "shell": {
+    "logoSubtitle": "Offerte Immobiliari",
+    "sections": {
+      "listings": "Annunci",
+      "myListings": "I Miei Annunci",
+      "admin": "Admin",
+      "itAdmin": "IT Admin"
+    },
+    "nav": {
+      "allListings": "Tutti gli annunci",
+      "viewMyListings": "Vedi i miei annunci",
+      "addNewListing": "Aggiungi annuncio",
+      "viewListings": "Vedi annunci",
+      "viewUsers": "Vedi utenti",
+      "viewInvitations": "Vedi inviti"
+    },
+    "pages": {
+      "listingDetails": "Dettagli annuncio"
+    },
+    "support": {
+      "title": "Supporto",
+      "body": "Qui arriveranno presto risorse di aiuto e contatti di supporto.",
+      "cta": "Prossimamente"
+    }
+  },
   "home": {
     "welcome": "Benvenuto",
     "latestListings": "Ultimi Annunci",

@@ -172,7 +172,7 @@ export function MapSearchPage() {
   // Loading States
   if (!googleMapsApiKey) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center h-[calc(100vh-64px)] flex items-center justify-center">
+      <div className="container mx-auto flex flex-1 items-center justify-center px-4 py-16 text-center">
          <div className="flex flex-col items-center">
            <MapIcon className="h-16 w-16 text-muted-foreground mb-4 opacity-50" />
            <p className="text-xl font-medium text-muted-foreground">Map is not configured.</p>
@@ -184,7 +184,7 @@ export function MapSearchPage() {
 
   if (loadError) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6">
         <div className="p-4 bg-destructive/10 text-destructive border border-destructive/20 rounded-md">
           {t('common.error')}: Could not load Google Maps script.
         </div>
@@ -193,29 +193,25 @@ export function MapSearchPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background">
-      {/* Top Header Section for Map Search */}
-      <div className="flex-none px-6 py-4 border-b bg-card">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-           <div>
-             <h1 className="text-2xl font-bold tracking-tight">{t('nav.map')}</h1>
-             <p className="text-sm text-muted-foreground mt-1">
-               {listingsWithCoords.length} {listingsWithCoords.length === 1 ? 'result' : 'results'} found.
-             </p>
-           </div>
-           
-           <div className="flex items-center space-x-2">
-             <Label htmlFor="toggle-filters" className="cursor-pointer">Filters</Label>
-             <Switch 
-               id="toggle-filters" 
-               checked={showFilters} 
-               onCheckedChange={setShowFilters} 
-             />
-           </div>
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
+      <div className="flex-none border-b bg-card px-6 py-4">
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <p className="text-sm text-muted-foreground">
+            {listingsWithCoords.length} {listingsWithCoords.length === 1 ? 'result' : 'results'} found.
+          </p>
+
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="toggle-filters" className="cursor-pointer">{t('listings.filters')}</Label>
+            <Switch
+              id="toggle-filters"
+              checked={showFilters}
+              onCheckedChange={setShowFilters}
+            />
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+      <div className="relative flex flex-1 flex-col overflow-hidden md:flex-row">
         {/* Filters Panel (Slide Overlay on Mobile, Push on Desktop) */}
         <motion.div
             initial={{ width: 0, opacity: 0 }}

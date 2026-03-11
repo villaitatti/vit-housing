@@ -43,22 +43,22 @@ export function HomePage() {
     <div>
       {/* Hero Section */}
       <motion.section
-        className="bg-gradient-to-b from-primary/5 to-background py-16 md:py-24"
+        className="bg-gradient-to-b from-primary/5 to-background py-12 md:py-20"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
         <div className="container mx-auto px-4 text-center">
-          <motion.h1
-            className="text-4xl md:text-5xl font-bold tracking-tight mb-4"
+          <motion.p
+            className="mb-3 text-sm font-semibold uppercase tracking-[0.24em] text-primary"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.5 }}
           >
             {t('home.welcome')}
-          </motion.h1>
+          </motion.p>
           <motion.p
-            className="text-xl text-muted-foreground mb-8"
+            className="mb-8 text-3xl font-bold tracking-tight text-foreground md:text-4xl"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}

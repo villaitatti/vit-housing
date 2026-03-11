@@ -166,9 +166,7 @@ export function FavoritesPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-8 text-3xl font-bold">{t('favorites.title')}</h1>
-
+    <div className="container mx-auto px-4 py-6">
       <div className="flex flex-col gap-8 md:flex-row">
         <aside className="w-full shrink-0 md:w-64">
           <ListingFilters

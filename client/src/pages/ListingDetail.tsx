@@ -201,7 +201,7 @@ export function ListingDetailPage() {
 
   return (
     <motion.div
-      className="container mx-auto px-4 py-8"
+      className="container mx-auto px-4 py-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
@@ -241,7 +241,7 @@ export function ListingDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="mb-2 text-3xl font-bold">{listing.title}</h1>
+              <div className="mb-2 text-2xl font-semibold">{listing.title}</div>
               <p className="flex items-center gap-1 text-muted-foreground">
                 <MapPin className="h-4 w-4" />
                 {listing.address_1}

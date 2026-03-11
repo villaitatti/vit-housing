@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import api from '@/lib/api';
@@ -63,6 +63,16 @@ const ROLE_VARIANTS: Record<Role, 'default' | 'secondary' | 'outline' | 'destruc
   HOUSE_IT_ADMIN: 'destructive',
 };
 
+function renderSortIcon(column: SortBy, sortBy: SortBy, sortOrder: 'asc' | 'desc') {
+  if (sortBy !== column) {
+    return <ArrowUpDown className="ml-1 h-3.5 w-3.5 opacity-50" />;
+  }
+
+  return sortOrder === 'asc'
+    ? <ArrowUp className="ml-1 h-3.5 w-3.5" />
+    : <ArrowDown className="ml-1 h-3.5 w-3.5" />;
+}
+
 export function AdminUsersPage() {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
@@ -106,13 +116,6 @@ export function AdminUsersPage() {
     },
     placeholderData: keepPreviousData,
   });
-
-  // Clamp page when totalPages shrinks (e.g., after search/filter)
-  useEffect(() => {
-    if (data && data.totalPages > 0 && page > data.totalPages) {
-      setPage(data.totalPages);
-    }
-  }, [data, page]);
 
   const updateRolesMutation = useMutation({
     mutationFn: async ({ id, roles }: { id: number; roles: Role[] }) => {
@@ -183,13 +186,6 @@ export function AdminUsersPage() {
     updateRolesMutation.mutate({ id: user.id, roles: newRoles });
   };
 
-  const SortIcon = ({ column }: { column: SortBy }) => {
-    if (sortBy !== column) return <ArrowUpDown className="h-3.5 w-3.5 ml-1 opacity-50" />;
-    return sortOrder === 'asc'
-      ? <ArrowUp className="h-3.5 w-3.5 ml-1" />
-      : <ArrowDown className="h-3.5 w-3.5 ml-1" />;
-  };
-
   if (isLoading && !data) {
     return (
       <div className="space-y-3">
@@ -204,8 +200,6 @@ export function AdminUsersPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-6">{t('admin.users')}</h2>
-
       {/* Search & Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative w-full max-w-xl">
@@ -281,13 +275,13 @@ export function AdminUsersPage() {
             <TableHead>
               <button className="flex items-center font-medium" onClick={() => handleSort('first_name')}>
                 {t('admin.userColumns.name')}
-                <SortIcon column="first_name" />
+                {renderSortIcon('first_name', sortBy, sortOrder)}
               </button>
             </TableHead>
             <TableHead>
               <button className="flex items-center font-medium" onClick={() => handleSort('email')}>
                 {t('admin.userColumns.email')}
-                <SortIcon column="email" />
+                {renderSortIcon('email', sortBy, sortOrder)}
               </button>
             </TableHead>
             <TableHead>{t('admin.userColumns.role')}</TableHead>
@@ -296,13 +290,13 @@ export function AdminUsersPage() {
             <TableHead>
               <button className="flex items-center font-medium" onClick={() => handleSort('last_login')}>
                 {t('admin.userColumns.lastLogin')}
-                <SortIcon column="last_login" />
+                {renderSortIcon('last_login', sortBy, sortOrder)}
               </button>
             </TableHead>
             <TableHead>
               <button className="flex items-center font-medium" onClick={() => handleSort('created_at')}>
                 {t('admin.userColumns.createdAt')}
-                <SortIcon column="created_at" />
+                {renderSortIcon('created_at', sortBy, sortOrder)}
               </button>
             </TableHead>
             <TableHead>{t('admin.userColumns.actions')}</TableHead>
