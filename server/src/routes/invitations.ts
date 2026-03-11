@@ -97,6 +97,9 @@ router.post(
   requireRole('HOUSE_ADMIN', 'HOUSE_IT_ADMIN'),
   validate(createInvitationSchema),
   async (req: Request, res: Response) => {
+    let stagedInvitationId: number | null = null;
+    let stagedRevokedAt: Date | null = null;
+
     try {
       const { email, first_name, last_name, role, language } = req.body;
       const normalizedEmail = normalizeEmail(email);
@@ -109,7 +112,7 @@ router.post(
 
       const token = generateInvitationToken();
       const expiresAt = buildInvitationExpiryDate();
-      const stagedRevokedAt = new Date();
+      stagedRevokedAt = new Date();
 
       const invitation = await prisma.invitation.create({
         data: {
@@ -125,73 +128,117 @@ router.post(
         },
         select: invitationSelect,
       });
+      stagedInvitationId = invitation.id;
 
-      try {
-        const activatedInvitation = await prisma.$transaction(async (tx) => {
-          await acquireInvitationEmailLock(tx, normalizedEmail);
+      const activationResult = await prisma.$transaction(async (tx) => {
+        await acquireInvitationEmailLock(tx, normalizedEmail);
 
-          await tx.invitation.updateMany({
-            where: {
-              email: normalizedEmail,
-              used: false,
-              revoked_at: null,
-            },
-            data: {
-              revoked_at: new Date(),
-            },
-          });
-
-          const nextInvitation = await tx.invitation.update({
-            where: { id: invitation.id },
-            data: { revoked_at: null },
-            select: invitationSelect,
-          });
-
-          try {
-            await sendInvitationEmail({
-              to: normalizedEmail,
-              token,
-              role,
-              lang: language,
-              firstName: first_name,
-              lastName: last_name,
-              expiresAt,
-            });
-          } catch (emailError) {
-            console.error('Invitation email send error:', {
-              invitationId: nextInvitation.id,
-              redactedEmail: redactEmail(normalizedEmail),
-              error: sanitizeErrorIdentifier(emailError),
-            });
-            throw new InvitationDeliveryError();
-          }
-
-          return nextInvitation;
-        }, {
-          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        const previouslyActiveInvitations = await tx.invitation.findMany({
+          where: {
+            email: normalizedEmail,
+            used: false,
+            revoked_at: null,
+          },
+          select: {
+            id: true,
+          },
         });
 
-        sendSuccess(res, { invitation: activatedInvitation }, 201);
-      } catch (emailError) {
-        if (emailError instanceof InvitationDeliveryError) {
-          try {
-            await prisma.invitation.delete({
-              where: { id: invitation.id },
-            });
-          } catch (cleanupError) {
-            console.error('Invitation cleanup error:', {
-              invitationId: invitation.id,
-              redactedEmail: redactEmail(normalizedEmail),
-              error: sanitizeErrorIdentifier(cleanupError),
-            });
-          }
+        await tx.invitation.updateMany({
+          where: {
+            email: normalizedEmail,
+            used: false,
+            revoked_at: null,
+          },
+          data: {
+            revoked_at: new Date(),
+          },
+        });
 
-          throw emailError;
+        const nextInvitation = await tx.invitation.update({
+          where: { id: invitation.id },
+          data: { revoked_at: null },
+          select: invitationSelect,
+        });
+
+        return {
+          invitation: nextInvitation,
+          previouslyActiveIds: previouslyActiveInvitations.map(({ id }) => id),
+        };
+      }, {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      });
+
+      try {
+        await sendInvitationEmail({
+          to: normalizedEmail,
+          token,
+          role,
+          lang: language,
+          firstName: first_name,
+          lastName: last_name,
+          expiresAt,
+        });
+      } catch (emailError) {
+        console.error('Invitation email send error:', {
+          invitationId: activationResult.invitation.id,
+          redactedEmail: redactEmail(normalizedEmail),
+          error: sanitizeErrorIdentifier(emailError),
+        });
+
+        try {
+          await prisma.$transaction(async (tx) => {
+            await acquireInvitationEmailLock(tx, normalizedEmail);
+
+            await tx.invitation.delete({
+              where: { id: activationResult.invitation.id },
+            });
+
+            if (activationResult.previouslyActiveIds.length > 0) {
+              await tx.invitation.updateMany({
+                where: {
+                  id: {
+                    in: activationResult.previouslyActiveIds,
+                  },
+                  used: false,
+                },
+                data: {
+                  revoked_at: null,
+                },
+              });
+            }
+          }, {
+            isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+          });
+        } catch (cleanupError) {
+          console.error('Invitation cleanup error:', {
+            invitationId: activationResult.invitation.id,
+            redactedEmail: redactEmail(normalizedEmail),
+            error: sanitizeErrorIdentifier(cleanupError),
+          });
         }
 
-        throw emailError;
+        throw new InvitationDeliveryError();
       }
+
+      sendSuccess(res, { invitation: activationResult.invitation }, 201);
     } catch (err) {
+      if (stagedInvitationId !== null && stagedRevokedAt !== null && !(err instanceof InvitationDeliveryError)) {
+        try {
+          await prisma.invitation.deleteMany({
+            where: {
+              id: stagedInvitationId,
+              revoked_at: stagedRevokedAt,
+            },
+          });
+        } catch (cleanupError) {
+          console.error('Invitation cleanup error:', {
+            invitationId: stagedInvitationId,
+            error: sanitizeErrorIdentifier(cleanupError),
+          });
+        }
+      }
+
       if (err instanceof InvitationDeliveryError) {
         sendError(res, 'Failed to create invitation', 'INVITE_ERROR', 500);
         return;
