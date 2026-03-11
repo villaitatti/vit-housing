@@ -104,7 +104,7 @@ export function Sidebar({
       />
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex h-screen flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground shadow-xl transition-all duration-200 ease-out lg:static lg:z-auto lg:shadow-none',
+          'fixed inset-y-0 left-0 z-50 flex h-screen flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground shadow-xl transition-all duration-200 ease-out lg:static lg:z-auto lg:overflow-hidden lg:shadow-none',
           isMobile ? 'w-72' : collapsed ? 'w-20' : 'w-72',
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
           className,
@@ -123,7 +123,7 @@ export function SidebarInset({
   className?: string;
   children: React.ReactNode;
 }) {
-  return <div className={cn('flex min-h-screen min-w-0 flex-1 flex-col', className)}>{children}</div>;
+  return <div className={cn('flex min-h-screen min-w-0 flex-1 flex-col lg:h-screen lg:min-h-0', className)}>{children}</div>;
 }
 
 export function SidebarHeader({

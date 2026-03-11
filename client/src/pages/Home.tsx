@@ -2,12 +2,13 @@ import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, PlusSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ListingCard } from '@/components/listings/ListingCard';
 import api from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 import { queryKeys } from '@/lib/queryKeys';
 import type { PaginatedData } from '@vithousing/shared';
 
@@ -27,6 +28,10 @@ interface HomeListing {
 export function HomePage() {
   const { t } = useTranslation();
   const { lang } = useParams();
+  const { user } = useAuth();
+  const canAddListing = user?.roles?.some((role) =>
+    ['HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'].includes(role),
+  );
 
   const { data, isLoading } = useQuery<PaginatedData<HomeListing>>({
     queryKey: queryKeys.listings.latest,
@@ -50,30 +55,30 @@ export function HomePage() {
       >
         <div className="container mx-auto px-4 text-center">
           <motion.p
-            className="mb-3 text-sm font-semibold uppercase tracking-[0.24em] text-primary"
+            className="mb-3 text-sm font-semibold tracking-[0.12em] text-primary"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.5 }}
           >
-            {t('home.welcome')}
+            {t('home.welcomeTo')}
           </motion.p>
-          <motion.p
-            className="mb-8 text-3xl font-bold tracking-tight text-foreground md:text-4xl"
+          <motion.h2
+            className="mx-auto mb-8 max-w-3xl text-3xl font-bold tracking-tight text-foreground md:text-5xl"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
-            {t('common.appName')}
-          </motion.p>
+            {t('home.portalTitle')}
+          </motion.h2>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
           >
             <Button asChild size="lg">
-              <Link to={`/${lang}/listings`}>
-                {t('home.viewAll')}
-                <ArrowRight className="ml-2 h-4 w-4" />
+              <Link to={canAddListing ? `/${lang}/listings/new` : `/${lang}/listings`}>
+                {canAddListing ? t('listingForm.createTitle') : t('shell.nav.allListings')}
+                {canAddListing ? <PlusSquare className="ml-2 h-4 w-4" /> : <ArrowRight className="ml-2 h-4 w-4" />}
               </Link>
             </Button>
           </motion.div>

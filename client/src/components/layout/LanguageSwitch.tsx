@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
 type LanguageSwitchProps = {
@@ -36,9 +38,11 @@ export function LanguageSwitch({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const [open, setOpen] = useState(false);
 
   const currentLang: 'en' | 'it' = lang === 'it' ? 'it' : 'en';
   const otherLang: 'en' | 'it' = currentLang === 'en' ? 'it' : 'en';
+  const hoverLabel = currentLang === 'en' ? t('nav.switchToItalian') : t('nav.switchToEnglish');
 
   const handleLanguageSwitch = () => {
     const segments = location.pathname.split('/');
@@ -50,17 +54,36 @@ export function LanguageSwitch({
 
   return (
     <div className={cn('flex items-center', className)}>
-      <Button
-        type="button"
-        variant="ghost"
-        size={size}
-        onClick={handleLanguageSwitch}
-        aria-label={`${t('nav.language')}: ${otherLang.toUpperCase()}`}
-        className={cn('gap-1.5', buttonClassName)}
-      >
-        <LanguageFlag lang={otherLang} />
-        <span className="font-semibold">{otherLang.toUpperCase()}</span>
-      </Button>
+      <Popover open={open}>
+        <PopoverAnchor asChild>
+          <div
+            onMouseEnter={() => setOpen(true)}
+            onMouseLeave={() => setOpen(false)}
+            onFocus={() => setOpen(true)}
+            onBlur={() => setOpen(false)}
+          >
+            <Button
+              type="button"
+              variant="ghost"
+              size={size}
+              onClick={handleLanguageSwitch}
+              aria-label={`${t('nav.language')}: ${otherLang.toUpperCase()}`}
+              className={cn('gap-1.5', buttonClassName)}
+            >
+              <LanguageFlag lang={otherLang} />
+              <span className="font-semibold">{otherLang.toUpperCase()}</span>
+            </Button>
+          </div>
+        </PopoverAnchor>
+        <PopoverContent
+          side="bottom"
+          align="end"
+          sideOffset={10}
+          className="relative w-auto rounded-[1.15rem] border-0 bg-foreground px-4 py-2 text-sm font-medium text-background shadow-xl before:absolute before:right-5 before:top-0 before:h-3 before:w-3 before:-translate-y-1/2 before:rotate-45 before:bg-foreground"
+        >
+          <span className="whitespace-nowrap">{hoverLabel}</span>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
