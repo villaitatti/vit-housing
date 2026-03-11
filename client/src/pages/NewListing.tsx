@@ -67,7 +67,7 @@ export function NewListingPage() {
 
   return (
     <motion.div
-      className="container mx-auto px-4 py-8 max-w-3xl"
+      className="mx-auto px-6 lg:px-11 py-8"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
     >

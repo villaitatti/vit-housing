@@ -4,10 +4,11 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createListingSchema, type CreateListingInput } from '@vithousing/shared';
 import type { z } from 'zod';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -24,11 +25,21 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useDropzone } from 'react-dropzone';
-import { Plus, X, Upload, Star } from 'lucide-react';
+import {
+  Plus, X, Upload, Star,
+  FileText, MapPin, Euro, CalendarDays, Home, Sparkles, Camera,
+  Zap, Flame, Droplets, Phone, Globe,
+  Warehouse, ArrowDownToLine, TreePine, Fence, AirVent,
+  WashingMachine, Wind, CookingPot, ArrowUpDown, Tv, Wifi,
+  Cable, CarFront, PawPrint,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import accommodationTypes from '@/data/accommodation-types.json';
 import floorOptions from '@/data/floor-options.json';
 import { ITALIAN_PROVINCES } from '@/lib/provinces';
 import { PhotoBatchDialog } from '@/components/photos/PhotoBatchDialog';
+import { StepIndicator } from '@/components/ui/step-indicator';
 
 export interface PhotoFile {
   file: File;
@@ -76,12 +87,31 @@ const featureTranslationKeys: Record<string, string> = {
   feature_pets_allowed: 'petsAllowed',
 };
 
+const featureIcons: Record<string, LucideIcon> = {
+  feature_storage_room: Warehouse,
+  feature_basement: ArrowDownToLine,
+  feature_garden: TreePine,
+  feature_balcony: Fence,
+  feature_air_con: AirVent,
+  feature_washing_machine: WashingMachine,
+  feature_dryer: Wind,
+  feature_fireplace: Flame,
+  feature_dishwasher: CookingPot,
+  feature_elevator: ArrowUpDown,
+  feature_tv: Tv,
+  feature_telephone: Phone,
+  feature_wifi: Wifi,
+  feature_wired_internet: Cable,
+  feature_parking: CarFront,
+  feature_pets_allowed: PawPrint,
+};
+
 const utilityFields = [
-  { name: 'utility_electricity' as const, label: 'listingDetail.electricity' },
-  { name: 'utility_gas' as const, label: 'listingDetail.gas' },
-  { name: 'utility_water' as const, label: 'listingDetail.water' },
-  { name: 'utility_telephone' as const, label: 'listingDetail.telephone' },
-  { name: 'utility_internet' as const, label: 'listingDetail.internet' },
+  { name: 'utility_electricity' as const, label: 'listingDetail.electricity', icon: Zap },
+  { name: 'utility_gas' as const, label: 'listingDetail.gas', icon: Flame },
+  { name: 'utility_water' as const, label: 'listingDetail.water', icon: Droplets },
+  { name: 'utility_telephone' as const, label: 'listingDetail.telephone', icon: Phone },
+  { name: 'utility_internet' as const, label: 'listingDetail.internet', icon: Globe },
 ];
 
 const RequiredStar = () => (
@@ -91,6 +121,65 @@ const RequiredStar = () => (
 );
 
 const EMPTY_PHOTOS: ExistingPhoto[] = [];
+
+type StepFieldName = keyof CreateListingInput | 'available_dates';
+
+interface WizardStep {
+  id: string;
+  titleKey: string;
+  icon: LucideIcon;
+  fields: StepFieldName[];
+}
+
+const WIZARD_STEPS: WizardStep[] = [
+  {
+    id: 'propertyDetails',
+    titleKey: 'listingForm.steps.propertyDetails',
+    icon: Home,
+    fields: ['title', 'description', 'accommodation_type', 'floor', 'bathrooms', 'bedrooms', 'floor_space'],
+  },
+  {
+    id: 'address',
+    titleKey: 'listingForm.steps.address',
+    icon: MapPin,
+    fields: ['address_1', 'address_2', 'postal_code', 'city', 'province'],
+  },
+  {
+    id: 'cost',
+    titleKey: 'listingForm.steps.cost',
+    icon: Euro,
+    fields: ['monthly_rent', 'deposit', 'condominium_expenses', 'utility_electricity', 'utility_gas', 'utility_water', 'utility_telephone', 'utility_internet'],
+  },
+  {
+    id: 'features',
+    titleKey: 'listingForm.steps.features',
+    icon: Sparkles,
+    fields: [...featureFields],
+  },
+  {
+    id: 'availability',
+    titleKey: 'listingForm.steps.availability',
+    icon: CalendarDays,
+    fields: ['available_dates'],
+  },
+];
+
+const TOTAL_STEPS = WIZARD_STEPS.length;
+
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 80 : -80,
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction: number) => ({
+    x: direction > 0 ? -80 : 80,
+    opacity: 0,
+  }),
+};
 
 interface ListingFormProps {
   mode: 'create' | 'edit';
@@ -107,6 +196,13 @@ export function ListingForm({ mode, initialData, existingPhotos = EMPTY_PHOTOS, 
   const [keptExisting, setKeptExisting] = useState<ExistingPhoto[]>(existingPhotos);
   const newPhotosRef = useRef(newPhotos);
   newPhotosRef.current = newPhotos;
+
+  // Wizard state
+  const [currentStep, setCurrentStep] = useState(1);
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(
+    () => mode === 'edit' ? new Set([1, 2, 3, 4, 5]) : new Set(),
+  );
+  const [direction, setDirection] = useState(1);
 
   useEffect(() => {
     setKeptExisting(existingPhotos);
@@ -174,7 +270,6 @@ export function ListingForm({ mode, initialData, existingPhotos = EMPTY_PHOTOS, 
     });
     setNewPhotos((prev) => {
       const combined = [...prev, ...photos];
-      // If no main photo exists (among existing + new), set first new as main
       const hasMainExisting = keptExisting.length > 0 && !combined.some((p) => p.isMain);
       if (!hasMainExisting && !combined.some((p) => p.isMain) && combined.length > 0 && keptExisting.length === 0) {
         return combined.map((p, i) => (i === 0 ? { ...p, isMain: true } : p));
@@ -226,564 +321,741 @@ export function ListingForm({ mode, initialData, existingPhotos = EMPTY_PHOTOS, 
     onSubmit(data, newPhotos, deletedPhotoIds);
   };
 
+  // Wizard navigation
+  const handleNext = async () => {
+    const stepConfig = WIZARD_STEPS[currentStep - 1];
+    const valid = await form.trigger(stepConfig.fields as unknown as Parameters<typeof form.trigger>[0]);
+    if (!valid) return;
+    setCompletedSteps((prev) => new Set([...prev, currentStep]));
+    setDirection(1);
+    setCurrentStep((s) => Math.min(s + 1, TOTAL_STEPS));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBack = () => {
+    setDirection(-1);
+    setCurrentStep((s) => Math.max(s - 1, 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const goToStep = (step: number) => {
+    if (completedSteps.has(step) || step < currentStep) {
+      setDirection(step > currentStep ? 1 : -1);
+      setCurrentStep(step);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const wizardStepLabels = WIZARD_STEPS.map((s) => ({
+    id: s.id,
+    label: t(s.titleKey),
+  }));
+
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8">
-          {/* Section 1: General */}
-          <section>
-            <h2 className="text-xl font-semibold mb-4">{t('listingForm.sectionGeneral')}</h2>
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('listingForm.postingTitle')} <RequiredStar /></FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('listingForm.description')} <RequiredStar /></FormLabel>
-                    <FormControl>
-                      <textarea
-                        className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </section>
+        <form onSubmit={form.handleSubmit(handleFormSubmit)}>
+          <StepIndicator
+            steps={wizardStepLabels}
+            currentStep={currentStep}
+            completedSteps={completedSteps}
+            onStepClick={goToStep}
+          />
 
-          <Separator />
-
-          {/* Section 2: Address */}
-          <section>
-            <h2 className="text-xl font-semibold mb-4">{t('listingForm.sectionAddress')}</h2>
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="address_1"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('listingForm.address1')} <RequiredStar /></FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="address_2"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('listingForm.address2')}</FormLabel>
-                    <FormControl>
-                      <Input {...field} value={field.value || ''} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="postal_code"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('listingForm.postalCode')} <RequiredStar /></FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="city"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('listingForm.city')} <RequiredStar /></FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name="province"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('listingForm.province')} <RequiredStar /></FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {ITALIAN_PROVINCES.map((prov) => (
-                          <SelectItem key={prov} value={prov}>
-                            {prov}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </section>
-
-          <Separator />
-
-          {/* Section 3: Cost */}
-          <section>
-            <h2 className="text-xl font-semibold mb-4">{t('listingForm.sectionCost')}</h2>
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="monthly_rent"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('listingForm.monthlyRent')} (€) <RequiredStar /></FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
-                        <Input
-                          type="number"
-                          className="pl-8"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="deposit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('listingForm.deposit')} (€)</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
-                          <Input
-                            type="number"
-                            className="pl-8"
-                            {...field}
-                            value={field.value ?? ''}
-                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="condominium_expenses"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('listingForm.condominiumExpenses')} (€)</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
-                          <Input
-                            type="number"
-                            className="pl-8"
-                            {...field}
-                            value={field.value ?? ''}
-                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div>
-                <FormLabel>{t('listingForm.utilitiesIncluded')}</FormLabel>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
-                  {utilityFields.map((util) => (
-                    <FormField
-                      key={util.name}
-                      control={form.control}
-                      name={util.name}
-                      render={({ field }) => (
-                        <FormItem className="flex items-center gap-2 space-y-0">
-                          <FormControl>
-                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                          <FormLabel className="font-normal">{t(util.label)}</FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <Separator />
-
-          {/* Section 4: Dates Available */}
-          <section>
-            <h2 className="text-xl font-semibold mb-4">{t('listingForm.sectionDates')}</h2>
-            <div className="space-y-4">
-              {dateFields.map((field, index) => (
-                <div key={field.id} className="flex gap-4 items-start border rounded-lg p-4">
-                  <div className="flex-1 space-y-3">
+          <AnimatePresence mode="wait" custom={direction}>
+            {/* Step 1: Property Details (General + Listing Details) */}
+            {currentStep === 1 && (
+              <motion.div
+                key="step-1"
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                className="space-y-8"
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-xl">
+                      <FileText className="h-5 w-5 text-primary" />
+                      {t('listingForm.sectionGeneral')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
                     <FormField
                       control={form.control}
-                      name={`available_dates.${index}.available_from`}
+                      name="title"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('listingForm.availableFrom')} <RequiredStar /></FormLabel>
+                          <FormLabel>{t('listingForm.postingTitle')} <RequiredStar /></FormLabel>
                           <FormControl>
-                            <Input type="date" {...field} value={field.value as string} />
+                            <Input {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        checked={showAvailableTo[index] || false}
-                        onCheckedChange={(checked) => {
-                          const newShow = [...showAvailableTo];
-                          newShow[index] = !!checked;
-                          setShowAvailableTo(newShow);
-                          if (!checked) {
-                            form.setValue(`available_dates.${index}.available_to`, undefined);
-                          }
-                        }}
-                      />
-                      <label className="text-sm">{t('listingForm.showAvailableTo')}</label>
-                    </div>
-                    {showAvailableTo[index] && (
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('listingForm.description')} <RequiredStar /></FormLabel>
+                          <FormControl>
+                            <textarea
+                              className="flex min-h-[120px] w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-xl">
+                      <Home className="h-5 w-5 text-primary" />
+                      {t('listingForm.sectionDetails')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <FormField
                         control={form.control}
-                        name={`available_dates.${index}.available_to`}
+                        name="accommodation_type"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('listingForm.availableTo')}</FormLabel>
+                            <FormLabel>{t('listingForm.accommodationType.label')} <RequiredStar /></FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {typedAccommodationTypes.map((type) => (
+                                  <SelectItem key={type.value} value={type.value}>
+                                    {t(type.labelKey)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="floor"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('listingForm.floor.label')} <RequiredStar /></FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {typedFloorOptions.map((opt) => (
+                                  <SelectItem key={opt.value} value={opt.value}>
+                                    {t(opt.labelKey)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="bathrooms"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('listingForm.bathrooms')}</FormLabel>
                             <FormControl>
-                              <Input type="date" {...field} value={(field.value as string) || ''} />
+                              <Input
+                                type="number"
+                                min="0"
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                    )}
-                  </div>
-                  {index > 0 && (
+                      <FormField
+                        control={form.control}
+                        name="bedrooms"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('listingForm.bedrooms')}</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min="0"
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="floor_space"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('listingForm.floorSpace')}</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  className="pr-16"
+                                  {...field}
+                                  value={field.value ?? ''}
+                                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                                  {t('listingForm.floorSpaceSuffix')}
+                                </span>
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Step 2: Address */}
+            {currentStep === 2 && (
+              <motion.div
+                key="step-2"
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-xl">
+                      <MapPin className="h-5 w-5 text-primary" />
+                      {t('listingForm.sectionAddress')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="address_1"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('listingForm.address1')} <RequiredStar /></FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="address_2"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('listingForm.address2')}</FormLabel>
+                          <FormControl>
+                            <Input {...field} value={field.value || ''} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="postal_code"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('listingForm.postalCode')} <RequiredStar /></FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('listingForm.city')} <RequiredStar /></FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="province"
+                      render={({ field }) => (
+                        <FormItem className="max-w-sm">
+                          <FormLabel>{t('listingForm.province')} <RequiredStar /></FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {ITALIAN_PROVINCES.map((prov) => (
+                                <SelectItem key={prov} value={prov}>
+                                  {prov}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Step 3: Cost */}
+            {currentStep === 3 && (
+              <motion.div
+                key="step-3"
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-xl">
+                      <Euro className="h-5 w-5 text-primary" />
+                      {t('listingForm.sectionCost')}
+                    </CardTitle>
+                    <CardDescription>{t('listingForm.sectionCostDescription')}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="monthly_rent"
+                      render={({ field }) => (
+                        <FormItem className="max-w-sm">
+                          <FormLabel>{t('listingForm.monthlyRent')} (€) <RequiredStar /></FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
+                              <Input
+                                type="number"
+                                className="pl-8"
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="deposit"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('listingForm.deposit')} (€)</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
+                                <Input
+                                  type="number"
+                                  className="pl-8"
+                                  {...field}
+                                  value={field.value ?? ''}
+                                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="condominium_expenses"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('listingForm.condominiumExpenses')} (€)</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
+                                <Input
+                                  type="number"
+                                  className="pl-8"
+                                  {...field}
+                                  value={field.value ?? ''}
+                                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <FormLabel>{t('listingForm.utilitiesIncluded')}</FormLabel>
+                      <div className="grid grid-cols-3 sm:grid-cols-5 gap-4 mt-2">
+                        {utilityFields.map((util) => (
+                          <FormField
+                            key={util.name}
+                            control={form.control}
+                            name={util.name}
+                            render={({ field }) => (
+                              <FormItem className="space-y-0">
+                                <FormControl>
+                                  <button
+                                    type="button"
+                                    role="checkbox"
+                                    aria-checked={!!field.value}
+                                    onClick={() => field.onChange(!field.value)}
+                                    className={cn(
+                                      "flex w-full flex-col items-center justify-center gap-1.5 rounded-lg border-2 p-3 text-center transition-colors",
+                                      field.value
+                                        ? "border-primary bg-primary/5 text-primary"
+                                        : "border-muted hover:border-primary/30 text-muted-foreground"
+                                    )}
+                                  >
+                                    <util.icon className="h-5 w-5" />
+                                    <span className="text-xs font-medium leading-tight">{t(util.label)}</span>
+                                  </button>
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Step 4: Features */}
+            {currentStep === 4 && (
+              <motion.div
+                key="step-4"
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-xl">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                      {t('listingForm.sectionFeatures')}
+                    </CardTitle>
+                    <CardDescription>{t('listingForm.sectionFeaturesDescription')}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+                      {featureFields.map((feature) => {
+                        const Icon = featureIcons[feature];
+                        return (
+                          <FormField
+                            key={feature}
+                            control={form.control}
+                            name={feature}
+                            render={({ field }) => (
+                              <FormItem className="space-y-0">
+                                <FormControl>
+                                  <button
+                                    type="button"
+                                    role="checkbox"
+                                    aria-checked={!!field.value}
+                                    onClick={() => field.onChange(!field.value)}
+                                    className={cn(
+                                      "flex w-full flex-col items-center justify-center gap-1.5 rounded-lg border-2 p-3 text-center transition-colors",
+                                      field.value
+                                        ? "border-primary bg-primary/5 text-primary"
+                                        : "border-muted hover:border-primary/30 text-muted-foreground"
+                                    )}
+                                  >
+                                    <Icon className="h-5 w-5" />
+                                    <span className="text-xs font-medium leading-tight">
+                                      {t(`listingForm.features.${featureTranslationKeys[feature]}`)}
+                                    </span>
+                                  </button>
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Step 5: Availability & Photos */}
+            {currentStep === 5 && (
+              <motion.div
+                key="step-5"
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                className="space-y-8"
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-xl">
+                      <CalendarDays className="h-5 w-5 text-primary" />
+                      {t('listingForm.sectionDates')}
+                    </CardTitle>
+                    <CardDescription>{t('listingForm.sectionDatesDescription')}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {dateFields.map((field, index) => (
+                      <div key={field.id} className="flex gap-4 items-start border rounded-lg p-4">
+                        <div className="flex-1 space-y-3">
+                          <FormField
+                            control={form.control}
+                            name={`available_dates.${index}.available_from`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{t('listingForm.availableFrom')} <RequiredStar /></FormLabel>
+                                <FormControl>
+                                  <Input type="date" {...field} value={field.value as string} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              checked={showAvailableTo[index] || false}
+                              onCheckedChange={(checked) => {
+                                const newShow = [...showAvailableTo];
+                                newShow[index] = !!checked;
+                                setShowAvailableTo(newShow);
+                                if (!checked) {
+                                  form.setValue(`available_dates.${index}.available_to`, undefined);
+                                }
+                              }}
+                            />
+                            <label className="text-sm">{t('listingForm.showAvailableTo')}</label>
+                          </div>
+                          {showAvailableTo[index] && (
+                            <FormField
+                              control={form.control}
+                              name={`available_dates.${index}.available_to`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t('listingForm.availableTo')}</FormLabel>
+                                  <FormControl>
+                                    <Input type="date" {...field} value={(field.value as string) || ''} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
+                        </div>
+                        {index > 0 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              removeDate(index);
+                              setShowAvailableTo((prev) => prev.filter((_, i) => i !== index));
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={() => {
-                        removeDate(index);
-                        setShowAvailableTo((prev) => prev.filter((_, i) => i !== index));
+                        appendDate({ available_from: '' });
+                        setShowAvailableTo((prev) => [...prev, false]);
                       }}
                     >
-                      <X className="h-4 w-4" />
+                      <Plus className="h-4 w-4 mr-1" />
+                      {t('listingForm.addPeriod')}
                     </Button>
-                  )}
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  appendDate({ available_from: '' });
-                  setShowAvailableTo((prev) => [...prev, false]);
-                }}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                {t('listingForm.addPeriod')}
-              </Button>
-            </div>
-          </section>
+                  </CardContent>
+                </Card>
 
-          <Separator />
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-xl">
+                      <Camera className="h-5 w-5 text-primary" />
+                      {t('listingForm.sectionPhotos')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div
+                      {...getRootProps()}
+                      className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                        isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50'
+                      }`}
+                    >
+                      <input {...getInputProps()} />
+                      <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                      <p className="text-sm text-muted-foreground">{t('listingForm.photos.dragDrop')}</p>
+                      <Button type="button" variant="outline" size="sm" className="mt-3">
+                        {t('listingForm.photos.browse')}
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-2">{t('listingForm.photos.acceptedFormats')}</p>
+                      <p className="text-xs text-muted-foreground">{t('listingForm.photos.minDimensions')}</p>
+                    </div>
 
-          {/* Section 5: Listing Details */}
-          <section>
-            <h2 className="text-xl font-semibold mb-4">{t('listingForm.sectionDetails')}</h2>
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="accommodation_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('listingForm.accommodationType.label')} <RequiredStar /></FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {typedAccommodationTypes.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {t(type.labelKey)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="floor"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('listingForm.floor.label')} <RequiredStar /></FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {typedFloorOptions.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            {t(opt.labelKey)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="bathrooms"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('listingForm.bathrooms')}</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="bedrooms"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('listingForm.bedrooms')}</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="floor_space"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('listingForm.floorSpace')}</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            type="number"
-                            min="0"
-                            className="pr-16"
-                            {...field}
-                            value={field.value ?? ''}
-                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                          />
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                            {t('listingForm.floorSpaceSuffix')}
-                          </span>
+                    {(keptExisting.length > 0 || newPhotos.length > 0) && (
+                      <>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4 mt-4">
+                          {keptExisting.map((photo) => (
+                            <div
+                              key={`existing-${photo.id}`}
+                              className="relative group aspect-square rounded-lg overflow-hidden"
+                            >
+                              <img
+                                src={photo.url}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                              {photo.sort_order === 0 && (
+                                <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded flex items-center gap-1">
+                                  <Star className="h-3 w-3" />
+                                  {t('listingForm.photos.mainPhotoBadge')}
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                aria-label={t('listingForm.photos.removePhoto', { index: photo.sort_order + 1 })}
+                                onClick={() => removeExistingPhoto(photo.id)}
+                                className="absolute top-1 right-1 rounded-full bg-destructive p-0.5 text-white opacity-0 transition-opacity hover:bg-destructive/90 group-hover:opacity-100"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                          {newPhotos.map((photo, index) => (
+                            <div
+                              key={`new-${index}`}
+                              role="button"
+                              tabIndex={0}
+                              className="relative group aspect-square rounded-lg overflow-hidden cursor-pointer"
+                              onClick={() => setMainNewPhoto(index)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  setMainNewPhoto(index);
+                                }
+                              }}
+                              title={t('listingForm.photos.setAsMain')}
+                              aria-label={`${t('listingForm.photos.setAsMain')} - ${t('listingForm.photos.photoLabel', { index: keptExisting.length + index + 1 })}${photo.isMain ? ` (${t('listingForm.photos.mainPhotoBadge')})` : ''}`}
+                            >
+                              <img
+                                src={photo.preview}
+                                alt={t('listingForm.photos.photoLabel', { index: keptExisting.length + index + 1 })}
+                                className="w-full h-full object-cover"
+                              />
+                              {photo.isMain && keptExisting.length === 0 && (
+                                <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded flex items-center gap-1">
+                                  <Star className="h-3 w-3" />
+                                  {t('listingForm.photos.mainPhotoBadge')}
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                aria-label={t('listingForm.photos.removePhoto', { index: keptExisting.length + index + 1 })}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeNewPhoto(index);
+                                }}
+                                className="absolute top-1 right-1 rounded-full bg-destructive p-0.5 text-white opacity-0 transition-opacity hover:bg-destructive/90 group-hover:opacity-100"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
                         </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-          </section>
-
-          <Separator />
-
-          {/* Section 6: Features */}
-          <section>
-            <h2 className="text-xl font-semibold mb-4">{t('listingForm.sectionFeatures')}</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {featureFields.map((feature) => (
-                <FormField
-                  key={feature}
-                  control={form.control}
-                  name={feature}
-                  render={({ field }) => (
-                    <FormItem className="flex items-center gap-2 space-y-0">
-                      <FormControl>
-                        <Checkbox checked={field.value as boolean} onCheckedChange={field.onChange} />
-                      </FormControl>
-                      <FormLabel className="font-normal">
-                        {t(`listingForm.features.${featureTranslationKeys[feature]}`)}
-                      </FormLabel>
-                    </FormItem>
-                  )}
-                />
-              ))}
-            </div>
-          </section>
-
-          <Separator />
-
-          {/* Section 7: Photos */}
-          <section>
-            <h2 className="text-xl font-semibold mb-4">{t('listingForm.sectionPhotos')}</h2>
-            <div
-              {...getRootProps()}
-              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50'
-              }`}
-            >
-              <input {...getInputProps()} />
-              <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">{t('listingForm.photos.dragDrop')}</p>
-              <Button type="button" variant="outline" size="sm" className="mt-3">
-                {t('listingForm.photos.browse')}
-              </Button>
-              <p className="text-xs text-muted-foreground mt-2">{t('listingForm.photos.acceptedFormats')}</p>
-              <p className="text-xs text-muted-foreground">{t('listingForm.photos.minDimensions')}</p>
-            </div>
-
-            {(keptExisting.length > 0 || newPhotos.length > 0) && (
-              <>
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4">
-                  {keptExisting.map((photo) => (
-                    <div
-                      key={`existing-${photo.id}`}
-                      className="relative group aspect-square rounded-lg overflow-hidden"
-                    >
-                      <img
-                        src={photo.url}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                      {photo.sort_order === 0 && (
-                        <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded flex items-center gap-1">
-                          <Star className="h-3 w-3" />
-                          {t('listingForm.photos.mainPhotoBadge')}
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        aria-label={t('listingForm.photos.removePhoto', { index: photo.sort_order + 1 })}
-                        onClick={() => removeExistingPhoto(photo.id)}
-                        className="absolute top-1 right-1 rounded-full bg-destructive p-0.5 text-white opacity-0 transition-opacity hover:bg-destructive/90 group-hover:opacity-100"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ))}
-                  {newPhotos.map((photo, index) => (
-                    <div
-                      key={`new-${index}`}
-                      role="button"
-                      tabIndex={0}
-                      className="relative group aspect-square rounded-lg overflow-hidden cursor-pointer"
-                      onClick={() => setMainNewPhoto(index)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          setMainNewPhoto(index);
-                        }
-                      }}
-                      title={t('listingForm.photos.setAsMain')}
-                      aria-label={`${t('listingForm.photos.setAsMain')} - ${t('listingForm.photos.photoLabel', { index: keptExisting.length + index + 1 })}${photo.isMain ? ` (${t('listingForm.photos.mainPhotoBadge')})` : ''}`}
-                    >
-                      <img
-                        src={photo.preview}
-                        alt={t('listingForm.photos.photoLabel', { index: keptExisting.length + index + 1 })}
-                        className="w-full h-full object-cover"
-                      />
-                      {photo.isMain && keptExisting.length === 0 && (
-                        <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded flex items-center gap-1">
-                          <Star className="h-3 w-3" />
-                          {t('listingForm.photos.mainPhotoBadge')}
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        aria-label={t('listingForm.photos.removePhoto', { index: keptExisting.length + index + 1 })}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeNewPhoto(index);
-                        }}
-                        className="absolute top-1 right-1 rounded-full bg-destructive p-0.5 text-white opacity-0 transition-opacity hover:bg-destructive/90 group-hover:opacity-100"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">{t('listingForm.photos.changeMainHint')}</p>
-              </>
+                        <p className="mt-2 text-xs text-muted-foreground">{t('listingForm.photos.changeMainHint')}</p>
+                      </>
+                    )}
+                    {totalPhotos < 2 && (
+                      <p className="mt-2 text-sm text-destructive">{t('listingForm.photos.minRequired')}</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
             )}
-            {totalPhotos < 2 && (
-              <p className="mt-2 text-sm text-destructive">{t('listingForm.photos.minRequired')}</p>
-            )}
-          </section>
+          </AnimatePresence>
 
-          <div className="flex justify-end pt-4">
-            <Button type="submit" size="lg" disabled={isSubmitting}>
-              {isSubmitting
-                ? t('common.loading')
-                : mode === 'edit'
-                  ? t('listingForm.updateListing')
-                  : t('listingForm.saveListing')}
-            </Button>
+          {/* Sticky wizard footer */}
+          <div className="sticky bottom-0 z-10 -mx-6 lg:-mx-11 mt-8 border-t bg-background/80 px-6 lg:px-11 py-4 backdrop-blur-sm flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              {t('listingForm.stepOf', { current: currentStep, total: TOTAL_STEPS })}
+            </span>
+            <div className="flex gap-3">
+              {currentStep > 1 && (
+                <Button type="button" variant="outline" size="lg" onClick={handleBack}>
+                  {t('listingForm.back')}
+                </Button>
+              )}
+              {currentStep < TOTAL_STEPS ? (
+                <Button type="button" size="lg" onClick={handleNext}>
+                  {t('listingForm.next')}
+                </Button>
+              ) : (
+                <Button type="submit" size="lg" disabled={isSubmitting}>
+                  {isSubmitting
+                    ? t('common.loading')
+                    : mode === 'edit'
+                      ? t('listingForm.updateListing')
+                      : t('listingForm.saveListing')}
+                </Button>
+              )}
+            </div>
           </div>
         </form>
       </Form>

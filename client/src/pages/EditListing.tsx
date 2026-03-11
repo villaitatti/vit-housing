@@ -139,7 +139,7 @@ export function EditListingPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-3xl space-y-4">
+      <div className="mx-auto px-6 lg:px-11 py-8 space-y-4">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-64 w-full" />
@@ -220,7 +220,7 @@ export function EditListingPage() {
 
   return (
     <motion.div
-      className="container mx-auto px-4 py-8 max-w-3xl"
+      className="mx-auto px-6 lg:px-11 py-8"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
     >

@@ -154,9 +154,12 @@
     "sectionGeneral": "General",
     "sectionAddress": "Address",
     "sectionCost": "Cost",
+    "sectionCostDescription": "Set the monthly costs",
     "sectionDates": "Dates Available",
+    "sectionDatesDescription": "Add availability periods",
     "sectionDetails": "Listing Details",
     "sectionFeatures": "Features",
+    "sectionFeaturesDescription": "Select amenities",
     "sectionPhotos": "Photos",
     "postingTitle": "Posting Title",
     "description": "Description",
@@ -242,6 +245,16 @@
       "photoLabel": "Photo {{index}}",
       "removePhoto": "Remove photo {{index}}"
     },
+    "steps": {
+      "propertyDetails": "Property Details",
+      "address": "Address",
+      "cost": "Cost",
+      "features": "Features",
+      "availability": "Availability & Photos"
+    },
+    "stepOf": "Step {{current}} of {{total}}",
+    "next": "Next",
+    "back": "Back",
     "saveListing": "Save Listing",
     "updateListing": "Update Listing"
   },
