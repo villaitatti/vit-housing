@@ -7,7 +7,8 @@ import { validate } from '../middleware/validate.js';
 import { loginSchema, registerSchema, vitIdCallbackSchema } from '@vithousing/shared';
 import { Role as PrismaRole } from '../generated/prisma/client.js';
 import { getUserAuth0Roles } from '../services/auth0.service.js';
-import { hashInvitationToken, getInvitationStatus, normalizeEmail } from '../lib/invitations.js';
+import { hashInvitationToken, getInvitationStatus } from '../lib/invitations.js';
+import { normalizeEmail } from '../lib/email.js';
 import { hashPassword, needsPasswordRehash, validatePasswordPolicy, verifyPassword } from '../lib/password.js';
 import { createRateLimitMiddleware } from '../middleware/rateLimit.js';
 

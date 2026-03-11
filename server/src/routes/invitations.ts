@@ -7,13 +7,13 @@ import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/requireRole.js';
 import { validate } from '../middleware/validate.js';
 import { createInvitationSchema, validateInvitationTokenSchema } from '@vithousing/shared';
+import { normalizeEmail } from '../lib/email.js';
 import { sendInvitationEmail } from '../services/email.service.js';
 import {
   buildInvitationExpiryDate,
   generateInvitationToken,
   getInvitationStatus,
   hashInvitationToken,
-  normalizeEmail,
 } from '../lib/invitations.js';
 import { createRateLimitMiddleware } from '../middleware/rateLimit.js';
 

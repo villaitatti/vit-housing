@@ -1,14 +1,11 @@
 import crypto from 'crypto';
+import { normalizeEmail } from './email.js';
 
 interface AvatarUserShape {
   email: string;
   auth0_user_id: string | null;
   profile_photo_path: string | null;
   profile_photo_url: string | null;
-}
-
-function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
 }
 
 export function getUploadedProfilePhotoUrl(user: Pick<AvatarUserShape, 'profile_photo_path' | 'profile_photo_url'>): string | null {

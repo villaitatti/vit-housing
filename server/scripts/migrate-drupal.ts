@@ -4,8 +4,8 @@ import fs from 'fs/promises';
 import { appendFileSync, writeFileSync } from 'fs';
 import { createConnection, type Connection, type RowDataPacket } from 'mysql2/promise';
 import { Role } from '../src/generated/prisma/enums.js';
+import { normalizeEmail } from '../src/lib/email.js';
 import { prisma } from '../src/lib/prisma.js';
-import { normalizeEmail } from '../src/lib/invitations.js';
 import { deleteLocalFile, processAndSaveImage } from '../src/services/upload.service.js';
 
 const LOG_FILE = path.resolve('server/scripts/drupal-migration-log.txt');
@@ -201,6 +201,12 @@ interface MigrationAudit {
     unmapped_utilities: Array<{ nid: number; value: string }>;
   };
   user_pictures: Array<{ uid: number; email: string; uri: string }>;
+}
+
+interface ProcessedListingPhoto {
+  filePath: string;
+  url: string;
+  sort_order: number;
 }
 
 function log(message: string): void {
@@ -879,49 +885,71 @@ async function migrateListings(
       select: { file_path: true },
     });
 
-    if (existingPhotos.length > 0) {
-      await prisma.listingPhoto.deleteMany({ where: { listing_id: upsertedListing.id } });
-      await Promise.all(existingPhotos.map((photo) => deleteLocalFile(photo.file_path)));
-    }
-
-    await prisma.availableDate.deleteMany({ where: { listing_id: upsertedListing.id } });
-
-    const availabilityRows = data.availabilityByListingId.get(listing.nid) || [];
-    if (availabilityRows.length > 0) {
-      await prisma.availableDate.createMany({
-        data: availabilityRows.map((row) => ({
-          listing_id: upsertedListing.id,
-          available_from: toNullableDate(row.available_from) || new Date(listing.created * 1000),
-          available_to: toNullableDate(row.available_to),
-        })),
-      });
-    }
-
     const photoRows = data.photosByListingId.get(listing.nid) || [];
-    for (const photo of photoRows) {
-      if (!photo.uri) {
-        audit.listings.missing_photos.push({ nid: listing.nid, fid: photo.fid, uri: null });
-        continue;
-      }
+    const processedPhotos: ProcessedListingPhoto[] = [];
 
-      const relativeFilePath = photo.uri.replace(/^public:\/\//, '');
-      const absoluteDrupalPhotoPath = path.join(DRUPAL_FILES_ROOT, relativeFilePath);
+    try {
+      for (const photo of photoRows) {
+        if (!photo.uri) {
+          audit.listings.missing_photos.push({ nid: listing.nid, fid: photo.fid, uri: null });
+          continue;
+        }
 
-      try {
-        const fileBuffer = await fs.readFile(absoluteDrupalPhotoPath);
-        const savedPhoto = await processAndSaveImage(fileBuffer);
+        const relativeFilePath = photo.uri.replace(/^public:\/\//, '');
+        const absoluteDrupalPhotoPath = path.join(DRUPAL_FILES_ROOT, relativeFilePath);
 
-        await prisma.listingPhoto.create({
-          data: {
-            listing_id: upsertedListing.id,
-            file_path: savedPhoto.filePath,
+        try {
+          const fileBuffer = await fs.readFile(absoluteDrupalPhotoPath);
+          const savedPhoto = await processAndSaveImage(fileBuffer);
+
+          processedPhotos.push({
+            filePath: savedPhoto.filePath,
             url: savedPhoto.url,
             sort_order: photo.delta,
-          },
-        });
-      } catch {
-        audit.listings.missing_photos.push({ nid: listing.nid, fid: photo.fid, uri: photo.uri });
+          });
+        } catch {
+          audit.listings.missing_photos.push({ nid: listing.nid, fid: photo.fid, uri: photo.uri });
+        }
       }
+
+      const availabilityRows = data.availabilityByListingId.get(listing.nid) || [];
+      await prisma.$transaction(async (tx) => {
+        await tx.availableDate.deleteMany({ where: { listing_id: upsertedListing.id } });
+
+        if (availabilityRows.length > 0) {
+          await tx.availableDate.createMany({
+            data: availabilityRows.map((row) => ({
+              listing_id: upsertedListing.id,
+              available_from: toNullableDate(row.available_from) || new Date(listing.created * 1000),
+              available_to: toNullableDate(row.available_to),
+            })),
+          });
+        }
+
+        await tx.listingPhoto.deleteMany({ where: { listing_id: upsertedListing.id } });
+
+        if (processedPhotos.length > 0) {
+          await tx.listingPhoto.createMany({
+            data: processedPhotos.map((photo) => ({
+              listing_id: upsertedListing.id,
+              file_path: photo.filePath,
+              url: photo.url,
+              sort_order: photo.sort_order,
+            })),
+          });
+        }
+      });
+
+      await Promise.all(existingPhotos.map(async (photo) => {
+        try {
+          await deleteLocalFile(photo.file_path);
+        } catch {
+          // Ignore old-file cleanup failures after the DB swap succeeds.
+        }
+      }));
+    } catch (err) {
+      await Promise.all(processedPhotos.map((photo) => deleteLocalFile(photo.filePath)));
+      throw err;
     }
 
     audit.listings.imported.push({ nid: listing.nid, slug: upsertedListing.slug });

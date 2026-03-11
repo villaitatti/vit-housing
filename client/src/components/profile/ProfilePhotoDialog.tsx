@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
 import { useTranslation } from 'react-i18next';
@@ -73,9 +73,16 @@ export function ProfilePhotoDialog({
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
-
-  const imageUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const isAllowedFile = !file || ALLOWED_TYPES.includes(file.type);
+
+  const handleCancel = () => {
+    if (isSubmitting) {
+      return;
+    }
+
+    onCancel();
+  };
 
   useEffect(() => {
     if (!open) {
@@ -86,12 +93,18 @@ export function ProfilePhotoDialog({
   }, [open]);
 
   useEffect(() => {
+    if (!file) {
+      setImageUrl(null);
+      return;
+    }
+
+    const nextImageUrl = URL.createObjectURL(file);
+    setImageUrl(nextImageUrl);
+
     return () => {
-      if (imageUrl) {
-        URL.revokeObjectURL(imageUrl);
-      }
+      URL.revokeObjectURL(nextImageUrl);
     };
-  }, [imageUrl]);
+  }, [file]);
 
   const handleConfirm = async () => {
     if (!imageUrl || !croppedAreaPixels) {
@@ -103,7 +116,14 @@ export function ProfilePhotoDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(nextOpen) => (!nextOpen ? onCancel() : null)}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          handleCancel();
+        }
+      }}
+    >
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t('profile.photo.cropTitle')}</DialogTitle>
@@ -148,7 +168,7 @@ export function ProfilePhotoDialog({
         ) : null}
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+          <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
             {t('common.cancel')}
           </Button>
           <Button type="button" onClick={() => void handleConfirm()} disabled={!imageUrl || !isAllowedFile || isSubmitting}>

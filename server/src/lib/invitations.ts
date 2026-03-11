@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { INVITATION_EXPIRY_DAYS } from '@vithousing/shared';
+import { normalizeEmail } from './email.js';
 
 export type InvitationLifecycleStatus = 'pending' | 'used' | 'expired' | 'revoked';
 
@@ -7,10 +8,6 @@ export interface InvitationStatusShape {
   used: boolean;
   expires_at: Date;
   revoked_at: Date | null;
-}
-
-export function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
 }
 
 export function generateInvitationToken(): string {
@@ -42,3 +39,5 @@ export function getInvitationStatus(invitation: InvitationStatusShape, now = new
 
   return 'pending';
 }
+
+export { normalizeEmail };

@@ -85,11 +85,7 @@ export function ProfilePage() {
     mutationFn: async (blob: Blob) => {
       const formData = new FormData();
       formData.append('photo', new File([blob], 'profile-photo.jpg', { type: 'image/jpeg' }));
-      const res = await api.post('/api/v1/users/me/photo', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const res = await api.post('/api/v1/users/me/photo', formData);
       return res.data.user;
     },
     onSuccess: () => {

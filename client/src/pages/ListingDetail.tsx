@@ -19,9 +19,10 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FavoriteListingDialog } from '@/components/listings/FavoriteListingDialog';
 import { canUseFavoriteListings } from '@vithousing/shared';
+import { getInitials } from '@/lib/avatar';
 
 // Swiper
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -404,6 +405,7 @@ export function ListingDetailPage() {
               {listing.owner?.avatar_url ? (
                 <Avatar className="h-20 w-20">
                   <AvatarImage src={listing.owner.avatar_url} alt={`${listing.owner.first_name} ${listing.owner.last_name}`} />
+                  <AvatarFallback>{getInitials(listing.owner.first_name, listing.owner.last_name)}</AvatarFallback>
                 </Avatar>
               ) : null}
               <div className="flex items-center gap-2">

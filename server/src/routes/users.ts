@@ -37,10 +37,6 @@ const userAdminListSelect = {
   _count: { select: { listings: true } },
 } satisfies Prisma.UserSelect;
 
-const userPhotoUpdateSelect = {
-  ...userProfileSelect,
-} satisfies Prisma.UserSelect;
-
 // GET /api/v1/users/me — Current user profile
 router.get('/me', authenticate, async (req: Request, res: Response) => {
   try {
@@ -82,8 +78,10 @@ router.post('/me/photo', authenticate, uploadMiddleware.single('photo'), async (
     return;
   }
 
+  let savedPhoto: Awaited<ReturnType<typeof processAndSaveProfilePhoto>> | null = null;
+
   try {
-    const savedPhoto = await processAndSaveProfilePhoto(req.file.buffer);
+    savedPhoto = await processAndSaveProfilePhoto(req.file.buffer);
 
     const existingUser = await prisma.user.findUnique({
       where: { id: req.user!.userId },
@@ -102,7 +100,7 @@ router.post('/me/photo', authenticate, uploadMiddleware.single('photo'), async (
         profile_photo_path: savedPhoto.filePath,
         profile_photo_url: savedPhoto.url,
       } satisfies Prisma.UserUpdateInput,
-      select: userPhotoUpdateSelect,
+      select: userProfileSelect,
     });
 
     if (existingUser.profile_photo_path && existingUser.profile_photo_path !== savedPhoto.filePath) {
@@ -111,6 +109,9 @@ router.post('/me/photo', authenticate, uploadMiddleware.single('photo'), async (
 
     sendSuccess(res, { user: serializeUserAvatar(user) });
   } catch (err) {
+    if (savedPhoto) {
+      await deleteLocalFile(savedPhoto.filePath);
+    }
     const message = err instanceof Error ? err.message : 'Failed to upload profile photo';
     sendError(res, message, 'UPLOAD_ERROR', 400);
   }
@@ -135,7 +136,7 @@ router.delete('/me/photo', authenticate, async (req: Request, res: Response) => 
         profile_photo_path: null,
         profile_photo_url: null,
       } satisfies Prisma.UserUpdateInput,
-      select: userPhotoUpdateSelect,
+      select: userProfileSelect,
     });
 
     if (existingUser.profile_photo_path) {
@@ -225,6 +226,21 @@ router.delete(
       if (id === req.user!.userId) {
         sendError(res, 'Cannot delete your own account', 'SELF_DELETE', 400);
         return;
+      }
+
+      const existingUser = await prisma.user.findUnique({
+        where: { id },
+        select: {
+          profile_photo_path: true,
+        },
+      });
+
+      if (existingUser?.profile_photo_path) {
+        try {
+          await deleteLocalFile(existingUser.profile_photo_path);
+        } catch (err) {
+          console.warn(`Failed to delete profile photo for user ${id}:`, err);
+        }
       }
 
       await prisma.user.delete({ where: { id } });

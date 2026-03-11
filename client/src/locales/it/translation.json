@@ -407,9 +407,9 @@
       "cropTitle": "Ritaglia foto profilo",
       "zoom": "Zoom",
       "invalidType": "Sono supportate solo immagini JPEG, PNG e WebP.",
-      "uploaded": "La tua foto caricata e' attualmente visibile.",
+      "uploaded": "La tua foto caricata è attualmente visibile.",
       "gravatarFallback": "Non hai ancora caricato una foto. Il tuo account Auth0 usa al momento Gravatar.",
-      "noPhoto": "Al momento non e' visibile alcuna foto sul tuo account.",
+      "noPhoto": "Al momento non è visibile alcuna foto sul tuo account.",
       "updateSuccess": "Foto profilo aggiornata con successo!",
       "removeSuccess": "Foto profilo rimossa con successo!"
     }
