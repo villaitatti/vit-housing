@@ -67,12 +67,10 @@ export function NewListingPage() {
 
   return (
     <motion.div
-      className="mx-auto px-6 lg:px-11 py-8"
+      className="mx-auto px-6 lg:px-11 py-6"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <h1 className="text-3xl font-bold mb-8">{t('listingForm.createTitle')}</h1>
-
       <ListingForm
         mode="create"
         onSubmit={handleSubmit}

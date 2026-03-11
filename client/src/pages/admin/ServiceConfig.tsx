@@ -408,7 +408,6 @@ export function ServiceConfigPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-6">{currentGroup.label}</h2>
       <div className="space-y-6">
         <ServiceCard group={currentGroup} onSave={handleSave} />
         {service === 'auth0' && <Auth0RoleMappingSection />}

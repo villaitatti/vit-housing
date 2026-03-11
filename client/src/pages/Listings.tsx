@@ -118,9 +118,7 @@ export function ListingsPage() {
   const isFavoriteDialogPending = favoriteDialog?.mode === 'add' ? isAddingFavorite : isRemovingFavorite;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">{t('listings.title')}</h1>
-
+    <div className="container mx-auto px-4 py-6">
       <div className="flex flex-col md:flex-row gap-8">
         {/* Filters sidebar */}
         <aside className="w-full md:w-64 shrink-0">

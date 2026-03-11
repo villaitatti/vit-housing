@@ -195,7 +195,6 @@ export function ListingForm({ mode, initialData, existingPhotos = EMPTY_PHOTOS, 
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<number[]>([]);
   const [keptExisting, setKeptExisting] = useState<ExistingPhoto[]>(existingPhotos);
   const newPhotosRef = useRef(newPhotos);
-  newPhotosRef.current = newPhotos;
 
   // Wizard state
   const [currentStep, setCurrentStep] = useState(1);
@@ -207,6 +206,10 @@ export function ListingForm({ mode, initialData, existingPhotos = EMPTY_PHOTOS, 
   useEffect(() => {
     setKeptExisting(existingPhotos);
   }, [existingPhotos]);
+
+  useEffect(() => {
+    newPhotosRef.current = newPhotos;
+  }, [newPhotos]);
 
   useEffect(() => {
     return () => {

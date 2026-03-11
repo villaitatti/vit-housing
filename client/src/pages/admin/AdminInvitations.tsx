@@ -57,8 +57,6 @@ export function AdminInvitationsPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-6">{t('admin.invitations')}</h2>
-
       <Table>
         <TableHeader>
           <TableRow>

@@ -38,6 +38,31 @@
     "logout": "Log Out",
     "language": "Language"
   },
+  "shell": {
+    "logoSubtitle": "Housing Offers",
+    "sections": {
+      "listings": "Listings",
+      "myListings": "My Listings",
+      "admin": "Admin",
+      "itAdmin": "IT Admin"
+    },
+    "nav": {
+      "allListings": "All Listings",
+      "viewMyListings": "View my listings",
+      "addNewListing": "Add new listing",
+      "viewListings": "View listings",
+      "viewUsers": "View users",
+      "viewInvitations": "View invitations"
+    },
+    "pages": {
+      "listingDetails": "Listing Details"
+    },
+    "support": {
+      "title": "Support",
+      "body": "Help resources and contact options will be added here soon.",
+      "cta": "Coming soon"
+    }
+  },
   "home": {
     "welcome": "Welcome",
     "latestListings": "Latest Listings",
