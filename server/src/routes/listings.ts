@@ -27,6 +27,26 @@ const listingDetailInclude = {
   },
 };
 
+async function fetchFavoriteListingIds(userId: number, listingIds: number[]): Promise<Set<number>> {
+  if (listingIds.length === 0) {
+    return new Set();
+  }
+
+  const rows = await prisma.$queryRaw<Array<{ listing_id: number }>>(Prisma.sql`
+    SELECT "listing_id"
+    FROM "FavoriteListing"
+    WHERE "user_id" = ${userId}
+      AND "listing_id" IN (${Prisma.join(listingIds)})
+  `);
+
+  return new Set(rows.map((row) => row.listing_id));
+}
+
+async function isFavoriteListing(userId: number, listingId: number): Promise<boolean> {
+  const favoriteIds = await fetchFavoriteListingIds(userId, [listingId]);
+  return favoriteIds.has(listingId);
+}
+
 function parseId(value: string): number | null {
   const trimmed = value.trim();
   if (!/^\d+$/.test(trimmed)) return null;
@@ -61,11 +81,20 @@ async function checkListingOwnership(req: Request, res: Response, listingId: num
   return true;
 }
 
-async function fetchListingDetail(where: { id: number } | { slug: string }) {
-  return prisma.listing.findUnique({
+async function fetchListingDetail(where: { id: number } | { slug: string }, userId: number) {
+  const listing = await prisma.listing.findUnique({
     where,
     include: listingDetailInclude,
   });
+
+  if (!listing) {
+    return null;
+  }
+
+  return {
+    ...listing,
+    is_favorite: await isFavoriteListing(userId, listing.id),
+  };
 }
 
 async function sendListingDetailResponse(
@@ -74,7 +103,7 @@ async function sendListingDetailResponse(
   where: { id: number } | { slug: string },
 ) {
   try {
-    const listing = await fetchListingDetail(where);
+    const listing = await fetchListingDetail(where, req.user!.userId);
 
     if (!listing) {
       sendError(res, 'Listing not found', 'NOT_FOUND', 404);
@@ -155,9 +184,16 @@ router.get('/', authenticate, validate(listingFiltersSchema, 'query'), async (re
       }),
       prisma.listing.count({ where }),
     ]);
+    const favoriteIds = await fetchFavoriteListingIds(
+      req.user!.userId,
+      listings.map((listing) => listing.id),
+    );
 
     sendSuccess(res, {
-      items: listings,
+      items: listings.map((listing) => ({
+        ...listing,
+        is_favorite: favoriteIds.has(listing.id),
+      })),
       total,
       page,
       limit,

@@ -10,8 +10,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Home, Building2, Plus, List, Shield, User, LogOut } from 'lucide-react';
+import { Home, Building2, Plus, List, Shield, User, LogOut, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { canUseFavoriteListings } from '@vithousing/shared';
 import { LanguageSwitch } from './LanguageSwitch';
 
 export function Header() {
@@ -24,11 +25,13 @@ export function Header() {
 
   const canAddListing = user?.roles?.some(r => ['HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'].includes(r));
   const isAdmin = user?.roles?.some(r => ['HOUSE_ADMIN', 'HOUSE_IT_ADMIN'].includes(r));
+  const canFavoriteListings = user ? canUseFavoriteListings(user.roles) : false;
   const homePath = `/${currentLang}/home`;
   const listingsPath = `/${currentLang}/listings`;
   const newListingPath = `/${currentLang}/listings/new`;
   const myListingsPath = `/${currentLang}/my-listings`;
   const mapPath = `/${currentLang}/map`;
+  const favoritesPath = `/${currentLang}/favorites`;
   const adminPath = `/${currentLang}/admin`;
 
   const navLinkClass = (isActive: boolean) =>
@@ -71,6 +74,17 @@ export function Header() {
               >
                 {t('nav.map')}
               </Link>
+              {canFavoriteListings && (
+                <Link
+                  to={favoritesPath}
+                  className={navLinkClass(location.pathname === favoritesPath)}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Heart className="h-4 w-4" />
+                    {t('nav.favorites')}
+                  </span>
+                </Link>
+              )}
               {canAddListing && (
                 <>
                   <Link
@@ -139,6 +153,14 @@ export function Header() {
                     {t('nav.profile')}
                   </Link>
                 </DropdownMenuItem>
+                {canFavoriteListings && (
+                  <DropdownMenuItem asChild>
+                    <Link to={favoritesPath} className="cursor-pointer">
+                      <Heart className="mr-2 h-4 w-4" />
+                      {t('nav.favorites')}
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 {canAddListing && (
                   <DropdownMenuItem asChild>
                     <Link to={myListingsPath} className="cursor-pointer">

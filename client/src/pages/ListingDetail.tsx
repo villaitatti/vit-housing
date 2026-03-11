@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   BedDouble, Bath, Ruler, Building2, MapPin, Euro, Phone, Mail, User,
-  Warehouse, TreePine, Sun, Wind, WashingMachine, Flame, Tv, Wifi, Car, PawPrint,
+  Warehouse, TreePine, Sun, Wind, WashingMachine, Flame, Tv, Wifi, Car, PawPrint, Heart,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { AlertTriangle } from 'lucide-react';
@@ -13,10 +13,14 @@ import api from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { getListingDetailPath, isLegacyListingIdParam } from '@/lib/listingPaths';
 import { useAuth } from '@/hooks/useAuth';
+import { useFavoriteMutations } from '@/hooks/useFavoriteMutations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { FavoriteListingDialog } from '@/components/listings/FavoriteListingDialog';
+import { canUseFavoriteListings } from '@vithousing/shared';
 
 // Swiper
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -87,6 +91,7 @@ interface ListingDetail {
   feature_pets_allowed: boolean;
   published: boolean;
   owner_id: number;
+  is_favorite: boolean;
   photos: ListingPhoto[];
   available_dates: ListingAvailableDate[];
   owner: ListingOwner | null;
@@ -117,9 +122,12 @@ export function ListingDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const canFavoriteListings = canUseFavoriteListings(user?.roles ?? []);
+  const { addFavorite, removeFavorite, isAddingFavorite, isRemovingFavorite } = useFavoriteMutations();
   const listingParam = slug?.trim() || '';
   const currentLang = lang || 'en';
   const isLegacyId = isLegacyListingIdParam(listingParam);
+  const [favoriteDialogMode, setFavoriteDialogMode] = useState<'add' | 'remove' | null>(null);
 
   const { data, isLoading } = useQuery<ListingDetail>({
     queryKey: isLegacyId
@@ -162,6 +170,7 @@ export function ListingDetailPage() {
   }
 
   const listing = data;
+  const canToggleFavorite = canFavoriteListings && listing.published;
   const features = Object.entries(listing)
     .filter(([key, value]) => key.startsWith('feature_') && value === true)
     .map(([key]) => key);
@@ -173,6 +182,22 @@ export function ListingDetailPage() {
     listing.utility_telephone && t('listingDetail.telephone'),
     listing.utility_internet && t('listingDetail.internet'),
   ].filter((util): util is string => Boolean(util));
+
+  const handleFavoriteConfirm = async (note: string) => {
+    if (!favoriteDialogMode) {
+      return;
+    }
+
+    if (favoriteDialogMode === 'add') {
+      await addFavorite({ listingId: listing.id, note });
+    }
+
+    if (favoriteDialogMode === 'remove') {
+      await removeFavorite({ listingId: listing.id });
+    }
+
+    setFavoriteDialogMode(null);
+  };
 
   return (
     <motion.div
@@ -214,14 +239,30 @@ export function ListingDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main content */}
         <div className="lg:col-span-2 space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">{listing.title}</h1>
-            <p className="text-muted-foreground flex items-center gap-1">
-              <MapPin className="h-4 w-4" />
-              {listing.address_1}
-              {listing.address_2 && `, ${listing.address_2}`}, {listing.postal_code} {listing.city},{' '}
-              {listing.province}
-            </p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="mb-2 text-3xl font-bold">{listing.title}</h1>
+              <p className="flex items-center gap-1 text-muted-foreground">
+                <MapPin className="h-4 w-4" />
+                {listing.address_1}
+                {listing.address_2 && `, ${listing.address_2}`}, {listing.postal_code} {listing.city},{' '}
+                {listing.province}
+              </p>
+            </div>
+            {canToggleFavorite ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-11 w-11 rounded-full"
+                onClick={() => setFavoriteDialogMode(listing.is_favorite ? 'remove' : 'add')}
+                aria-label={listing.is_favorite ? t('favorites.removeAction') : t('favorites.addAction')}
+              >
+                <Heart
+                  className={listing.is_favorite ? 'h-5 w-5 fill-[crimson] text-[crimson]' : 'h-5 w-5'}
+                />
+              </Button>
+            ) : null}
           </div>
 
           <div className="flex flex-wrap gap-4">
@@ -406,6 +447,18 @@ export function ListingDetailPage() {
           )}
         </div>
       </div>
+
+      {favoriteDialogMode ? (
+        <FavoriteListingDialog
+          key={`${favoriteDialogMode}-${listing.id}`}
+          open
+          mode={favoriteDialogMode}
+          listingTitle={listing.title}
+          isPending={favoriteDialogMode === 'add' ? isAddingFavorite : isRemovingFavorite}
+          onClose={() => setFavoriteDialogMode(null)}
+          onConfirm={handleFavoriteConfirm}
+        />
+      ) : null}
     </motion.div>
   );
 }

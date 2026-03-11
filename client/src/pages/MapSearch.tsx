@@ -5,15 +5,19 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF } from '@react-google-maps/api';
 import { SearchX, MapIcon } from 'lucide-react';
+import { canUseFavoriteListings } from '@vithousing/shared';
 import api from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { getListingDetailPath } from '@/lib/listingPaths';
 import { ListingCard } from '@/components/listings/ListingCard';
+import { FavoriteListingDialog } from '@/components/listings/FavoriteListingDialog';
 import { ListingFilters, type FiltersState } from '@/components/listings/ListingFilters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { useAuth } from '@/hooks/useAuth';
+import { useFavoriteMutations } from '@/hooks/useFavoriteMutations';
 import type { PaginatedData } from '@vithousing/shared';
 
 interface ListingsListItem {
@@ -29,11 +33,13 @@ interface ListingsListItem {
   bedrooms: number;
   bathrooms: number;
   created_at: string;
+  is_favorite: boolean;
   photos?: { url: string }[];
 }
 
 type ListingsResponse = PaginatedData<ListingsListItem>;
 type ListingQueryFilters = FiltersState & { limit: string };
+type FavoriteDialogState = { mode: 'add' | 'remove'; listing: ListingsListItem } | null;
 
 const MAP_CONTAINER_STYLE = {
   width: '100%',
@@ -50,9 +56,13 @@ export function MapSearchPage() {
   const { t } = useTranslation();
   const { lang } = useParams();
   const currentLang = lang || 'en';
+  const { user } = useAuth();
+  const canFavoriteListings = canUseFavoriteListings(user?.roles ?? []);
+  const { addFavorite, removeFavorite, isAddingFavorite, isRemovingFavorite } = useFavoriteMutations();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeListing, setActiveListing] = useState<ListingsListItem | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [favoriteDialog, setFavoriteDialog] = useState<FavoriteDialogState>(null);
 
   // 1. Fetch Google Maps API Key from Public Config
   const { data: configData } = useQuery({
@@ -140,6 +150,24 @@ export function MapSearchPage() {
       map.fitBounds(bounds);
     }
   }, [map, listingsWithCoords]);
+
+  const handleFavoriteConfirm = async (note: string) => {
+    if (!favoriteDialog) {
+      return;
+    }
+
+    if (favoriteDialog.mode === 'add') {
+      await addFavorite({ listingId: favoriteDialog.listing.id, note });
+    }
+
+    if (favoriteDialog.mode === 'remove') {
+      await removeFavorite({ listingId: favoriteDialog.listing.id });
+    }
+
+    setFavoriteDialog(null);
+  };
+
+  const isFavoriteDialogPending = favoriteDialog?.mode === 'add' ? isAddingFavorite : isRemovingFavorite;
 
   // Loading States
   if (!googleMapsApiKey) {
@@ -320,7 +348,7 @@ export function MapSearchPage() {
                  className="space-y-4"
                >
                  {listingsWithCoords.map((listing) => (
-                   <motion.div
+                 <motion.div
                      key={listing.id}
                      variants={{
                        hidden: { opacity: 0, x: 20 },
@@ -329,18 +357,44 @@ export function MapSearchPage() {
                      onMouseEnter={() => setActiveListing(listing)}
                      onMouseLeave={() => setActiveListing(null)}
                      className={`cursor-pointer transition-all duration-200 ${activeListing?.id === listing.id ? 'ring-2 ring-primary rounded-xl scale-[1.02] shadow-md z-10 relative' : ''}`}
-                     onClick={() => {
-                        window.open(getListingDetailPath(currentLang, listing.slug), '_blank');
-                     }}
                    >
-                     <ListingCard listing={listing} lang={lang || 'en'} />
-                   </motion.div>
+                    {canFavoriteListings ? (
+                      <ListingCard
+                        listing={listing}
+                        lang={lang || 'en'}
+                        openInNewTab
+                        showFavoriteButton
+                        onFavoriteClick={(targetListing) => setFavoriteDialog({
+                          mode: targetListing.is_favorite ? 'remove' : 'add',
+                          listing: targetListing,
+                        })}
+                      />
+                    ) : (
+                      <ListingCard
+                        listing={listing}
+                        lang={lang || 'en'}
+                        openInNewTab
+                      />
+                    )}
+                  </motion.div>
                  ))}
                </motion.div>
              )}
           </div>
         </div>
       </div>
+
+      {favoriteDialog ? (
+        <FavoriteListingDialog
+          key={`${favoriteDialog.mode}-${favoriteDialog.listing.id}`}
+          open
+          mode={favoriteDialog.mode}
+          listingTitle={favoriteDialog.listing.title}
+          isPending={isFavoriteDialogPending}
+          onClose={() => setFavoriteDialog(null)}
+          onConfirm={handleFavoriteConfirm}
+        />
+      ) : null}
     </div>
   );
 }

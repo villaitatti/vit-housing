@@ -34,6 +34,7 @@ model User {
   updated_at         DateTime     @updatedAt
   last_login         DateTime?
   listings           Listing[]
+  favorite_listings  FavoriteListing[]
   invitations_sent   Invitation[]
   configs_updated    ServiceConfig[]
 }
@@ -102,6 +103,22 @@ model Listing {
   owner                   User            @relation(fields: [owner_id], references: [id], onDelete: Cascade)
   available_dates         AvailableDate[]
   photos                  ListingPhoto[]
+  favorites               FavoriteListing[]
+}
+
+model FavoriteListing {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  listing_id Int
+  note       String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  listing    Listing  @relation(fields: [listing_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, listing_id])
+  @@index([user_id])
+  @@index([listing_id])
 }
 
 model AvailableDate {
