@@ -25,6 +25,27 @@ const invitationValidationRateLimit = createRateLimitMiddleware({
   message: 'Too many invitation link attempts. Please try again later.',
 });
 
+const invitationSelect = {
+  id: true,
+  email: true,
+  first_name: true,
+  last_name: true,
+  role: true,
+  language: true,
+  used: true,
+  revoked_at: true,
+  created_at: true,
+  expires_at: true,
+  invited_by: true,
+} as const;
+
+class InvitationDeliveryError extends Error {
+  constructor() {
+    super('INVITATION_DELIVERY_FAILED');
+    this.name = 'InvitationDeliveryError';
+  }
+}
+
 function redactEmail(email: string): string {
   const [localPart, domain = ''] = email.split('@');
   if (!localPart) {
@@ -38,12 +59,12 @@ function sanitizeErrorIdentifier(err: unknown): string {
   if (typeof err === 'object' && err !== null) {
     const code = 'code' in err ? err.code : null;
     if (typeof code === 'string' && code.trim().length > 0) {
-      return code;
+      return code.trim().slice(0, 64);
     }
 
-    const message = 'message' in err ? err.message : null;
-    if (typeof message === 'string' && message.trim().length > 0) {
-      return message.slice(0, 120);
+    const name = 'name' in err ? err.name : null;
+    if (typeof name === 'string' && name.trim().length > 0) {
+      return name.trim().slice(0, 64);
     }
   }
 
@@ -65,6 +86,10 @@ function isActiveInvitationConflictError(err: unknown): boolean {
     || err.message.includes('Invitation_active_email_key');
 }
 
+async function acquireInvitationEmailLock(tx: Prisma.TransactionClient, email: string) {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${email})::bigint)`;
+}
+
 // POST /api/v1/invitations — Admin creates invitation
 router.post(
   '/',
@@ -84,44 +109,21 @@ router.post(
 
       const token = generateInvitationToken();
       const expiresAt = buildInvitationExpiryDate();
+      const stagedRevokedAt = new Date();
 
-      const invitation = await prisma.$transaction(async (tx) => {
-        await tx.invitation.updateMany({
-          where: {
-            email: normalizedEmail,
-            used: false,
-            revoked_at: null,
-          },
-          data: {
-            revoked_at: new Date(),
-          },
-        });
-
-        return tx.invitation.create({
-          data: {
-            email: normalizedEmail,
-            first_name: first_name ?? null,
-            last_name: last_name ?? null,
-            role,
-            language,
-            token_hash: hashInvitationToken(token),
-            expires_at: expiresAt,
-            invited_by: req.user!.userId,
-          },
-          select: {
-            id: true,
-            email: true,
-            first_name: true,
-            last_name: true,
-            role: true,
-            language: true,
-            used: true,
-            revoked_at: true,
-            created_at: true,
-            expires_at: true,
-            invited_by: true,
-          },
-        });
+      const invitation = await prisma.invitation.create({
+        data: {
+          email: normalizedEmail,
+          first_name: first_name ?? null,
+          last_name: last_name ?? null,
+          role,
+          language,
+          token_hash: hashInvitationToken(token),
+          expires_at: expiresAt,
+          invited_by: req.user!.userId,
+          revoked_at: stagedRevokedAt,
+        },
+        select: invitationSelect,
       });
 
       try {
@@ -140,21 +142,59 @@ router.post(
           redactedEmail: redactEmail(normalizedEmail),
           error: sanitizeErrorIdentifier(emailError),
         });
-        await prisma.invitation.update({
-          where: { id: invitation.id },
-          data: { revoked_at: new Date() },
-        });
-        throw emailError;
+        try {
+          await prisma.invitation.delete({
+            where: { id: invitation.id },
+          });
+        } catch (cleanupError) {
+          console.error('Invitation cleanup error:', {
+            invitationId: invitation.id,
+            redactedEmail: redactEmail(normalizedEmail),
+            error: sanitizeErrorIdentifier(cleanupError),
+          });
+        }
+
+        throw new InvitationDeliveryError();
       }
 
-      sendSuccess(res, { invitation }, 201);
+      const activatedInvitation = await prisma.$transaction(async (tx) => {
+        await acquireInvitationEmailLock(tx, normalizedEmail);
+
+        await tx.invitation.updateMany({
+          where: {
+            email: normalizedEmail,
+            used: false,
+            revoked_at: null,
+          },
+          data: {
+            revoked_at: new Date(),
+          },
+        });
+
+        return tx.invitation.update({
+          where: { id: invitation.id },
+          data: { revoked_at: null },
+          select: invitationSelect,
+        });
+      }, {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      });
+
+      sendSuccess(res, { invitation: activatedInvitation }, 201);
     } catch (err) {
+      if (err instanceof InvitationDeliveryError) {
+        sendError(res, 'Failed to create invitation', 'INVITE_ERROR', 500);
+        return;
+      }
+
       if (isActiveInvitationConflictError(err)) {
         sendError(res, 'An active invitation for this email already exists', 'INVITATION_EXISTS', 409);
         return;
       }
 
-      console.error('Create invitation error:', err);
+      console.error('Create invitation error:', {
+        error: sanitizeErrorIdentifier(err),
+      });
       sendError(res, 'Failed to create invitation', 'INVITE_ERROR', 500);
     }
   },
