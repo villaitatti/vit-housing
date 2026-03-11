@@ -9,7 +9,7 @@ async function getSESConfig() {
   const accessKeyId = await getEffectiveConfigValue('ses', 'access_key_id') || process.env.AWS_ACCESS_KEY_ID || '';
   const secretAccessKey = await getEffectiveConfigValue('ses', 'secret_access_key') || process.env.AWS_SECRET_ACCESS_KEY || '';
   const fromAddress = await getEffectiveConfigValue('ses', 'from_address') || process.env.SES_FROM_ADDRESS || 'noreply@example.com';
-  const invitationBaseUrl = await getEffectiveConfigValue('ses', 'invitation_base_url') || process.env.INVITATION_BASE_URL || 'http://localhost:5173';
+  const invitationBaseUrl = await getEffectiveConfigValue('ses', 'invitation_base_url') || process.env.INVITATION_BASE_URL || 'http://localhost:5175';
   return { region, accessKeyId, secretAccessKey, fromAddress, invitationBaseUrl };
 }
 

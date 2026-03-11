@@ -265,7 +265,7 @@ const routeMetadata: RouteMetadataDefinition[] = [
     pattern: '/:lang/admin/listings',
     titleKey: 'admin.listings',
     breadcrumbs: () => [
-      { labelKey: 'shell.sections.admin' },
+      { labelKey: 'shell.sections.admin', href: (lang) => `/${lang}/admin/listings` },
       { labelKey: 'admin.listings' },
     ],
   },
@@ -274,7 +274,7 @@ const routeMetadata: RouteMetadataDefinition[] = [
     pattern: '/:lang/admin/users',
     titleKey: 'admin.users',
     breadcrumbs: () => [
-      { labelKey: 'shell.sections.admin' },
+      { labelKey: 'shell.sections.admin', href: (lang) => `/${lang}/admin/listings` },
       { labelKey: 'admin.users' },
     ],
   },
@@ -283,7 +283,7 @@ const routeMetadata: RouteMetadataDefinition[] = [
     pattern: '/:lang/admin/invitations',
     titleKey: 'admin.invitations',
     breadcrumbs: () => [
-      { labelKey: 'shell.sections.admin' },
+      { labelKey: 'shell.sections.admin', href: (lang) => `/${lang}/admin/listings` },
       { labelKey: 'admin.invitations' },
     ],
   },
@@ -292,7 +292,7 @@ const routeMetadata: RouteMetadataDefinition[] = [
     pattern: '/:lang/admin/invite-user',
     titleKey: 'admin.inviteTitle',
     breadcrumbs: () => [
-      { labelKey: 'shell.sections.admin' },
+      { labelKey: 'shell.sections.admin', href: (lang) => `/${lang}/admin/listings` },
       { labelKey: 'admin.inviteUser' },
     ],
   },
