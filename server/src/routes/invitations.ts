@@ -126,39 +126,19 @@ router.post(
         select: invitationSelect,
       });
 
-      try {
-        await sendInvitationEmail({
-          to: normalizedEmail,
-          token,
-          role,
-          lang: language,
-          firstName: first_name,
-          lastName: last_name,
-          expiresAt,
-        });
-      } catch (emailError) {
-        console.error('Invitation email send error:', {
-          invitationId: invitation.id,
-          redactedEmail: redactEmail(normalizedEmail),
-          error: sanitizeErrorIdentifier(emailError),
-        });
-        try {
-          await prisma.invitation.delete({
-            where: { id: invitation.id },
-          });
-        } catch (cleanupError) {
-          console.error('Invitation cleanup error:', {
-            invitationId: invitation.id,
-            redactedEmail: redactEmail(normalizedEmail),
-            error: sanitizeErrorIdentifier(cleanupError),
-          });
-        }
-
-        throw new InvitationDeliveryError();
-      }
-
-      const activatedInvitation = await prisma.$transaction(async (tx) => {
+      const activationResult = await prisma.$transaction(async (tx) => {
         await acquireInvitationEmailLock(tx, normalizedEmail);
+
+        const previouslyActiveInvitations = await tx.invitation.findMany({
+          where: {
+            email: normalizedEmail,
+            used: false,
+            revoked_at: null,
+          },
+          select: {
+            id: true,
+          },
+        });
 
         await tx.invitation.updateMany({
           where: {
@@ -171,16 +151,73 @@ router.post(
           },
         });
 
-        return tx.invitation.update({
+        const activatedInvitation = await tx.invitation.update({
           where: { id: invitation.id },
           data: { revoked_at: null },
           select: invitationSelect,
         });
+
+        return {
+          invitation: activatedInvitation,
+          previouslyActiveIds: previouslyActiveInvitations.map(({ id }) => id),
+        };
       }, {
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
       });
 
-      sendSuccess(res, { invitation: activatedInvitation }, 201);
+      try {
+        await sendInvitationEmail({
+          to: normalizedEmail,
+          token,
+          role,
+          lang: language,
+          firstName: first_name,
+          lastName: last_name,
+          expiresAt,
+        });
+      } catch (emailError) {
+        console.error('Invitation email send error:', {
+          invitationId: activationResult.invitation.id,
+          redactedEmail: redactEmail(normalizedEmail),
+          error: sanitizeErrorIdentifier(emailError),
+        });
+
+        try {
+          await prisma.$transaction(async (tx) => {
+            await acquireInvitationEmailLock(tx, normalizedEmail);
+
+            await tx.invitation.delete({
+              where: { id: activationResult.invitation.id },
+            });
+
+            if (activationResult.previouslyActiveIds.length > 0) {
+              await tx.invitation.updateMany({
+                where: {
+                  id: {
+                    in: activationResult.previouslyActiveIds,
+                  },
+                  used: false,
+                },
+                data: {
+                  revoked_at: null,
+                },
+              });
+            }
+          }, {
+            isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+          });
+        } catch (cleanupError) {
+          console.error('Invitation cleanup error:', {
+            invitationId: activationResult.invitation.id,
+            redactedEmail: redactEmail(normalizedEmail),
+            error: sanitizeErrorIdentifier(cleanupError),
+          });
+        }
+
+        throw new InvitationDeliveryError();
+      }
+
+      sendSuccess(res, { invitation: activationResult.invitation }, 201);
     } catch (err) {
       if (err instanceof InvitationDeliveryError) {
         sendError(res, 'Failed to create invitation', 'INVITE_ERROR', 500);
