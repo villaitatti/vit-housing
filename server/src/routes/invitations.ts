@@ -288,6 +288,9 @@ router.get(
       });
       sendSuccess(res, { invitations });
     } catch (err) {
+      console.error('Fetch invitations error:', {
+        error: sanitizeErrorIdentifier(err),
+      });
       sendError(res, 'Failed to fetch invitations', 'FETCH_ERROR', 500);
     }
   },
