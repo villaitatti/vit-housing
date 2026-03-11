@@ -390,18 +390,24 @@ export function RegisterPage() {
                     {t('auth.passwordHint', { min: PASSWORD_MIN_LENGTH, max: PASSWORD_MAX_LENGTH })}
                   </p>
                   <ul className="mt-3 space-y-2 text-sm">
-                    {checklist.map((item) => (
-                      <li
-                        key={item.id}
-                        className={item.passed ? 'text-emerald-700' : 'text-muted-foreground'}
-                      >
-                        <span aria-hidden="true">{item.passed ? '✓' : '•'}</span>{' '}
-                        {t(`auth.passwordChecklist.${item.id}`, {
-                          min: PASSWORD_MIN_LENGTH,
-                          max: PASSWORD_MAX_LENGTH,
-                        })}
-                      </li>
-                    ))}
+                    {checklist.map((item) => {
+                      const requirementText = t(`auth.passwordChecklist.${item.id}`, {
+                        min: PASSWORD_MIN_LENGTH,
+                        max: PASSWORD_MAX_LENGTH,
+                      });
+                      const statusText = t(item.passed ? 'common.met' : 'common.notMet');
+
+                      return (
+                        <li
+                          key={item.id}
+                          className={item.passed ? 'text-emerald-700' : 'text-muted-foreground'}
+                          aria-label={`${requirementText}. ${statusText}`}
+                        >
+                          <span aria-hidden="true">{item.passed ? '✓' : '•'}</span>{' '}
+                          {requirementText}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
 

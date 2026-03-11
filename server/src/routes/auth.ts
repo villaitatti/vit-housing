@@ -33,6 +33,13 @@ class InvitationUnavailableError extends Error {
   }
 }
 
+class EmailExistsError extends Error {
+  constructor() {
+    super('An account with this email already exists');
+    this.name = 'EmailExistsError';
+  }
+}
+
 // POST /api/v1/auth/login — Local email/password login
 router.post('/login', validate(loginSchema), async (req: Request, res: Response) => {
   try {
@@ -127,12 +134,20 @@ router.post('/register', registrationRateLimit, validate(registerSchema), async 
 
     await prisma.$transaction(async (tx) => {
       const transactionNow = new Date();
+      const transactionalExistingUser = await tx.user.findUnique({
+        where: { email: invitation.email },
+      });
+
+      if (transactionalExistingUser) {
+        throw new EmailExistsError();
+      }
+
       const markInvitationUsed = await tx.invitation.updateMany({
         where: {
           id: invitation.id,
           used: false,
           revoked_at: null,
-          expires_at: { gt: transactionNow },
+          expires_at: { gte: transactionNow },
         },
         data: {
           used: true,
@@ -161,6 +176,14 @@ router.post('/register', registrationRateLimit, validate(registerSchema), async 
   } catch (err) {
     if (err instanceof InvitationUnavailableError) {
       sendError(res, 'This invitation is no longer available', 'TOKEN_UNAVAILABLE', 409);
+      return;
+    }
+
+    if (
+      err instanceof EmailExistsError ||
+      (err && typeof err === 'object' && 'code' in err && err.code === 'P2002')
+    ) {
+      sendError(res, 'An account with this email already exists', 'EMAIL_EXISTS', 400);
       return;
     }
 

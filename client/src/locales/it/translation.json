@@ -17,7 +17,9 @@
     "or": "OPPURE",
     "required": "Obbligatorio",
     "optional": "Facoltativo",
-    "next": "Pagina successiva"
+    "next": "Pagina successiva",
+    "met": "Soddisfatto",
+    "notMet": "Non soddisfatto"
   },
   "nav": {
     "home": "Home",
