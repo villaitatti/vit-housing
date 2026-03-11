@@ -183,9 +183,6 @@ export const navigationItems: NavigationItem[] = [
   },
 ];
 
-const getDefaultItAdminHref = (lang: string) =>
-  navigationItems.find((item) => item.section === 'itAdmin')?.href(lang) ?? `/${lang}/admin/services/auth0`;
-
 const serviceTitleKey = (service: string) => {
   switch (service) {
     case 'auth0':
@@ -304,7 +301,7 @@ const routeMetadata: RouteMetadataDefinition[] = [
     pattern: '/:lang/admin/services/:service',
     titleKey: (params) => serviceTitleKey(params.service ?? ''),
     breadcrumbs: (params) => [
-      { labelKey: 'shell.sections.itAdmin', href: () => getDefaultItAdminHref(params.lang ?? 'en') },
+      { labelKey: 'shell.sections.itAdmin' },
       { labelKey: serviceTitleKey(params.service ?? '') },
     ],
   },
