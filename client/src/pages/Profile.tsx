@@ -219,7 +219,7 @@ export function ProfilePage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('auth.preferredLanguage')}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />

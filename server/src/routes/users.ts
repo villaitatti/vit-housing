@@ -228,22 +228,20 @@ router.delete(
         return;
       }
 
-      const existingUser = await prisma.user.findUnique({
+      const deletedUser = await prisma.user.delete({
         where: { id },
         select: {
           profile_photo_path: true,
         },
       });
 
-      if (existingUser?.profile_photo_path) {
+      if (deletedUser.profile_photo_path) {
         try {
-          await deleteLocalFile(existingUser.profile_photo_path);
+          await deleteLocalFile(deletedUser.profile_photo_path);
         } catch (err) {
           console.warn(`Failed to delete profile photo for user ${id}:`, err);
         }
       }
-
-      await prisma.user.delete({ where: { id } });
       sendSuccess(res, { message: 'User deleted' });
     } catch (err) {
       sendError(res, 'Failed to delete user', 'DELETE_ERROR', 500);

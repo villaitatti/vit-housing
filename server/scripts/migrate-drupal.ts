@@ -6,7 +6,11 @@ import { createConnection, type Connection, type RowDataPacket } from 'mysql2/pr
 import { Role } from '../src/generated/prisma/enums.js';
 import { normalizeEmail } from '../src/lib/email.js';
 import { prisma } from '../src/lib/prisma.js';
-import { deleteLocalFile, processAndSaveImage } from '../src/services/upload.service.js';
+import {
+  deleteLocalFile,
+  processAndSaveImage,
+  processAndSaveProfilePhoto,
+} from '../src/services/upload.service.js';
 
 const LOG_FILE = path.resolve('server/scripts/drupal-migration-log.txt');
 const AUDIT_FILE = path.resolve('server/scripts/drupal-migration-audit.json');
@@ -180,33 +184,38 @@ interface MigrationAudit {
   started_at: string;
   files_root: string;
   users: {
-    imported_external: string[];
-    imported_itatti_with_listings: string[];
-    skipped_itatti_without_listings: string[];
-    external_without_listings: string[];
-    blocked_users: string[];
-    users_with_legacy_hashes: string[];
+    imported_external_uids: number[];
+    imported_itatti_with_listing_uids: number[];
+    skipped_itatti_without_listing_uids: number[];
+    external_without_listing_uids: number[];
+    blocked_user_uids: number[];
+    legacy_hash_uids: number[];
     missing_emails: number[];
   };
   listings: {
     imported: Array<{ nid: number; slug: string }>;
-    missing_owners: Array<{ nid: number; email: string | null }>;
+    missing_owners: Array<{ nid: number; owner_uid: number | null }>;
     missing_aliases: Array<{ nid: number; fallback_slug: string }>;
     listing_languages: Array<{ nid: number; language: string }>;
     unmapped_listing_types: Array<{ nid: number; value: number }>;
-    missing_photos: Array<{ nid: number; fid: number | null; uri: string | null }>;
+    missing_photos: Array<{ nid: number; fid: number | null }>;
     unmapped_building_types: Array<{ nid: number; value: string }>;
     unmapped_floors: Array<{ nid: number; value: number }>;
     unmapped_features: Array<{ nid: number; value: string }>;
     unmapped_utilities: Array<{ nid: number; value: string }>;
   };
-  user_pictures: Array<{ uid: number; email: string; uri: string }>;
+  user_pictures: Array<{ uid: number; fid: number }>;
 }
 
 interface ProcessedListingPhoto {
   filePath: string;
   url: string;
   sort_order: number;
+}
+
+interface ProcessedUserPicture {
+  filePath: string;
+  url: string;
 }
 
 function log(message: string): void {
@@ -331,6 +340,29 @@ async function connectDrupal(): Promise<Connection> {
 
 async function ensureDrupalFilesRoot(): Promise<void> {
   await fs.access(DRUPAL_FILES_ROOT);
+}
+
+async function processDrupalUserPicture(
+  picture: DrupalUserPictureRow | undefined,
+): Promise<ProcessedUserPicture | null> {
+  if (!picture?.uri) {
+    return null;
+  }
+
+  try {
+    const relativeFilePath = picture.uri.replace(/^public:\/\//, '');
+    const absoluteDrupalPhotoPath = path.join(DRUPAL_FILES_ROOT, relativeFilePath);
+    const fileBuffer = await fs.readFile(absoluteDrupalPhotoPath);
+    const savedPhoto = await processAndSaveProfilePhoto(fileBuffer);
+
+    return {
+      filePath: savedPhoto.filePath,
+      url: savedPhoto.url,
+    };
+  } catch (err) {
+    log(`Skipping Drupal user picture uid=${picture.uid} fid=${picture.fid}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    return null;
+  }
 }
 
 async function fetchRows<T extends RowDataPacket>(connection: Connection, query: string): Promise<T[]> {
@@ -668,6 +700,7 @@ async function migrateUsers(
   log('Migrating users');
 
   const listingOwnerUids = new Set(data.listings.map((listing) => listing.uid));
+  const userPictureByUid = new Map(data.userPictures.map((picture) => [picture.uid, picture]));
   const roleIdsByUser = data.userRoles.reduce((map, row) => {
     const current = map.get(row.uid) || [];
     current.push(row.rid);
@@ -688,62 +721,106 @@ async function migrateUsers(
     }
 
     if (user.status !== 1) {
-      audit.users.blocked_users.push(normalizedEmail);
+      audit.users.blocked_user_uids.push(user.uid);
       continue;
     }
 
     if (isItattiEmail(normalizedEmail) && !ownsListing) {
-      audit.users.skipped_itatti_without_listings.push(normalizedEmail);
+      audit.users.skipped_itatti_without_listing_uids.push(user.uid);
       continue;
     }
 
     const name = splitName(user.name);
     const shouldKeepDrupalPassword = !isItattiEmail(normalizedEmail);
-
-    const migratedUser = await prisma.user.upsert({
+    const existingUser = await prisma.user.findUnique({
       where: { email: normalizedEmail },
-      update: {
-        first_name: name.first_name,
-        last_name: name.last_name,
-        roles,
-        preferred_language: parseDrupalLanguage(user.language),
-        phone_number: user.phone_number || null,
-        mobile_number: user.mobile_number || null,
-        password: shouldKeepDrupalPassword && user.pass ? user.pass : null,
-        auth0_user_id: isItattiEmail(normalizedEmail) ? null : undefined,
-        last_login: user.login > 0 ? new Date(user.login * 1000) : null,
-      },
-      create: {
-        email: normalizedEmail,
-        first_name: name.first_name,
-        last_name: name.last_name,
-        roles,
-        preferred_language: parseDrupalLanguage(user.language),
-        phone_number: user.phone_number || null,
-        mobile_number: user.mobile_number || null,
-        password: shouldKeepDrupalPassword && user.pass ? user.pass : null,
-        created_at: new Date(user.created * 1000),
-        last_login: user.login > 0 ? new Date(user.login * 1000) : null,
-      },
       select: {
         id: true,
         email: true,
+        password: true,
+        auth0_user_id: true,
+        profile_photo_path: true,
+        profile_photo_url: true,
       },
     });
 
-    importedUserIdsByEmail.set(migratedUser.email, migratedUser.id);
+    const commonUserData = {
+      first_name: name.first_name,
+      last_name: name.last_name,
+      roles,
+      preferred_language: parseDrupalLanguage(user.language),
+      phone_number: user.phone_number || null,
+      mobile_number: user.mobile_number || null,
+      last_login: user.login > 0 ? new Date(user.login * 1000) : null,
+    };
 
-    if (shouldKeepDrupalPassword && user.pass?.startsWith('$S$')) {
-      audit.users.users_with_legacy_hashes.push(normalizedEmail);
-    }
+    const shouldBackfillProfilePhoto =
+      !existingUser || (!existingUser.profile_photo_path && !existingUser.profile_photo_url);
+    let processedUserPicture: ProcessedUserPicture | null = null;
 
-    if (isItattiEmail(normalizedEmail)) {
-      audit.users.imported_itatti_with_listings.push(normalizedEmail);
-    } else {
-      audit.users.imported_external.push(normalizedEmail);
-      if (!ownsListing) {
-        audit.users.external_without_listings.push(normalizedEmail);
+    try {
+      if (shouldBackfillProfilePhoto) {
+        processedUserPicture = await processDrupalUserPicture(userPictureByUid.get(user.uid));
       }
+
+      const migratedUser = existingUser
+        ? await prisma.user.update({
+            where: { id: existingUser.id },
+            data: {
+              ...commonUserData,
+              ...(shouldKeepDrupalPassword && user.pass && !existingUser.password
+                ? { password: user.pass }
+                : {}),
+              ...(processedUserPicture
+                ? {
+                    profile_photo_path: processedUserPicture.filePath,
+                    profile_photo_url: processedUserPicture.url,
+                  }
+                : {}),
+            },
+            select: {
+              id: true,
+              email: true,
+            },
+          })
+        : await prisma.user.create({
+            data: {
+              email: normalizedEmail,
+              ...commonUserData,
+              ...(shouldKeepDrupalPassword && user.pass ? { password: user.pass } : {}),
+              ...(processedUserPicture
+                ? {
+                    profile_photo_path: processedUserPicture.filePath,
+                    profile_photo_url: processedUserPicture.url,
+                  }
+                : {}),
+              created_at: new Date(user.created * 1000),
+            },
+            select: {
+              id: true,
+              email: true,
+            },
+          });
+
+      importedUserIdsByEmail.set(migratedUser.email, migratedUser.id);
+
+      if (shouldKeepDrupalPassword && user.pass?.startsWith('$S$')) {
+        audit.users.legacy_hash_uids.push(user.uid);
+      }
+
+      if (isItattiEmail(normalizedEmail)) {
+        audit.users.imported_itatti_with_listing_uids.push(user.uid);
+      } else {
+        audit.users.imported_external_uids.push(user.uid);
+        if (!ownsListing) {
+          audit.users.external_without_listing_uids.push(user.uid);
+        }
+      }
+    } catch (err) {
+      if (processedUserPicture) {
+        await deleteLocalFile(processedUserPicture.filePath);
+      }
+      throw err;
     }
   }
 
@@ -768,7 +845,7 @@ async function migrateListings(
     const ownerId = ownerEmail ? importedUserIdsByEmail.get(ownerEmail) : undefined;
 
     if (!ownerId) {
-      audit.listings.missing_owners.push({ nid: listing.nid, email: ownerEmail });
+      audit.listings.missing_owners.push({ nid: listing.nid, owner_uid: listing.uid || null });
       continue;
     }
 
@@ -891,7 +968,7 @@ async function migrateListings(
     try {
       for (const photo of photoRows) {
         if (!photo.uri) {
-          audit.listings.missing_photos.push({ nid: listing.nid, fid: photo.fid, uri: null });
+          audit.listings.missing_photos.push({ nid: listing.nid, fid: photo.fid });
           continue;
         }
 
@@ -908,7 +985,7 @@ async function migrateListings(
             sort_order: photo.delta,
           });
         } catch {
-          audit.listings.missing_photos.push({ nid: listing.nid, fid: photo.fid, uri: photo.uri });
+          audit.listings.missing_photos.push({ nid: listing.nid, fid: photo.fid });
         }
       }
 
@@ -964,12 +1041,12 @@ async function main(): Promise<void> {
     started_at: new Date().toISOString(),
     files_root: DRUPAL_FILES_ROOT,
     users: {
-      imported_external: [],
-      imported_itatti_with_listings: [],
-      skipped_itatti_without_listings: [],
-      external_without_listings: [],
-      blocked_users: [],
-      users_with_legacy_hashes: [],
+      imported_external_uids: [],
+      imported_itatti_with_listing_uids: [],
+      skipped_itatti_without_listing_uids: [],
+      external_without_listing_uids: [],
+      blocked_user_uids: [],
+      legacy_hash_uids: [],
       missing_emails: [],
     },
     listings: {
@@ -994,8 +1071,7 @@ async function main(): Promise<void> {
     const drupalData = await readDrupalSourceData(connection);
     audit.user_pictures = drupalData.userPictures.map((picture) => ({
       uid: picture.uid,
-      email: normalizeEmail(picture.email),
-      uri: picture.uri,
+      fid: picture.fid,
     }));
 
     const importedUserIdsByEmail = await migrateUsers(drupalData, audit);
@@ -1007,9 +1083,9 @@ async function main(): Promise<void> {
 
   writeFileSync(AUDIT_FILE, `${JSON.stringify(audit, null, 2)}\n`);
 
-  log(`Imported ${audit.users.imported_external.length} external users`);
-  log(`Imported ${audit.users.imported_itatti_with_listings.length} @itatti.harvard.edu users with listings`);
-  log(`Skipped ${audit.users.skipped_itatti_without_listings.length} @itatti.harvard.edu users without listings`);
+  log(`Imported ${audit.users.imported_external_uids.length} external users`);
+  log(`Imported ${audit.users.imported_itatti_with_listing_uids.length} @itatti.harvard.edu users with listings`);
+  log(`Skipped ${audit.users.skipped_itatti_without_listing_uids.length} @itatti.harvard.edu users without listings`);
   log(`Imported ${audit.listings.imported.length} listings`);
   log(`Recorded ${audit.listings.missing_photos.length} missing listing photos`);
   log(`Audit written to ${AUDIT_FILE}`);
