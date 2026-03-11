@@ -44,3 +44,6 @@ server/uploads/
 
 # Temp files
 *.tmp
+
+# Local Drupal 7 source imports
+drupal7-import/

@@ -14,6 +14,9 @@ interface User {
   phone_number?: string | null;
   mobile_number?: string | null;
   auth0_user_id?: string | null;
+  profile_photo_url?: string | null;
+  has_uploaded_profile_photo?: boolean;
+  avatar_url?: string | null;
 }
 
 export function useAuth() {

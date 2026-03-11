@@ -397,7 +397,22 @@
   "profile": {
     "title": "Profilo",
     "personalInfo": "Informazioni Personali",
-    "updateSuccess": "Profilo aggiornato con successo!"
+    "updateSuccess": "Profilo aggiornato con successo!",
+    "photo": {
+      "title": "Foto profilo",
+      "help": "Carica un ritratto quadrato da usare in tutto il sito.",
+      "upload": "Carica foto",
+      "remove": "Rimuovi foto",
+      "save": "Salva foto",
+      "cropTitle": "Ritaglia foto profilo",
+      "zoom": "Zoom",
+      "invalidType": "Sono supportate solo immagini JPEG, PNG e WebP.",
+      "uploaded": "La tua foto caricata e' attualmente visibile.",
+      "gravatarFallback": "Non hai ancora caricato una foto. Il tuo account Auth0 usa al momento Gravatar.",
+      "noPhoto": "Al momento non e' visibile alcuna foto sul tuo account.",
+      "updateSuccess": "Foto profilo aggiornata con successo!",
+      "removeSuccess": "Foto profilo rimossa con successo!"
+    }
   },
   "errors": {
     "unauthorized": "Devi accedere per visualizzare questa pagina.",

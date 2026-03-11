@@ -397,7 +397,22 @@
   "profile": {
     "title": "Profile",
     "personalInfo": "Personal Information",
-    "updateSuccess": "Profile updated successfully!"
+    "updateSuccess": "Profile updated successfully!",
+    "photo": {
+      "title": "Profile Photo",
+      "help": "Upload a square portrait to use across the site.",
+      "upload": "Upload photo",
+      "remove": "Remove photo",
+      "save": "Save photo",
+      "cropTitle": "Crop profile photo",
+      "zoom": "Zoom",
+      "invalidType": "Only JPEG, PNG, and WebP images are supported.",
+      "uploaded": "Your uploaded photo is currently displayed.",
+      "gravatarFallback": "No uploaded photo yet. Your Auth0 account currently falls back to Gravatar.",
+      "noPhoto": "No photo is currently displayed on your account.",
+      "updateSuccess": "Profile photo updated successfully!",
+      "removeSuccess": "Profile photo removed successfully!"
+    }
   },
   "errors": {
     "unauthorized": "You must be logged in to access this page.",

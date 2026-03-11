@@ -24,6 +24,8 @@ model User {
   email              String       @unique
   password           String?
   auth0_user_id      String?      @unique
+  profile_photo_path String?
+  profile_photo_url  String?
   first_name         String
   last_name          String
   roles              Role[]       @default([HOUSE_USER])

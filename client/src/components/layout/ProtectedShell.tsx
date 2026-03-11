@@ -27,7 +27,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import {
   DropdownMenu,
@@ -36,6 +36,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { getInitials } from '@/lib/avatar';
 
 const BROWSER_APP_NAME = 'I Tatti Housing Offers';
 
@@ -88,7 +89,7 @@ function SidebarNavigation() {
   const visibilityContext = getNavigationVisibilityContext(user?.roles ?? []);
   const sections = getVisibleNavigationSections(visibilityContext);
 
-  const initials = `${user?.first_name?.[0] ?? ''}${user?.last_name?.[0] ?? ''}`.toUpperCase();
+  const initials = getInitials(user?.first_name, user?.last_name);
 
   const closeMobileSidebar = () => {
     if (isMobile) {
@@ -196,6 +197,7 @@ function SidebarNavigation() {
                 )}
               >
                 <Avatar className="h-10 w-10">
+                  {user.avatar_url ? <AvatarImage src={user.avatar_url} alt={`${user.first_name} ${user.last_name}`} /> : null}
                   <AvatarFallback>{initials || 'IT'}</AvatarFallback>
                 </Avatar>
                 {collapsed && !isMobile ? null : (

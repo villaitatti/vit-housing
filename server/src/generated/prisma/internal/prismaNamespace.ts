@@ -387,6 +387,7 @@ export const ModelName = {
   User: 'User',
   Invitation: 'Invitation',
   Listing: 'Listing',
+  FavoriteListing: 'FavoriteListing',
   AvailableDate: 'AvailableDate',
   ListingPhoto: 'ListingPhoto',
   ServiceConfig: 'ServiceConfig',
@@ -406,7 +407,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "invitation" | "listing" | "availableDate" | "listingPhoto" | "serviceConfig" | "auth0RoleMapping"
+    modelProps: "user" | "invitation" | "listing" | "favoriteListing" | "availableDate" | "listingPhoto" | "serviceConfig" | "auth0RoleMapping"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -629,6 +630,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ListingCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ListingCountAggregateOutputType> | number
+        }
+      }
+    }
+    FavoriteListing: {
+      payload: Prisma.$FavoriteListingPayload<ExtArgs>
+      fields: Prisma.FavoriteListingFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FavoriteListingFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteListingPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FavoriteListingFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteListingPayload>
+        }
+        findFirst: {
+          args: Prisma.FavoriteListingFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteListingPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FavoriteListingFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteListingPayload>
+        }
+        findMany: {
+          args: Prisma.FavoriteListingFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteListingPayload>[]
+        }
+        create: {
+          args: Prisma.FavoriteListingCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteListingPayload>
+        }
+        createMany: {
+          args: Prisma.FavoriteListingCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.FavoriteListingCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteListingPayload>[]
+        }
+        delete: {
+          args: Prisma.FavoriteListingDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteListingPayload>
+        }
+        update: {
+          args: Prisma.FavoriteListingUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteListingPayload>
+        }
+        deleteMany: {
+          args: Prisma.FavoriteListingDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FavoriteListingUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.FavoriteListingUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteListingPayload>[]
+        }
+        upsert: {
+          args: Prisma.FavoriteListingUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteListingPayload>
+        }
+        aggregate: {
+          args: Prisma.FavoriteListingAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFavoriteListing>
+        }
+        groupBy: {
+          args: Prisma.FavoriteListingGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FavoriteListingGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FavoriteListingCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FavoriteListingCountAggregateOutputType> | number
         }
       }
     }
@@ -972,6 +1047,8 @@ export const UserScalarFieldEnum = {
   email: 'email',
   password: 'password',
   auth0_user_id: 'auth0_user_id',
+  profile_photo_path: 'profile_photo_path',
+  profile_photo_url: 'profile_photo_url',
   first_name: 'first_name',
   last_name: 'last_name',
   roles: 'roles',
@@ -1052,6 +1129,18 @@ export const ListingScalarFieldEnum = {
 } as const
 
 export type ListingScalarFieldEnum = (typeof ListingScalarFieldEnum)[keyof typeof ListingScalarFieldEnum]
+
+
+export const FavoriteListingScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  listing_id: 'listing_id',
+  note: 'note',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type FavoriteListingScalarFieldEnum = (typeof FavoriteListingScalarFieldEnum)[keyof typeof FavoriteListingScalarFieldEnum]
 
 
 export const AvailableDateScalarFieldEnum = {
@@ -1332,6 +1421,7 @@ export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   invitation?: Prisma.InvitationOmit
   listing?: Prisma.ListingOmit
+  favoriteListing?: Prisma.FavoriteListingOmit
   availableDate?: Prisma.AvailableDateOmit
   listingPhoto?: Prisma.ListingPhotoOmit
   serviceConfig?: Prisma.ServiceConfigOmit

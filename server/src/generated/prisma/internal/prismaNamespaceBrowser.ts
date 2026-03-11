@@ -54,6 +54,7 @@ export const ModelName = {
   User: 'User',
   Invitation: 'Invitation',
   Listing: 'Listing',
+  FavoriteListing: 'FavoriteListing',
   AvailableDate: 'AvailableDate',
   ListingPhoto: 'ListingPhoto',
   ServiceConfig: 'ServiceConfig',
@@ -81,6 +82,8 @@ export const UserScalarFieldEnum = {
   email: 'email',
   password: 'password',
   auth0_user_id: 'auth0_user_id',
+  profile_photo_path: 'profile_photo_path',
+  profile_photo_url: 'profile_photo_url',
   first_name: 'first_name',
   last_name: 'last_name',
   roles: 'roles',
@@ -161,6 +164,18 @@ export const ListingScalarFieldEnum = {
 } as const
 
 export type ListingScalarFieldEnum = (typeof ListingScalarFieldEnum)[keyof typeof ListingScalarFieldEnum]
+
+
+export const FavoriteListingScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  listing_id: 'listing_id',
+  note: 'note',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type FavoriteListingScalarFieldEnum = (typeof FavoriteListingScalarFieldEnum)[keyof typeof FavoriteListingScalarFieldEnum]
 
 
 export const AvailableDateScalarFieldEnum = {

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { Prisma } from '../generated/prisma/client.js';
+import { getAvatarUrl } from '../lib/avatar.js';
 import { sendSuccess, sendError } from '../lib/response.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/requireRole.js';
@@ -23,6 +24,9 @@ const listingDetailInclude = {
       email: true,
       phone_number: true,
       mobile_number: true,
+      auth0_user_id: true,
+      profile_photo_path: true,
+      profile_photo_url: true,
     },
   },
 };
@@ -93,6 +97,16 @@ async function fetchListingDetail(where: { id: number } | { slug: string }, user
 
   return {
     ...listing,
+    owner: listing.owner
+      ? {
+          first_name: listing.owner.first_name,
+          last_name: listing.owner.last_name,
+          email: listing.owner.email,
+          phone_number: listing.owner.phone_number,
+          mobile_number: listing.owner.mobile_number,
+          avatar_url: getAvatarUrl(listing.owner),
+        }
+      : null,
     is_favorite: await isFavoriteListing(userId, listing.id),
   };
 }

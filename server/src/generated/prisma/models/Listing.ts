@@ -567,6 +567,7 @@ export type ListingWhereInput = {
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   available_dates?: Prisma.AvailableDateListRelationFilter
   photos?: Prisma.ListingPhotoListRelationFilter
+  favorites?: Prisma.FavoriteListingListRelationFilter
 }
 
 export type ListingOrderByWithRelationInput = {
@@ -617,6 +618,7 @@ export type ListingOrderByWithRelationInput = {
   owner?: Prisma.UserOrderByWithRelationInput
   available_dates?: Prisma.AvailableDateOrderByRelationAggregateInput
   photos?: Prisma.ListingPhotoOrderByRelationAggregateInput
+  favorites?: Prisma.FavoriteListingOrderByRelationAggregateInput
 }
 
 export type ListingWhereUniqueInput = Prisma.AtLeast<{
@@ -670,6 +672,7 @@ export type ListingWhereUniqueInput = Prisma.AtLeast<{
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   available_dates?: Prisma.AvailableDateListRelationFilter
   photos?: Prisma.ListingPhotoListRelationFilter
+  favorites?: Prisma.FavoriteListingListRelationFilter
 }, "id" | "slug">
 
 export type ListingOrderByWithAggregationInput = {
@@ -820,6 +823,7 @@ export type ListingCreateInput = {
   owner: Prisma.UserCreateNestedOneWithoutListingsInput
   available_dates?: Prisma.AvailableDateCreateNestedManyWithoutListingInput
   photos?: Prisma.ListingPhotoCreateNestedManyWithoutListingInput
+  favorites?: Prisma.FavoriteListingCreateNestedManyWithoutListingInput
 }
 
 export type ListingUncheckedCreateInput = {
@@ -869,6 +873,7 @@ export type ListingUncheckedCreateInput = {
   owner_id: number
   available_dates?: Prisma.AvailableDateUncheckedCreateNestedManyWithoutListingInput
   photos?: Prisma.ListingPhotoUncheckedCreateNestedManyWithoutListingInput
+  favorites?: Prisma.FavoriteListingUncheckedCreateNestedManyWithoutListingInput
 }
 
 export type ListingUpdateInput = {
@@ -917,6 +922,7 @@ export type ListingUpdateInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutListingsNestedInput
   available_dates?: Prisma.AvailableDateUpdateManyWithoutListingNestedInput
   photos?: Prisma.ListingPhotoUpdateManyWithoutListingNestedInput
+  favorites?: Prisma.FavoriteListingUpdateManyWithoutListingNestedInput
 }
 
 export type ListingUncheckedUpdateInput = {
@@ -966,6 +972,7 @@ export type ListingUncheckedUpdateInput = {
   owner_id?: Prisma.IntFieldUpdateOperationsInput | number
   available_dates?: Prisma.AvailableDateUncheckedUpdateManyWithoutListingNestedInput
   photos?: Prisma.ListingPhotoUncheckedUpdateManyWithoutListingNestedInput
+  favorites?: Prisma.FavoriteListingUncheckedUpdateManyWithoutListingNestedInput
 }
 
 export type ListingCreateManyInput = {
@@ -1355,6 +1362,20 @@ export type NullableDecimalFieldUpdateOperationsInput = {
   divide?: runtime.Decimal | runtime.DecimalJsLike | number | string
 }
 
+export type ListingCreateNestedOneWithoutFavoritesInput = {
+  create?: Prisma.XOR<Prisma.ListingCreateWithoutFavoritesInput, Prisma.ListingUncheckedCreateWithoutFavoritesInput>
+  connectOrCreate?: Prisma.ListingCreateOrConnectWithoutFavoritesInput
+  connect?: Prisma.ListingWhereUniqueInput
+}
+
+export type ListingUpdateOneRequiredWithoutFavoritesNestedInput = {
+  create?: Prisma.XOR<Prisma.ListingCreateWithoutFavoritesInput, Prisma.ListingUncheckedCreateWithoutFavoritesInput>
+  connectOrCreate?: Prisma.ListingCreateOrConnectWithoutFavoritesInput
+  upsert?: Prisma.ListingUpsertWithoutFavoritesInput
+  connect?: Prisma.ListingWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ListingUpdateToOneWithWhereWithoutFavoritesInput, Prisma.ListingUpdateWithoutFavoritesInput>, Prisma.ListingUncheckedUpdateWithoutFavoritesInput>
+}
+
 export type ListingCreateNestedOneWithoutAvailable_datesInput = {
   create?: Prisma.XOR<Prisma.ListingCreateWithoutAvailable_datesInput, Prisma.ListingUncheckedCreateWithoutAvailable_datesInput>
   connectOrCreate?: Prisma.ListingCreateOrConnectWithoutAvailable_datesInput
@@ -1428,6 +1449,7 @@ export type ListingCreateWithoutOwnerInput = {
   updated_at?: Date | string
   available_dates?: Prisma.AvailableDateCreateNestedManyWithoutListingInput
   photos?: Prisma.ListingPhotoCreateNestedManyWithoutListingInput
+  favorites?: Prisma.FavoriteListingCreateNestedManyWithoutListingInput
 }
 
 export type ListingUncheckedCreateWithoutOwnerInput = {
@@ -1476,6 +1498,7 @@ export type ListingUncheckedCreateWithoutOwnerInput = {
   updated_at?: Date | string
   available_dates?: Prisma.AvailableDateUncheckedCreateNestedManyWithoutListingInput
   photos?: Prisma.ListingPhotoUncheckedCreateNestedManyWithoutListingInput
+  favorites?: Prisma.FavoriteListingUncheckedCreateNestedManyWithoutListingInput
 }
 
 export type ListingCreateOrConnectWithoutOwnerInput = {
@@ -1554,6 +1577,216 @@ export type ListingScalarWhereInput = {
   owner_id?: Prisma.IntFilter<"Listing"> | number
 }
 
+export type ListingCreateWithoutFavoritesInput = {
+  title: string
+  slug: string
+  description: string
+  address_1: string
+  address_2?: string | null
+  postal_code: string
+  city: string
+  province: string
+  latitude?: number | null
+  longitude?: number | null
+  monthly_rent: runtime.Decimal | runtime.DecimalJsLike | number | string
+  deposit?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  condominium_expenses?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  utility_electricity?: boolean
+  utility_gas?: boolean
+  utility_water?: boolean
+  utility_telephone?: boolean
+  utility_internet?: boolean
+  accommodation_type: string
+  floor: string
+  bathrooms: number
+  bedrooms: number
+  floor_space?: number | null
+  feature_storage_room?: boolean
+  feature_basement?: boolean
+  feature_garden?: boolean
+  feature_balcony?: boolean
+  feature_air_con?: boolean
+  feature_washing_machine?: boolean
+  feature_dryer?: boolean
+  feature_fireplace?: boolean
+  feature_dishwasher?: boolean
+  feature_elevator?: boolean
+  feature_tv?: boolean
+  feature_telephone?: boolean
+  feature_wifi?: boolean
+  feature_wired_internet?: boolean
+  feature_parking?: boolean
+  feature_pets_allowed?: boolean
+  published?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string
+  owner: Prisma.UserCreateNestedOneWithoutListingsInput
+  available_dates?: Prisma.AvailableDateCreateNestedManyWithoutListingInput
+  photos?: Prisma.ListingPhotoCreateNestedManyWithoutListingInput
+}
+
+export type ListingUncheckedCreateWithoutFavoritesInput = {
+  id?: number
+  title: string
+  slug: string
+  description: string
+  address_1: string
+  address_2?: string | null
+  postal_code: string
+  city: string
+  province: string
+  latitude?: number | null
+  longitude?: number | null
+  monthly_rent: runtime.Decimal | runtime.DecimalJsLike | number | string
+  deposit?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  condominium_expenses?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  utility_electricity?: boolean
+  utility_gas?: boolean
+  utility_water?: boolean
+  utility_telephone?: boolean
+  utility_internet?: boolean
+  accommodation_type: string
+  floor: string
+  bathrooms: number
+  bedrooms: number
+  floor_space?: number | null
+  feature_storage_room?: boolean
+  feature_basement?: boolean
+  feature_garden?: boolean
+  feature_balcony?: boolean
+  feature_air_con?: boolean
+  feature_washing_machine?: boolean
+  feature_dryer?: boolean
+  feature_fireplace?: boolean
+  feature_dishwasher?: boolean
+  feature_elevator?: boolean
+  feature_tv?: boolean
+  feature_telephone?: boolean
+  feature_wifi?: boolean
+  feature_wired_internet?: boolean
+  feature_parking?: boolean
+  feature_pets_allowed?: boolean
+  published?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string
+  owner_id: number
+  available_dates?: Prisma.AvailableDateUncheckedCreateNestedManyWithoutListingInput
+  photos?: Prisma.ListingPhotoUncheckedCreateNestedManyWithoutListingInput
+}
+
+export type ListingCreateOrConnectWithoutFavoritesInput = {
+  where: Prisma.ListingWhereUniqueInput
+  create: Prisma.XOR<Prisma.ListingCreateWithoutFavoritesInput, Prisma.ListingUncheckedCreateWithoutFavoritesInput>
+}
+
+export type ListingUpsertWithoutFavoritesInput = {
+  update: Prisma.XOR<Prisma.ListingUpdateWithoutFavoritesInput, Prisma.ListingUncheckedUpdateWithoutFavoritesInput>
+  create: Prisma.XOR<Prisma.ListingCreateWithoutFavoritesInput, Prisma.ListingUncheckedCreateWithoutFavoritesInput>
+  where?: Prisma.ListingWhereInput
+}
+
+export type ListingUpdateToOneWithWhereWithoutFavoritesInput = {
+  where?: Prisma.ListingWhereInput
+  data: Prisma.XOR<Prisma.ListingUpdateWithoutFavoritesInput, Prisma.ListingUncheckedUpdateWithoutFavoritesInput>
+}
+
+export type ListingUpdateWithoutFavoritesInput = {
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  address_1?: Prisma.StringFieldUpdateOperationsInput | string
+  address_2?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postal_code?: Prisma.StringFieldUpdateOperationsInput | string
+  city?: Prisma.StringFieldUpdateOperationsInput | string
+  province?: Prisma.StringFieldUpdateOperationsInput | string
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  monthly_rent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  deposit?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  condominium_expenses?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  utility_electricity?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  utility_gas?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  utility_water?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  utility_telephone?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  utility_internet?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accommodation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  floor?: Prisma.StringFieldUpdateOperationsInput | string
+  bathrooms?: Prisma.IntFieldUpdateOperationsInput | number
+  bedrooms?: Prisma.IntFieldUpdateOperationsInput | number
+  floor_space?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  feature_storage_room?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_basement?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_garden?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_balcony?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_air_con?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_washing_machine?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_dryer?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_fireplace?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_dishwasher?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_elevator?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_tv?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_telephone?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_wifi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_wired_internet?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_parking?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_pets_allowed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  owner?: Prisma.UserUpdateOneRequiredWithoutListingsNestedInput
+  available_dates?: Prisma.AvailableDateUpdateManyWithoutListingNestedInput
+  photos?: Prisma.ListingPhotoUpdateManyWithoutListingNestedInput
+}
+
+export type ListingUncheckedUpdateWithoutFavoritesInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  address_1?: Prisma.StringFieldUpdateOperationsInput | string
+  address_2?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postal_code?: Prisma.StringFieldUpdateOperationsInput | string
+  city?: Prisma.StringFieldUpdateOperationsInput | string
+  province?: Prisma.StringFieldUpdateOperationsInput | string
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  monthly_rent?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  deposit?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  condominium_expenses?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  utility_electricity?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  utility_gas?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  utility_water?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  utility_telephone?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  utility_internet?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accommodation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  floor?: Prisma.StringFieldUpdateOperationsInput | string
+  bathrooms?: Prisma.IntFieldUpdateOperationsInput | number
+  bedrooms?: Prisma.IntFieldUpdateOperationsInput | number
+  floor_space?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  feature_storage_room?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_basement?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_garden?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_balcony?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_air_con?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_washing_machine?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_dryer?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_fireplace?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_dishwasher?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_elevator?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_tv?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_telephone?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_wifi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_wired_internet?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_parking?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  feature_pets_allowed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  owner_id?: Prisma.IntFieldUpdateOperationsInput | number
+  available_dates?: Prisma.AvailableDateUncheckedUpdateManyWithoutListingNestedInput
+  photos?: Prisma.ListingPhotoUncheckedUpdateManyWithoutListingNestedInput
+}
+
 export type ListingCreateWithoutAvailable_datesInput = {
   title: string
   slug: string
@@ -1599,6 +1832,7 @@ export type ListingCreateWithoutAvailable_datesInput = {
   updated_at?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutListingsInput
   photos?: Prisma.ListingPhotoCreateNestedManyWithoutListingInput
+  favorites?: Prisma.FavoriteListingCreateNestedManyWithoutListingInput
 }
 
 export type ListingUncheckedCreateWithoutAvailable_datesInput = {
@@ -1647,6 +1881,7 @@ export type ListingUncheckedCreateWithoutAvailable_datesInput = {
   updated_at?: Date | string
   owner_id: number
   photos?: Prisma.ListingPhotoUncheckedCreateNestedManyWithoutListingInput
+  favorites?: Prisma.FavoriteListingUncheckedCreateNestedManyWithoutListingInput
 }
 
 export type ListingCreateOrConnectWithoutAvailable_datesInput = {
@@ -1710,6 +1945,7 @@ export type ListingUpdateWithoutAvailable_datesInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutListingsNestedInput
   photos?: Prisma.ListingPhotoUpdateManyWithoutListingNestedInput
+  favorites?: Prisma.FavoriteListingUpdateManyWithoutListingNestedInput
 }
 
 export type ListingUncheckedUpdateWithoutAvailable_datesInput = {
@@ -1758,6 +1994,7 @@ export type ListingUncheckedUpdateWithoutAvailable_datesInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner_id?: Prisma.IntFieldUpdateOperationsInput | number
   photos?: Prisma.ListingPhotoUncheckedUpdateManyWithoutListingNestedInput
+  favorites?: Prisma.FavoriteListingUncheckedUpdateManyWithoutListingNestedInput
 }
 
 export type ListingCreateWithoutPhotosInput = {
@@ -1805,6 +2042,7 @@ export type ListingCreateWithoutPhotosInput = {
   updated_at?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutListingsInput
   available_dates?: Prisma.AvailableDateCreateNestedManyWithoutListingInput
+  favorites?: Prisma.FavoriteListingCreateNestedManyWithoutListingInput
 }
 
 export type ListingUncheckedCreateWithoutPhotosInput = {
@@ -1853,6 +2091,7 @@ export type ListingUncheckedCreateWithoutPhotosInput = {
   updated_at?: Date | string
   owner_id: number
   available_dates?: Prisma.AvailableDateUncheckedCreateNestedManyWithoutListingInput
+  favorites?: Prisma.FavoriteListingUncheckedCreateNestedManyWithoutListingInput
 }
 
 export type ListingCreateOrConnectWithoutPhotosInput = {
@@ -1916,6 +2155,7 @@ export type ListingUpdateWithoutPhotosInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutListingsNestedInput
   available_dates?: Prisma.AvailableDateUpdateManyWithoutListingNestedInput
+  favorites?: Prisma.FavoriteListingUpdateManyWithoutListingNestedInput
 }
 
 export type ListingUncheckedUpdateWithoutPhotosInput = {
@@ -1964,6 +2204,7 @@ export type ListingUncheckedUpdateWithoutPhotosInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner_id?: Prisma.IntFieldUpdateOperationsInput | number
   available_dates?: Prisma.AvailableDateUncheckedUpdateManyWithoutListingNestedInput
+  favorites?: Prisma.FavoriteListingUncheckedUpdateManyWithoutListingNestedInput
 }
 
 export type ListingCreateManyOwnerInput = {
@@ -2057,6 +2298,7 @@ export type ListingUpdateWithoutOwnerInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   available_dates?: Prisma.AvailableDateUpdateManyWithoutListingNestedInput
   photos?: Prisma.ListingPhotoUpdateManyWithoutListingNestedInput
+  favorites?: Prisma.FavoriteListingUpdateManyWithoutListingNestedInput
 }
 
 export type ListingUncheckedUpdateWithoutOwnerInput = {
@@ -2105,6 +2347,7 @@ export type ListingUncheckedUpdateWithoutOwnerInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   available_dates?: Prisma.AvailableDateUncheckedUpdateManyWithoutListingNestedInput
   photos?: Prisma.ListingPhotoUncheckedUpdateManyWithoutListingNestedInput
+  favorites?: Prisma.FavoriteListingUncheckedUpdateManyWithoutListingNestedInput
 }
 
 export type ListingUncheckedUpdateManyWithoutOwnerInput = {
@@ -2161,11 +2404,13 @@ export type ListingUncheckedUpdateManyWithoutOwnerInput = {
 export type ListingCountOutputType = {
   available_dates: number
   photos: number
+  favorites: number
 }
 
 export type ListingCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   available_dates?: boolean | ListingCountOutputTypeCountAvailable_datesArgs
   photos?: boolean | ListingCountOutputTypeCountPhotosArgs
+  favorites?: boolean | ListingCountOutputTypeCountFavoritesArgs
 }
 
 /**
@@ -2190,6 +2435,13 @@ export type ListingCountOutputTypeCountAvailable_datesArgs<ExtArgs extends runti
  */
 export type ListingCountOutputTypeCountPhotosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ListingPhotoWhereInput
+}
+
+/**
+ * ListingCountOutputType without action
+ */
+export type ListingCountOutputTypeCountFavoritesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FavoriteListingWhereInput
 }
 
 
@@ -2241,6 +2493,7 @@ export type ListingSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   available_dates?: boolean | Prisma.Listing$available_datesArgs<ExtArgs>
   photos?: boolean | Prisma.Listing$photosArgs<ExtArgs>
+  favorites?: boolean | Prisma.Listing$favoritesArgs<ExtArgs>
   _count?: boolean | Prisma.ListingCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["listing"]>
 
@@ -2392,6 +2645,7 @@ export type ListingInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   available_dates?: boolean | Prisma.Listing$available_datesArgs<ExtArgs>
   photos?: boolean | Prisma.Listing$photosArgs<ExtArgs>
+  favorites?: boolean | Prisma.Listing$favoritesArgs<ExtArgs>
   _count?: boolean | Prisma.ListingCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ListingIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2407,6 +2661,7 @@ export type $ListingPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     owner: Prisma.$UserPayload<ExtArgs>
     available_dates: Prisma.$AvailableDatePayload<ExtArgs>[]
     photos: Prisma.$ListingPhotoPayload<ExtArgs>[]
+    favorites: Prisma.$FavoriteListingPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -2850,6 +3105,7 @@ export interface Prisma__ListingClient<T, Null = never, ExtArgs extends runtime.
   owner<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   available_dates<T extends Prisma.Listing$available_datesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Listing$available_datesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AvailableDatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   photos<T extends Prisma.Listing$photosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Listing$photosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ListingPhotoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  favorites<T extends Prisma.Listing$favoritesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Listing$favoritesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FavoriteListingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3364,6 +3620,30 @@ export type Listing$photosArgs<ExtArgs extends runtime.Types.Extensions.Internal
   take?: number
   skip?: number
   distinct?: Prisma.ListingPhotoScalarFieldEnum | Prisma.ListingPhotoScalarFieldEnum[]
+}
+
+/**
+ * Listing.favorites
+ */
+export type Listing$favoritesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FavoriteListing
+   */
+  select?: Prisma.FavoriteListingSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the FavoriteListing
+   */
+  omit?: Prisma.FavoriteListingOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FavoriteListingInclude<ExtArgs> | null
+  where?: Prisma.FavoriteListingWhereInput
+  orderBy?: Prisma.FavoriteListingOrderByWithRelationInput | Prisma.FavoriteListingOrderByWithRelationInput[]
+  cursor?: Prisma.FavoriteListingWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FavoriteListingScalarFieldEnum | Prisma.FavoriteListingScalarFieldEnum[]
 }
 
 /**
