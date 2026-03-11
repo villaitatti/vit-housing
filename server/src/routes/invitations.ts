@@ -5,7 +5,7 @@ import { sendSuccess, sendError } from '../lib/response.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/requireRole.js';
 import { validate } from '../middleware/validate.js';
-import { createInvitationSchema } from '@vithousing/shared';
+import { createInvitationSchema, validateInvitationTokenSchema } from '@vithousing/shared';
 import { sendInvitationEmail } from '../services/email.service.js';
 import {
   buildInvitationExpiryDate,
@@ -151,10 +151,10 @@ router.get(
   },
 );
 
-// GET /api/v1/invitations/validate/:token — Public token validation
-router.get('/validate/:token', invitationValidationRateLimit, async (req: Request, res: Response) => {
+// POST /api/v1/invitations/validate — Public token validation
+router.post('/validate', invitationValidationRateLimit, validate(validateInvitationTokenSchema), async (req: Request, res: Response) => {
   try {
-    const tokenHash = hashInvitationToken(req.params.token as string);
+    const tokenHash = hashInvitationToken(req.body.token as string);
     const invitation = await prisma.invitation.findUnique({
       where: { token_hash: tokenHash },
     });

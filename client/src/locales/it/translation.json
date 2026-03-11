@@ -17,9 +17,12 @@
     "or": "OPPURE",
     "required": "Obbligatorio",
     "optional": "Facoltativo",
-    "next": "Pagina successiva",
+    "next": "Avanti",
     "met": "Soddisfatto",
     "notMet": "Non soddisfatto"
+  },
+  "pagination": {
+    "nextPage": "Pagina successiva"
   },
   "nav": {
     "home": "Home",
@@ -64,7 +67,7 @@
     "registrationSuccess": "Registrazione completata! Ora puoi accedere.",
     "registrationCompleteTitle": "Account creato",
     "redirectingToLogin": "Verrai reindirizzato alla pagina di accesso tra pochi istanti.",
-    "invalidToken": "Questo link di invito non è valido o è scaduto.",
+    "invalidToken": "Questo link di invito non è valido.",
     "tokenUsed": "Questo invito è già stato utilizzato.",
     "tokenExpired": "Questo invito è scaduto.",
     "tokenUnavailable": "Questo invito non è più disponibile.",

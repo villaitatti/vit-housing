@@ -17,4 +17,9 @@ export const createInvitationSchema = z.object({
   language: z.enum(['EN', 'IT']),
 });
 
+export const validateInvitationTokenSchema = z.object({
+  token: z.string().trim().min(1, 'Invitation token is required'),
+});
+
 export type CreateInvitationInput = z.infer<typeof createInvitationSchema>;
+export type ValidateInvitationTokenInput = z.infer<typeof validateInvitationTokenSchema>;

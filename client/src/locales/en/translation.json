@@ -17,9 +17,12 @@
     "or": "OR",
     "required": "Required",
     "optional": "Optional",
-    "next": "Next page",
+    "next": "Next",
     "met": "Met",
     "notMet": "Not met"
+  },
+  "pagination": {
+    "nextPage": "Next page"
   },
   "nav": {
     "home": "Home",
@@ -64,7 +67,7 @@
     "registrationSuccess": "Registration successful! You can now log in.",
     "registrationCompleteTitle": "Account created",
     "redirectingToLogin": "You will be redirected to the login page shortly.",
-    "invalidToken": "This invitation link is invalid or has expired.",
+    "invalidToken": "This invitation link is invalid.",
     "tokenUsed": "This invitation has already been used.",
     "tokenExpired": "This invitation has expired.",
     "tokenUnavailable": "This invitation is no longer available.",

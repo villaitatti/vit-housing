@@ -96,19 +96,30 @@ export function RegisterPage() {
   const { lang } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [inviteToken] = useState(() => searchParams.get('token')?.trim() || '');
+  const urlInviteToken = searchParams.get('token')?.trim() || '';
+  const [inviteToken, setInviteToken] = useState(urlInviteToken);
   const [registrationComplete, setRegistrationComplete] = useState(false);
   const [submissionErrorCode, setSubmissionErrorCode] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!searchParams.has('token')) {
+    if (!urlInviteToken || urlInviteToken === inviteToken) {
+      return;
+    }
+
+    setInviteToken(urlInviteToken);
+    setSubmissionErrorCode(null);
+    setRegistrationComplete(false);
+  }, [inviteToken, urlInviteToken]);
+
+  useEffect(() => {
+    if (!urlInviteToken) {
       return;
     }
 
     const nextSearchParams = new URLSearchParams(searchParams);
     nextSearchParams.delete('token');
     setSearchParams(nextSearchParams, { replace: true });
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, urlInviteToken]);
 
   const {
     data: invitation,
@@ -118,7 +129,7 @@ export function RegisterPage() {
   } = useQuery<InvitationValidationResponse>({
     queryKey: queryKeys.invitations.validate(inviteToken),
     queryFn: async () => {
-      const res = await api.get(`/api/v1/invitations/validate/${inviteToken}`);
+      const res = await api.post('/api/v1/invitations/validate', { token: inviteToken });
       return res.data;
     },
     enabled: !!inviteToken,
