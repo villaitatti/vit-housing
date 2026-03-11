@@ -44,6 +44,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+const BROWSER_APP_NAME = 'I Tatti Housing Offers';
+
 function SidebarNavigation() {
   const { t } = useTranslation();
   const { lang } = useParams();
@@ -74,13 +76,13 @@ function SidebarNavigation() {
           )}
         >
           <img
-            src="/i-tatti-logo.png"
+            src="/horizontal-simple-itatti-logo1.png"
             alt="Villa I Tatti"
-            className={cn('h-auto shrink-0 object-contain', collapsed && !isMobile ? 'w-10' : 'w-28')}
+            className={cn('h-auto shrink-0 object-contain', collapsed && !isMobile ? 'w-10' : 'w-40')}
           />
           {collapsed && !isMobile ? null : (
             <div className="min-w-0">
-              <div className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+              <div className="text-sm font-semibold tracking-[0.02em] text-primary">
                 {t('shell.logoSubtitle')}
               </div>
             </div>
@@ -227,6 +229,10 @@ function ProtectedShellFrame() {
   const title = routeMetadata ? t(routeMetadata.titleKey) : t('common.appName');
   const isMapRoute = routeMetadata?.id === 'map';
 
+  useEffect(() => {
+    document.title = routeMetadata ? `${title} | ${BROWSER_APP_NAME}` : BROWSER_APP_NAME;
+  }, [routeMetadata, title]);
+
   const breadcrumbItems = useMemo(
     () =>
       (routeMetadata?.breadcrumbs ?? []).map((item) => ({
@@ -243,7 +249,7 @@ function ProtectedShellFrame() {
       </Sidebar>
 
       <SidebarInset className="bg-background">
-        <header className="sticky top-0 z-30 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+        <header className="sticky top-0 z-30 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
           <div className="flex items-start justify-between gap-4 px-4 py-4 lg:px-6">
             <div className="flex min-w-0 items-start gap-3">
               <SidebarTrigger className="mt-1" />

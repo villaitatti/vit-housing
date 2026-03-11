@@ -17,8 +17,8 @@ const allowedOrigins = new Set(
   process.env.NODE_ENV === 'production'
     ? configuredClientUrls.length > 0
       ? configuredClientUrls
-      : ['http://localhost:5173']
-    : ['http://localhost:5173', 'http://localhost:5174', ...configuredClientUrls],
+      : ['http://localhost:5175']
+    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', ...configuredClientUrls],
 );
 
 app.use(
