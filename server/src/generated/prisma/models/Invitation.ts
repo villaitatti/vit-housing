@@ -39,10 +39,13 @@ export type InvitationSumAggregateOutputType = {
 export type InvitationMinAggregateOutputType = {
   id: number | null
   email: string | null
+  first_name: string | null
+  last_name: string | null
   role: $Enums.Role | null
   language: $Enums.Language | null
-  token: string | null
+  token_hash: string | null
   used: boolean | null
+  revoked_at: Date | null
   created_at: Date | null
   expires_at: Date | null
   invited_by: number | null
@@ -51,10 +54,13 @@ export type InvitationMinAggregateOutputType = {
 export type InvitationMaxAggregateOutputType = {
   id: number | null
   email: string | null
+  first_name: string | null
+  last_name: string | null
   role: $Enums.Role | null
   language: $Enums.Language | null
-  token: string | null
+  token_hash: string | null
   used: boolean | null
+  revoked_at: Date | null
   created_at: Date | null
   expires_at: Date | null
   invited_by: number | null
@@ -63,10 +69,13 @@ export type InvitationMaxAggregateOutputType = {
 export type InvitationCountAggregateOutputType = {
   id: number
   email: number
+  first_name: number
+  last_name: number
   role: number
   language: number
-  token: number
+  token_hash: number
   used: number
+  revoked_at: number
   created_at: number
   expires_at: number
   invited_by: number
@@ -87,10 +96,13 @@ export type InvitationSumAggregateInputType = {
 export type InvitationMinAggregateInputType = {
   id?: true
   email?: true
+  first_name?: true
+  last_name?: true
   role?: true
   language?: true
-  token?: true
+  token_hash?: true
   used?: true
+  revoked_at?: true
   created_at?: true
   expires_at?: true
   invited_by?: true
@@ -99,10 +111,13 @@ export type InvitationMinAggregateInputType = {
 export type InvitationMaxAggregateInputType = {
   id?: true
   email?: true
+  first_name?: true
+  last_name?: true
   role?: true
   language?: true
-  token?: true
+  token_hash?: true
   used?: true
+  revoked_at?: true
   created_at?: true
   expires_at?: true
   invited_by?: true
@@ -111,10 +126,13 @@ export type InvitationMaxAggregateInputType = {
 export type InvitationCountAggregateInputType = {
   id?: true
   email?: true
+  first_name?: true
+  last_name?: true
   role?: true
   language?: true
-  token?: true
+  token_hash?: true
   used?: true
+  revoked_at?: true
   created_at?: true
   expires_at?: true
   invited_by?: true
@@ -210,10 +228,13 @@ export type InvitationGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inter
 export type InvitationGroupByOutputType = {
   id: number
   email: string
+  first_name: string | null
+  last_name: string | null
   role: $Enums.Role
   language: $Enums.Language
-  token: string
+  token_hash: string
   used: boolean
+  revoked_at: Date | null
   created_at: Date
   expires_at: Date
   invited_by: number | null
@@ -245,10 +266,13 @@ export type InvitationWhereInput = {
   NOT?: Prisma.InvitationWhereInput | Prisma.InvitationWhereInput[]
   id?: Prisma.IntFilter<"Invitation"> | number
   email?: Prisma.StringFilter<"Invitation"> | string
+  first_name?: Prisma.StringNullableFilter<"Invitation"> | string | null
+  last_name?: Prisma.StringNullableFilter<"Invitation"> | string | null
   role?: Prisma.EnumRoleFilter<"Invitation"> | $Enums.Role
   language?: Prisma.EnumLanguageFilter<"Invitation"> | $Enums.Language
-  token?: Prisma.StringFilter<"Invitation"> | string
+  token_hash?: Prisma.StringFilter<"Invitation"> | string
   used?: Prisma.BoolFilter<"Invitation"> | boolean
+  revoked_at?: Prisma.DateTimeNullableFilter<"Invitation"> | Date | string | null
   created_at?: Prisma.DateTimeFilter<"Invitation"> | Date | string
   expires_at?: Prisma.DateTimeFilter<"Invitation"> | Date | string
   invited_by?: Prisma.IntNullableFilter<"Invitation"> | number | null
@@ -258,10 +282,13 @@ export type InvitationWhereInput = {
 export type InvitationOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  first_name?: Prisma.SortOrderInput | Prisma.SortOrder
+  last_name?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   language?: Prisma.SortOrder
-  token?: Prisma.SortOrder
+  token_hash?: Prisma.SortOrder
   used?: Prisma.SortOrder
+  revoked_at?: Prisma.SortOrderInput | Prisma.SortOrder
   created_at?: Prisma.SortOrder
   expires_at?: Prisma.SortOrder
   invited_by?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -270,27 +297,33 @@ export type InvitationOrderByWithRelationInput = {
 
 export type InvitationWhereUniqueInput = Prisma.AtLeast<{
   id?: number
-  token?: string
+  token_hash?: string
   AND?: Prisma.InvitationWhereInput | Prisma.InvitationWhereInput[]
   OR?: Prisma.InvitationWhereInput[]
   NOT?: Prisma.InvitationWhereInput | Prisma.InvitationWhereInput[]
   email?: Prisma.StringFilter<"Invitation"> | string
+  first_name?: Prisma.StringNullableFilter<"Invitation"> | string | null
+  last_name?: Prisma.StringNullableFilter<"Invitation"> | string | null
   role?: Prisma.EnumRoleFilter<"Invitation"> | $Enums.Role
   language?: Prisma.EnumLanguageFilter<"Invitation"> | $Enums.Language
   used?: Prisma.BoolFilter<"Invitation"> | boolean
+  revoked_at?: Prisma.DateTimeNullableFilter<"Invitation"> | Date | string | null
   created_at?: Prisma.DateTimeFilter<"Invitation"> | Date | string
   expires_at?: Prisma.DateTimeFilter<"Invitation"> | Date | string
   invited_by?: Prisma.IntNullableFilter<"Invitation"> | number | null
   inviter?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
-}, "id" | "token">
+}, "id" | "token_hash">
 
 export type InvitationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  first_name?: Prisma.SortOrderInput | Prisma.SortOrder
+  last_name?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   language?: Prisma.SortOrder
-  token?: Prisma.SortOrder
+  token_hash?: Prisma.SortOrder
   used?: Prisma.SortOrder
+  revoked_at?: Prisma.SortOrderInput | Prisma.SortOrder
   created_at?: Prisma.SortOrder
   expires_at?: Prisma.SortOrder
   invited_by?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -307,10 +340,13 @@ export type InvitationScalarWhereWithAggregatesInput = {
   NOT?: Prisma.InvitationScalarWhereWithAggregatesInput | Prisma.InvitationScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Invitation"> | number
   email?: Prisma.StringWithAggregatesFilter<"Invitation"> | string
+  first_name?: Prisma.StringNullableWithAggregatesFilter<"Invitation"> | string | null
+  last_name?: Prisma.StringNullableWithAggregatesFilter<"Invitation"> | string | null
   role?: Prisma.EnumRoleWithAggregatesFilter<"Invitation"> | $Enums.Role
   language?: Prisma.EnumLanguageWithAggregatesFilter<"Invitation"> | $Enums.Language
-  token?: Prisma.StringWithAggregatesFilter<"Invitation"> | string
+  token_hash?: Prisma.StringWithAggregatesFilter<"Invitation"> | string
   used?: Prisma.BoolWithAggregatesFilter<"Invitation"> | boolean
+  revoked_at?: Prisma.DateTimeNullableWithAggregatesFilter<"Invitation"> | Date | string | null
   created_at?: Prisma.DateTimeWithAggregatesFilter<"Invitation"> | Date | string
   expires_at?: Prisma.DateTimeWithAggregatesFilter<"Invitation"> | Date | string
   invited_by?: Prisma.IntNullableWithAggregatesFilter<"Invitation"> | number | null
@@ -318,10 +354,13 @@ export type InvitationScalarWhereWithAggregatesInput = {
 
 export type InvitationCreateInput = {
   email: string
+  first_name?: string | null
+  last_name?: string | null
   role: $Enums.Role
   language: $Enums.Language
-  token: string
+  token_hash: string
   used?: boolean
+  revoked_at?: Date | string | null
   created_at?: Date | string
   expires_at: Date | string
   inviter?: Prisma.UserCreateNestedOneWithoutInvitations_sentInput
@@ -330,10 +369,13 @@ export type InvitationCreateInput = {
 export type InvitationUncheckedCreateInput = {
   id?: number
   email: string
+  first_name?: string | null
+  last_name?: string | null
   role: $Enums.Role
   language: $Enums.Language
-  token: string
+  token_hash: string
   used?: boolean
+  revoked_at?: Date | string | null
   created_at?: Date | string
   expires_at: Date | string
   invited_by?: number | null
@@ -341,10 +383,13 @@ export type InvitationUncheckedCreateInput = {
 
 export type InvitationUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
-  token?: Prisma.StringFieldUpdateOperationsInput | string
+  token_hash?: Prisma.StringFieldUpdateOperationsInput | string
   used?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  revoked_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expires_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   inviter?: Prisma.UserUpdateOneWithoutInvitations_sentNestedInput
@@ -353,10 +398,13 @@ export type InvitationUpdateInput = {
 export type InvitationUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
-  token?: Prisma.StringFieldUpdateOperationsInput | string
+  token_hash?: Prisma.StringFieldUpdateOperationsInput | string
   used?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  revoked_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expires_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   invited_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -365,10 +413,13 @@ export type InvitationUncheckedUpdateInput = {
 export type InvitationCreateManyInput = {
   id?: number
   email: string
+  first_name?: string | null
+  last_name?: string | null
   role: $Enums.Role
   language: $Enums.Language
-  token: string
+  token_hash: string
   used?: boolean
+  revoked_at?: Date | string | null
   created_at?: Date | string
   expires_at: Date | string
   invited_by?: number | null
@@ -376,10 +427,13 @@ export type InvitationCreateManyInput = {
 
 export type InvitationUpdateManyMutationInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
-  token?: Prisma.StringFieldUpdateOperationsInput | string
+  token_hash?: Prisma.StringFieldUpdateOperationsInput | string
   used?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  revoked_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expires_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -387,10 +441,13 @@ export type InvitationUpdateManyMutationInput = {
 export type InvitationUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
-  token?: Prisma.StringFieldUpdateOperationsInput | string
+  token_hash?: Prisma.StringFieldUpdateOperationsInput | string
   used?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  revoked_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expires_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   invited_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -409,10 +466,13 @@ export type InvitationOrderByRelationAggregateInput = {
 export type InvitationCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  first_name?: Prisma.SortOrder
+  last_name?: Prisma.SortOrder
   role?: Prisma.SortOrder
   language?: Prisma.SortOrder
-  token?: Prisma.SortOrder
+  token_hash?: Prisma.SortOrder
   used?: Prisma.SortOrder
+  revoked_at?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   expires_at?: Prisma.SortOrder
   invited_by?: Prisma.SortOrder
@@ -426,10 +486,13 @@ export type InvitationAvgOrderByAggregateInput = {
 export type InvitationMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  first_name?: Prisma.SortOrder
+  last_name?: Prisma.SortOrder
   role?: Prisma.SortOrder
   language?: Prisma.SortOrder
-  token?: Prisma.SortOrder
+  token_hash?: Prisma.SortOrder
   used?: Prisma.SortOrder
+  revoked_at?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   expires_at?: Prisma.SortOrder
   invited_by?: Prisma.SortOrder
@@ -438,10 +501,13 @@ export type InvitationMaxOrderByAggregateInput = {
 export type InvitationMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  first_name?: Prisma.SortOrder
+  last_name?: Prisma.SortOrder
   role?: Prisma.SortOrder
   language?: Prisma.SortOrder
-  token?: Prisma.SortOrder
+  token_hash?: Prisma.SortOrder
   used?: Prisma.SortOrder
+  revoked_at?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   expires_at?: Prisma.SortOrder
   invited_by?: Prisma.SortOrder
@@ -512,10 +578,13 @@ export type NullableIntFieldUpdateOperationsInput = {
 
 export type InvitationCreateWithoutInviterInput = {
   email: string
+  first_name?: string | null
+  last_name?: string | null
   role: $Enums.Role
   language: $Enums.Language
-  token: string
+  token_hash: string
   used?: boolean
+  revoked_at?: Date | string | null
   created_at?: Date | string
   expires_at: Date | string
 }
@@ -523,10 +592,13 @@ export type InvitationCreateWithoutInviterInput = {
 export type InvitationUncheckedCreateWithoutInviterInput = {
   id?: number
   email: string
+  first_name?: string | null
+  last_name?: string | null
   role: $Enums.Role
   language: $Enums.Language
-  token: string
+  token_hash: string
   used?: boolean
+  revoked_at?: Date | string | null
   created_at?: Date | string
   expires_at: Date | string
 }
@@ -563,10 +635,13 @@ export type InvitationScalarWhereInput = {
   NOT?: Prisma.InvitationScalarWhereInput | Prisma.InvitationScalarWhereInput[]
   id?: Prisma.IntFilter<"Invitation"> | number
   email?: Prisma.StringFilter<"Invitation"> | string
+  first_name?: Prisma.StringNullableFilter<"Invitation"> | string | null
+  last_name?: Prisma.StringNullableFilter<"Invitation"> | string | null
   role?: Prisma.EnumRoleFilter<"Invitation"> | $Enums.Role
   language?: Prisma.EnumLanguageFilter<"Invitation"> | $Enums.Language
-  token?: Prisma.StringFilter<"Invitation"> | string
+  token_hash?: Prisma.StringFilter<"Invitation"> | string
   used?: Prisma.BoolFilter<"Invitation"> | boolean
+  revoked_at?: Prisma.DateTimeNullableFilter<"Invitation"> | Date | string | null
   created_at?: Prisma.DateTimeFilter<"Invitation"> | Date | string
   expires_at?: Prisma.DateTimeFilter<"Invitation"> | Date | string
   invited_by?: Prisma.IntNullableFilter<"Invitation"> | number | null
@@ -575,20 +650,26 @@ export type InvitationScalarWhereInput = {
 export type InvitationCreateManyInviterInput = {
   id?: number
   email: string
+  first_name?: string | null
+  last_name?: string | null
   role: $Enums.Role
   language: $Enums.Language
-  token: string
+  token_hash: string
   used?: boolean
+  revoked_at?: Date | string | null
   created_at?: Date | string
   expires_at: Date | string
 }
 
 export type InvitationUpdateWithoutInviterInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
-  token?: Prisma.StringFieldUpdateOperationsInput | string
+  token_hash?: Prisma.StringFieldUpdateOperationsInput | string
   used?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  revoked_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expires_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -596,10 +677,13 @@ export type InvitationUpdateWithoutInviterInput = {
 export type InvitationUncheckedUpdateWithoutInviterInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
-  token?: Prisma.StringFieldUpdateOperationsInput | string
+  token_hash?: Prisma.StringFieldUpdateOperationsInput | string
   used?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  revoked_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expires_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -607,10 +691,13 @@ export type InvitationUncheckedUpdateWithoutInviterInput = {
 export type InvitationUncheckedUpdateManyWithoutInviterInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
-  token?: Prisma.StringFieldUpdateOperationsInput | string
+  token_hash?: Prisma.StringFieldUpdateOperationsInput | string
   used?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  revoked_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expires_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -620,10 +707,13 @@ export type InvitationUncheckedUpdateManyWithoutInviterInput = {
 export type InvitationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   email?: boolean
+  first_name?: boolean
+  last_name?: boolean
   role?: boolean
   language?: boolean
-  token?: boolean
+  token_hash?: boolean
   used?: boolean
+  revoked_at?: boolean
   created_at?: boolean
   expires_at?: boolean
   invited_by?: boolean
@@ -633,10 +723,13 @@ export type InvitationSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type InvitationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   email?: boolean
+  first_name?: boolean
+  last_name?: boolean
   role?: boolean
   language?: boolean
-  token?: boolean
+  token_hash?: boolean
   used?: boolean
+  revoked_at?: boolean
   created_at?: boolean
   expires_at?: boolean
   invited_by?: boolean
@@ -646,10 +739,13 @@ export type InvitationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
 export type InvitationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   email?: boolean
+  first_name?: boolean
+  last_name?: boolean
   role?: boolean
   language?: boolean
-  token?: boolean
+  token_hash?: boolean
   used?: boolean
+  revoked_at?: boolean
   created_at?: boolean
   expires_at?: boolean
   invited_by?: boolean
@@ -659,16 +755,19 @@ export type InvitationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
 export type InvitationSelectScalar = {
   id?: boolean
   email?: boolean
+  first_name?: boolean
+  last_name?: boolean
   role?: boolean
   language?: boolean
-  token?: boolean
+  token_hash?: boolean
   used?: boolean
+  revoked_at?: boolean
   created_at?: boolean
   expires_at?: boolean
   invited_by?: boolean
 }
 
-export type InvitationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "role" | "language" | "token" | "used" | "created_at" | "expires_at" | "invited_by", ExtArgs["result"]["invitation"]>
+export type InvitationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "first_name" | "last_name" | "role" | "language" | "token_hash" | "used" | "revoked_at" | "created_at" | "expires_at" | "invited_by", ExtArgs["result"]["invitation"]>
 export type InvitationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   inviter?: boolean | Prisma.Invitation$inviterArgs<ExtArgs>
 }
@@ -687,10 +786,13 @@ export type $InvitationPayload<ExtArgs extends runtime.Types.Extensions.Internal
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     email: string
+    first_name: string | null
+    last_name: string | null
     role: $Enums.Role
     language: $Enums.Language
-    token: string
+    token_hash: string
     used: boolean
+    revoked_at: Date | null
     created_at: Date
     expires_at: Date
     invited_by: number | null
@@ -1120,10 +1222,13 @@ export interface Prisma__InvitationClient<T, Null = never, ExtArgs extends runti
 export interface InvitationFieldRefs {
   readonly id: Prisma.FieldRef<"Invitation", 'Int'>
   readonly email: Prisma.FieldRef<"Invitation", 'String'>
+  readonly first_name: Prisma.FieldRef<"Invitation", 'String'>
+  readonly last_name: Prisma.FieldRef<"Invitation", 'String'>
   readonly role: Prisma.FieldRef<"Invitation", 'Role'>
   readonly language: Prisma.FieldRef<"Invitation", 'Language'>
-  readonly token: Prisma.FieldRef<"Invitation", 'String'>
+  readonly token_hash: Prisma.FieldRef<"Invitation", 'String'>
   readonly used: Prisma.FieldRef<"Invitation", 'Boolean'>
+  readonly revoked_at: Prisma.FieldRef<"Invitation", 'DateTime'>
   readonly created_at: Prisma.FieldRef<"Invitation", 'DateTime'>
   readonly expires_at: Prisma.FieldRef<"Invitation", 'DateTime'>
   readonly invited_by: Prisma.FieldRef<"Invitation", 'Int'>

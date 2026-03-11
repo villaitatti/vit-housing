@@ -17,8 +17,13 @@
     "or": "OPPURE",
     "required": "Obbligatorio",
     "optional": "Facoltativo",
-    "next": "Pagina successiva",
-    "retry": "Riprova"
+    "next": "Avanti",
+    "retry": "Riprova",
+    "met": "Soddisfatto",
+    "notMet": "Non soddisfatto"
+  },
+  "pagination": {
+    "nextPage": "Pagina successiva"
   },
   "nav": {
     "home": "Home",
@@ -62,9 +67,27 @@
     "mobileNumber": "Numero di Cellulare",
     "registerButton": "Crea Account",
     "registrationSuccess": "Registrazione completata! Ora puoi accedere.",
-    "invalidToken": "Questo link di invito non è valido o è scaduto.",
+    "registrationCompleteTitle": "Account creato",
+    "redirectingToLogin": "Verrai reindirizzato alla pagina di accesso tra pochi istanti.",
+    "invalidToken": "Questo link di invito non è valido.",
     "tokenUsed": "Questo invito è già stato utilizzato.",
-    "tokenExpired": "Questo invito è scaduto."
+    "tokenExpired": "Questo invito è scaduto.",
+    "tokenUnavailable": "Questo invito non è più disponibile.",
+    "tokenRevoked": "Questo link di invito è stato sostituito da un invito più recente.",
+    "invitationStatusTitle": "Problema con l'invito",
+    "invitationContactAdmin": "Contatta un amministratore per richiedere un nuovo invito.",
+    "passwordStrength": "Robustezza della password",
+    "passwordStrengthWeak": "Debole",
+    "passwordStrengthFair": "Discreta",
+    "passwordStrengthGood": "Buona",
+    "passwordStrengthStrong": "Ottima",
+    "passwordHint": "Usa una passphrase lunga tra {{min}} e {{max}} caratteri. Più è lunga, meglio è.",
+    "passwordChecklist": {
+      "length-min": "Almeno {{min}} caratteri",
+      "length-max": "Non più di {{max}} caratteri",
+      "common": "Non una password molto comune",
+      "confirm": "Le password coincidono"
+    }
   },
   "listings": {
     "title": "Annunci",
@@ -281,11 +304,23 @@
     "invitations": "Inviti",
     "inviteUser": "Invita Utente",
     "inviteTitle": "Invita un Nuovo Utente",
+    "inviteFirstName": "Nome",
+    "inviteLastName": "Cognome",
+    "inviteFirstNamePlaceholder": "Facoltativo",
+    "inviteLastNamePlaceholder": "Facoltativo",
     "inviteEmail": "Indirizzo Email",
     "inviteRole": "Ruolo",
     "inviteLanguage": "Lingua Preferita",
     "sendInvite": "Invia Invito",
     "inviteSent": "Invito inviato con successo!",
+    "invitationStatus": "Stato",
+    "invitedBy": "Invitato da",
+    "status": {
+      "pending": "In attesa",
+      "used": "Usato",
+      "expired": "Scaduto",
+      "revoked": "Revocato"
+    },
     "emailExists": "Un utente con questa email esiste già.",
     "roleUser": "Utente",
     "roleLandlord": "Proprietario",

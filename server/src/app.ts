@@ -8,6 +8,7 @@ import apiRouter from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
+app.set('trust proxy', 1);
 const configuredClientUrls = (process.env.CLIENT_URL || '')
   .split(',')
   .map((value) => value.trim())
@@ -20,7 +21,13 @@ const allowedOrigins = new Set(
     : ['http://localhost:5173', 'http://localhost:5174', ...configuredClientUrls],
 );
 
-app.use(helmet());
+app.use(
+  helmet({
+    referrerPolicy: {
+      policy: 'no-referrer',
+    },
+  }),
+);
 app.use(
   cors({
     origin(origin, callback) {

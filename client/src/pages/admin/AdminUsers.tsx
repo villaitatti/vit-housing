@@ -420,7 +420,7 @@ export function AdminUsersPage() {
               size="sm"
               disabled={page >= totalPages}
               onClick={() => setPage(p => p + 1)}
-              aria-label={t('common.next')}
+              aria-label={t('pagination.nextPage', 'Next page')}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>

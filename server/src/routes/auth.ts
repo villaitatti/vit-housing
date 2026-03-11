@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
 import { prisma } from '../lib/prisma.js';
 import { signToken } from '../lib/jwt.js';
 import { sendSuccess, sendError } from '../lib/response.js';
@@ -8,10 +7,11 @@ import { validate } from '../middleware/validate.js';
 import { loginSchema, registerSchema, vitIdCallbackSchema } from '@vithousing/shared';
 import { Role as PrismaRole } from '../generated/prisma/client.js';
 import { getUserAuth0Roles } from '../services/auth0.service.js';
+import { hashInvitationToken, getInvitationStatus, normalizeEmail } from '../lib/invitations.js';
+import { hashPassword, needsPasswordRehash, validatePasswordPolicy, verifyPassword } from '../lib/password.js';
+import { createRateLimitMiddleware } from '../middleware/rateLimit.js';
 
 const router = Router();
-
-const BCRYPT_ROUNDS = 12;
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
@@ -19,45 +19,70 @@ const COOKIE_OPTIONS = {
   maxAge: 8 * 60 * 60 * 1000, // 8 hours
   path: '/',
 };
+const registrationRateLimit = createRateLimitMiddleware({
+  windowMs: 15 * 60 * 1000,
+  maxRequests: 10,
+  code: 'RATE_LIMITED',
+  message: 'Too many registration attempts. Please try again later.',
+});
+
+class InvitationUnavailableError extends Error {
+  constructor() {
+    super('This invitation is no longer available');
+    this.name = 'InvitationUnavailableError';
+  }
+}
+
+class EmailExistsError extends Error {
+  constructor() {
+    super('An account with this email already exists');
+    this.name = 'EmailExistsError';
+  }
+}
 
 // POST /api/v1/auth/login — Local email/password login
 router.post('/login', validate(loginSchema), async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = normalizeEmail(email);
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (!user || !user.password) {
       sendError(res, 'Invalid email or password', 'INVALID_CREDENTIALS', 401);
       return;
     }
 
-    const valid = await bcrypt.compare(password, user.password);
+    const valid = await verifyPassword(password, user.password);
     if (!valid) {
       sendError(res, 'Invalid email or password', 'INVALID_CREDENTIALS', 401);
       return;
     }
 
-    await prisma.user.update({
+    const passwordUpdate = needsPasswordRehash(user.password)
+      ? { password: await hashPassword(password) }
+      : {};
+
+    const updatedUser = await prisma.user.update({
       where: { id: user.id },
-      data: { last_login: new Date() },
+      data: { last_login: new Date(), ...passwordUpdate },
     });
 
     const token = signToken({
-      userId: user.id,
-      email: user.email,
-      roles: user.roles,
-      preferred_language: user.preferred_language,
+      userId: updatedUser.id,
+      email: updatedUser.email,
+      roles: updatedUser.roles,
+      preferred_language: updatedUser.preferred_language,
     });
 
     res.cookie('token', token, COOKIE_OPTIONS);
     sendSuccess(res, {
       user: {
-        id: user.id,
-        email: user.email,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        roles: user.roles,
-        preferred_language: user.preferred_language,
+        id: updatedUser.id,
+        email: updatedUser.email,
+        first_name: updatedUser.first_name,
+        last_name: updatedUser.last_name,
+        roles: updatedUser.roles,
+        preferred_language: updatedUser.preferred_language,
       },
     });
   } catch (err) {
@@ -66,24 +91,36 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
 });
 
 // POST /api/v1/auth/register — Register via invitation token
-router.post('/register', validate(registerSchema), async (req: Request, res: Response) => {
+router.post('/register', registrationRateLimit, validate(registerSchema), async (req: Request, res: Response) => {
   try {
     const { token, first_name, last_name, password, preferred_language, phone_number, mobile_number } =
       req.body;
 
-    const invitation = await prisma.invitation.findUnique({ where: { token } });
+    const passwordPolicyError = validatePasswordPolicy(password);
+    if (passwordPolicyError) {
+      sendError(res, passwordPolicyError, 'WEAK_PASSWORD', 400);
+      return;
+    }
+
+    const invitation = await prisma.invitation.findUnique({ where: { token_hash: hashInvitationToken(token) } });
     if (!invitation) {
       sendError(res, 'Invalid invitation token', 'INVALID_TOKEN', 400);
       return;
     }
 
-    if (invitation.used) {
+    const status = getInvitationStatus(invitation);
+    if (status === 'used') {
       sendError(res, 'This invitation has already been used', 'TOKEN_USED', 400);
       return;
     }
 
-    if (new Date() > invitation.expires_at) {
+    if (status === 'expired') {
       sendError(res, 'This invitation has expired', 'TOKEN_EXPIRED', 400);
+      return;
+    }
+
+    if (status === 'revoked') {
+      sendError(res, 'This invitation has been replaced by a newer link', 'TOKEN_REVOKED', 400);
       return;
     }
 
@@ -93,10 +130,35 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
       return;
     }
 
-    const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    const hashedPassword = await hashPassword(password);
 
-    await prisma.$transaction([
-      prisma.user.create({
+    await prisma.$transaction(async (tx) => {
+      const transactionNow = new Date();
+      const transactionalExistingUser = await tx.user.findUnique({
+        where: { email: invitation.email },
+      });
+
+      if (transactionalExistingUser) {
+        throw new EmailExistsError();
+      }
+
+      const markInvitationUsed = await tx.invitation.updateMany({
+        where: {
+          id: invitation.id,
+          used: false,
+          revoked_at: null,
+          expires_at: { gte: transactionNow },
+        },
+        data: {
+          used: true,
+        },
+      });
+
+      if (markInvitationUsed.count !== 1) {
+        throw new InvitationUnavailableError();
+      }
+
+      await tx.user.create({
         data: {
           email: invitation.email,
           password: hashedPassword,
@@ -107,15 +169,24 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
           phone_number: phone_number || null,
           mobile_number: mobile_number || null,
         },
-      }),
-      prisma.invitation.update({
-        where: { id: invitation.id },
-        data: { used: true },
-      }),
-    ]);
+      });
+    });
 
     sendSuccess(res, { message: 'Registration successful' }, 201);
   } catch (err) {
+    if (err instanceof InvitationUnavailableError) {
+      sendError(res, 'This invitation is no longer available', 'TOKEN_UNAVAILABLE', 409);
+      return;
+    }
+
+    if (
+      err instanceof EmailExistsError ||
+      (err && typeof err === 'object' && 'code' in err && err.code === 'P2002')
+    ) {
+      sendError(res, 'An account with this email already exists', 'EMAIL_EXISTS', 400);
+      return;
+    }
+
     sendError(res, 'Registration failed', 'REGISTER_ERROR', 500);
   }
 });
@@ -148,6 +219,8 @@ router.post('/vit-id/callback', validate(vitIdCallbackSchema), async (req: Reque
       return;
     }
 
+    const normalizedAuth0Email = normalizeEmail(auth0Payload.email);
+
     // Look up existing user by auth0_user_id
     let user = await prisma.user.findUnique({
       where: { auth0_user_id: auth0Payload.sub },
@@ -173,7 +246,7 @@ router.post('/vit-id/callback', validate(vitIdCallbackSchema), async (req: Reque
     if (!user) {
       // Check if a user with this email already exists (e.g., created via invitation)
       const existingByEmail = await prisma.user.findUnique({
-        where: { email: auth0Payload.email },
+        where: { email: normalizedAuth0Email },
       });
 
       if (existingByEmail) {
@@ -200,7 +273,7 @@ router.post('/vit-id/callback', validate(vitIdCallbackSchema), async (req: Reque
         // Auto-provision new user; fall back to HOUSE_USER if no roles resolved
         user = await prisma.user.create({
           data: {
-            email: auth0Payload.email,
+            email: normalizedAuth0Email,
             auth0_user_id: auth0Payload.sub,
             first_name: auth0Payload.given_name || '',
             last_name: auth0Payload.family_name || '',

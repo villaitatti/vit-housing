@@ -1,9 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createInvitationSchema, type CreateInvitationInput } from '@vithousing/shared';
+import { z } from 'zod';
 import api from '@/lib/api';
+import { queryKeys } from '@/lib/queryKeys';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -24,13 +26,18 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 
+type InviteUserFormValues = z.input<typeof createInvitationSchema>;
+
 export function InviteUserPage() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
-  const form = useForm<CreateInvitationInput>({
+  const form = useForm<InviteUserFormValues, unknown, CreateInvitationInput>({
     resolver: zodResolver(createInvitationSchema),
     defaultValues: {
       email: '',
+      first_name: '',
+      last_name: '',
       role: 'HOUSE_USER',
       language: 'EN',
     },
@@ -41,8 +48,15 @@ export function InviteUserPage() {
       await api.post('/api/v1/invitations', data);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.invitations.all });
       toast.success(t('admin.inviteSent'));
-      form.reset();
+      form.reset({
+        email: '',
+        first_name: '',
+        last_name: '',
+        role: 'HOUSE_USER',
+        language: 'EN',
+      });
     },
     onError: (err: Error) => {
       toast.error(err.message);
@@ -53,13 +67,43 @@ export function InviteUserPage() {
     <div>
       <h2 className="text-2xl font-semibold mb-6">{t('admin.inviteTitle')}</h2>
 
-      <Card className="max-w-md">
+      <Card className="max-w-2xl">
         <CardContent className="pt-6">
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit((data) => inviteMutation.mutate(data))}
               className="space-y-4"
             >
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="first_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('admin.inviteFirstName')}</FormLabel>
+                      <FormControl>
+                        <Input placeholder={t('admin.inviteFirstNamePlaceholder')} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="last_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('admin.inviteLastName')}</FormLabel>
+                      <FormControl>
+                        <Input placeholder={t('admin.inviteLastNamePlaceholder')} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={form.control}
                 name="email"

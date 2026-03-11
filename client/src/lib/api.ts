@@ -1,5 +1,17 @@
 import axios from 'axios';
 
+export class ApiError extends Error {
+  code?: string;
+  status?: number;
+
+  constructor(message: string, options?: { code?: string; status?: number }) {
+    super(message);
+    this.name = 'ApiError';
+    this.code = options?.code;
+    this.status = options?.status;
+  }
+}
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
   withCredentials: true,
@@ -28,7 +40,12 @@ api.interceptors.response.use(
     }
     // Extract error message from envelope
     const message = error.response?.data?.error || error.message;
-    return Promise.reject(new Error(message));
+    return Promise.reject(
+      new ApiError(message, {
+        code: error.response?.data?.code,
+        status: error.response?.status,
+      }),
+    );
   },
 );
 

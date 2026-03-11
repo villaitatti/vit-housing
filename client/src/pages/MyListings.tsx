@@ -178,7 +178,7 @@ export function MyListingsPage() {
                 size="sm"
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
-                aria-label={t('common.next', 'Next page')}
+                aria-label={t('pagination.nextPage', 'Next page')}
               >
                 &rarr;
               </Button>

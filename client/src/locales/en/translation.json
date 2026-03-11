@@ -17,8 +17,13 @@
     "or": "OR",
     "required": "Required",
     "optional": "Optional",
-    "next": "Next page",
-    "retry": "Try again"
+    "next": "Next",
+    "retry": "Try again",
+    "met": "Met",
+    "notMet": "Not met"
+  },
+  "pagination": {
+    "nextPage": "Next page"
   },
   "nav": {
     "home": "Home",
@@ -62,9 +67,27 @@
     "mobileNumber": "Mobile Number",
     "registerButton": "Create Account",
     "registrationSuccess": "Registration successful! You can now log in.",
-    "invalidToken": "This invitation link is invalid or has expired.",
+    "registrationCompleteTitle": "Account created",
+    "redirectingToLogin": "You will be redirected to the login page shortly.",
+    "invalidToken": "This invitation link is invalid.",
     "tokenUsed": "This invitation has already been used.",
-    "tokenExpired": "This invitation has expired."
+    "tokenExpired": "This invitation has expired.",
+    "tokenUnavailable": "This invitation is no longer available.",
+    "tokenRevoked": "This invitation link has been replaced by a newer invitation.",
+    "invitationStatusTitle": "Invitation issue",
+    "invitationContactAdmin": "Please contact an administrator to request a new invitation.",
+    "passwordStrength": "Password strength",
+    "passwordStrengthWeak": "Weak",
+    "passwordStrengthFair": "Fair",
+    "passwordStrengthGood": "Good",
+    "passwordStrengthStrong": "Strong",
+    "passwordHint": "Use a long passphrase between {{min}} and {{max}} characters. Longer is better.",
+    "passwordChecklist": {
+      "length-min": "At least {{min}} characters",
+      "length-max": "No more than {{max}} characters",
+      "common": "Not a very common password",
+      "confirm": "Passwords match"
+    }
   },
   "listings": {
     "title": "Listings",
@@ -281,11 +304,23 @@
     "invitations": "Invitations",
     "inviteUser": "Invite User",
     "inviteTitle": "Invite a New User",
+    "inviteFirstName": "First Name",
+    "inviteLastName": "Last Name",
+    "inviteFirstNamePlaceholder": "Optional",
+    "inviteLastNamePlaceholder": "Optional",
     "inviteEmail": "Email Address",
     "inviteRole": "Role",
     "inviteLanguage": "Preferred Language",
     "sendInvite": "Send Invitation",
     "inviteSent": "Invitation sent successfully!",
+    "invitationStatus": "Status",
+    "invitedBy": "Invited By",
+    "status": {
+      "pending": "Pending",
+      "used": "Used",
+      "expired": "Expired",
+      "revoked": "Revoked"
+    },
     "emailExists": "A user with this email already exists.",
     "roleUser": "User",
     "roleLandlord": "Landlord",
