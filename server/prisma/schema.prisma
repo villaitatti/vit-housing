@@ -53,6 +53,8 @@ model Invitation {
   expires_at DateTime
   invited_by Int?
   inviter    User?    @relation(fields: [invited_by], references: [id], onDelete: SetNull)
+
+  @@index([email, used, revoked_at, expires_at])
 }
 
 model Listing {

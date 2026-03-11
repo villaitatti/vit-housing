@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
+import { Prisma } from '../generated/prisma/client.js';
 import { sendSuccess, sendError } from '../lib/response.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/requireRole.js';
@@ -23,6 +24,46 @@ const invitationValidationRateLimit = createRateLimitMiddleware({
   code: 'RATE_LIMITED',
   message: 'Too many invitation link attempts. Please try again later.',
 });
+
+function redactEmail(email: string): string {
+  const [localPart, domain = ''] = email.split('@');
+  if (!localPart) {
+    return `***@${domain}`;
+  }
+
+  return `${localPart[0]}***@${domain}`;
+}
+
+function sanitizeErrorIdentifier(err: unknown): string {
+  if (typeof err === 'object' && err !== null) {
+    const code = 'code' in err ? err.code : null;
+    if (typeof code === 'string' && code.trim().length > 0) {
+      return code;
+    }
+
+    const message = 'message' in err ? err.message : null;
+    if (typeof message === 'string' && message.trim().length > 0) {
+      return message.slice(0, 120);
+    }
+  }
+
+  return 'unknown';
+}
+
+function isActiveInvitationConflictError(err: unknown): boolean {
+  if (!(err instanceof Prisma.PrismaClientKnownRequestError) || err.code !== 'P2002') {
+    return false;
+  }
+
+  const targets = Array.isArray(err.meta?.target)
+    ? err.meta.target
+    : err.meta?.target
+      ? [err.meta.target]
+      : [];
+
+  return targets.some((target) => String(target).includes('Invitation_active_email_key') || String(target).includes('email'))
+    || err.message.includes('Invitation_active_email_key');
+}
 
 // POST /api/v1/invitations — Admin creates invitation
 router.post(
@@ -50,7 +91,6 @@ router.post(
             email: normalizedEmail,
             used: false,
             revoked_at: null,
-            expires_at: { gt: new Date() },
           },
           data: {
             revoked_at: new Date(),
@@ -97,8 +137,8 @@ router.post(
       } catch (emailError) {
         console.error('Invitation email send error:', {
           invitationId: invitation.id,
-          email: normalizedEmail,
-          error: emailError,
+          redactedEmail: redactEmail(normalizedEmail),
+          error: sanitizeErrorIdentifier(emailError),
         });
         await prisma.invitation.update({
           where: { id: invitation.id },
@@ -109,6 +149,11 @@ router.post(
 
       sendSuccess(res, { invitation }, 201);
     } catch (err) {
+      if (isActiveInvitationConflictError(err)) {
+        sendError(res, 'An active invitation for this email already exists', 'INVITATION_EXISTS', 409);
+        return;
+      }
+
       console.error('Create invitation error:', err);
       sendError(res, 'Failed to create invitation', 'INVITE_ERROR', 500);
     }
