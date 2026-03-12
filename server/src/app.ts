@@ -18,8 +18,10 @@ const allowedOrigins = new Set(
     ? configuredClientUrls.length > 0
       ? configuredClientUrls
       : ['http://localhost:5175']
-    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', ...configuredClientUrls],
+    : configuredClientUrls,
 );
+const isDevLocalhost = (origin: string) =>
+  process.env.NODE_ENV !== 'production' && /^http:\/\/localhost:\d+$/.test(origin);
 
 app.use(
   helmet({
@@ -31,7 +33,7 @@ app.use(
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.has(origin)) {
+      if (!origin || allowedOrigins.has(origin) || isDevLocalhost(origin)) {
         callback(null, true);
         return;
       }
