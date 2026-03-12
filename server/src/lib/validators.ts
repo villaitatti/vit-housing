@@ -6,5 +6,5 @@ export function parseId(value: string): number | null {
   const trimmed = value.trim();
   if (!/^\d+$/.test(trimmed)) return null;
   const id = Number(trimmed);
-  return id > 0 ? id : null;
+  return id > 0 && Number.isSafeInteger(id) ? id : null;
 }
