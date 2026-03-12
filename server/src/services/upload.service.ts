@@ -97,7 +97,14 @@ export async function processAndSaveProfilePhoto(buffer: Buffer): Promise<{ file
 }
 
 export async function deleteLocalFile(filePath: string): Promise<void> {
-  const absolutePath = path.resolve('uploads', filePath);
+  const uploadsDir = path.resolve('uploads');
+  const absolutePath = path.resolve(uploadsDir, filePath);
+
+  // Ensure the resolved path is within the uploads directory
+  if (!absolutePath.startsWith(uploadsDir + path.sep)) {
+    throw new Error('Invalid file path: outside uploads directory');
+  }
+
   try {
     await fs.unlink(absolutePath);
   } catch {
