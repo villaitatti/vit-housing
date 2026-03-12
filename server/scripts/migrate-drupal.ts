@@ -4,6 +4,7 @@ import fs from 'fs/promises';
 import { appendFileSync, writeFileSync } from 'fs';
 import { createConnection, type Connection, type RowDataPacket } from 'mysql2/promise';
 import { Role } from '../src/generated/prisma/enums.js';
+import { Prisma } from '../src/generated/prisma/client.js';
 import {
   buildDrupalListingSlug,
   buildNewUserMigrationCreate,
@@ -39,6 +40,20 @@ const BUILDING_TYPE_MAP: Record<string, string> = {
   Studio: 'studio',
   Room: 'room',
 };
+
+function isSlugUniqueConstraintError(err: unknown): boolean {
+  if (!(err instanceof Prisma.PrismaClientKnownRequestError) || err.code !== 'P2002') {
+    return false;
+  }
+
+  const targets = Array.isArray(err.meta?.target)
+    ? err.meta.target
+    : err.meta?.target
+      ? [err.meta.target]
+      : [];
+
+  return targets.some((target) => String(target).includes('slug'));
+}
 
 const FLOOR_MAP: Record<string, string> = {
   '-1': 'basement',
@@ -976,25 +991,37 @@ async function migrateListings(
         },
       });
     } else {
-      const { slug, collided } = await generateUniqueDrupalListingSlug(prisma, preferredSlug);
-      if (collided) {
-        audit.listings.slug_collisions.push({
-          nid: listing.nid,
-          preferred_slug: preferredSlug,
-          resolved_slug: slug,
-        });
+      const maxCreateAttempts = 5;
+
+      for (let attempt = 1; attempt <= maxCreateAttempts; attempt += 1) {
+        const { slug, collided } = await generateUniqueDrupalListingSlug(prisma, preferredSlug);
+        if (collided) {
+          audit.listings.slug_collisions.push({
+            nid: listing.nid,
+            preferred_slug: preferredSlug,
+            resolved_slug: slug,
+          });
+        }
+
+        try {
+          upsertedListing = await prisma.listing.create({
+            data: {
+              ...listingData,
+              slug,
+              created_at: createdAt,
+            },
+            select: {
+              id: true,
+              slug: true,
+            },
+          });
+          break;
+        } catch (err) {
+          if (!isSlugUniqueConstraintError(err) || attempt === maxCreateAttempts) {
+            throw err;
+          }
+        }
       }
-      upsertedListing = await prisma.listing.create({
-        data: {
-          ...listingData,
-          slug,
-          created_at: createdAt,
-        },
-        select: {
-          id: true,
-          slug: true,
-        },
-      });
     }
 
     const existingPhotos = await prisma.listingPhoto.findMany({
