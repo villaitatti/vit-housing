@@ -1045,6 +1045,7 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 export const UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
+  legacy_drupal_uid: 'legacy_drupal_uid',
   password: 'password',
   auth0_user_id: 'auth0_user_id',
   profile_photo_path: 'profile_photo_path',
@@ -1083,6 +1084,7 @@ export type InvitationScalarFieldEnum = (typeof InvitationScalarFieldEnum)[keyof
 
 export const ListingScalarFieldEnum = {
   id: 'id',
+  legacy_drupal_nid: 'legacy_drupal_nid',
   title: 'title',
   slug: 'slug',
   description: 'description',

@@ -4,6 +4,15 @@ import fs from 'fs/promises';
 import { appendFileSync, writeFileSync } from 'fs';
 import { createConnection, type Connection, type RowDataPacket } from 'mysql2/promise';
 import { Role } from '../src/generated/prisma/enums.js';
+import {
+  buildDrupalListingSlug,
+  buildNewUserMigrationCreate,
+  findUnambiguousLegacyListingMatch,
+  generateUniqueDrupalListingSlug,
+  planExistingUserMigrationUpdate,
+  type ExistingDrupalUser,
+  type ProcessedUserPicture,
+} from '../src/lib/drupalMigration.js';
 import { normalizeEmail } from '../src/lib/email.js';
 import { prisma } from '../src/lib/prisma.js';
 import {
@@ -189,6 +198,8 @@ interface MigrationAudit {
     imported_itatti_with_listing_uids: number[];
     skipped_itatti_without_listing_uids: number[];
     external_without_listing_uids: number[];
+    linked_existing_account_uids: number[];
+    preserved_local_state_uids: number[];
     blocked_user_uids: number[];
     legacy_hash_uids: number[];
     missing_emails: number[];
@@ -196,7 +207,9 @@ interface MigrationAudit {
   listings: {
     imported: Array<{ nid: number; slug: string }>;
     missing_owners: Array<{ nid: number; owner_uid: number | null }>;
+    linked_existing_listing_nids: number[];
     missing_aliases: Array<{ nid: number; fallback_slug: string }>;
+    slug_collisions: Array<{ nid: number; preferred_slug: string; resolved_slug: string }>;
     listing_languages: Array<{ nid: number; language: string }>;
     unmapped_listing_types: Array<{ nid: number; value: number }>;
     missing_photos: Array<{ nid: number; fid: number | null }>;
@@ -214,25 +227,10 @@ interface ProcessedListingPhoto {
   sort_order: number;
 }
 
-interface ProcessedUserPicture {
-  filePath: string;
-  url: string;
-}
-
 function log(message: string): void {
   const line = `[${new Date().toISOString()}] ${message}`;
   console.log(line);
   appendFileSync(LOG_FILE, `${line}\n`);
-}
-
-function slugify(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
 }
 
 function isItattiEmail(email: string): boolean {
@@ -266,21 +264,6 @@ function splitName(fullName: string): { first_name: string; last_name: string } 
 
 function parseDrupalLanguage(language: string): 'EN' | 'IT' {
   return language?.toLowerCase() === 'it' ? 'IT' : 'EN';
-}
-
-function buildFallbackListingSlug(title: string, nid: number): string {
-  const slugBase = slugify(title) || `listing-${nid}`;
-  return `${slugBase}-${nid}`;
-}
-
-function buildListingSlug(alias: string | null | undefined, title: string, nid: number): string {
-  if (!alias) {
-    return buildFallbackListingSlug(title, nid);
-  }
-
-  const withoutPrefix = alias.startsWith('listing/') ? alias.slice('listing/'.length) : alias;
-  const slug = slugify(withoutPrefix);
-  return slug || buildFallbackListingSlug(title, nid);
 }
 
 function makeDefaultFeatureState(): ListingFeatureState {
@@ -713,7 +696,7 @@ async function readDrupalSourceData(connection: Connection) {
 async function migrateUsers(
   data: Awaited<ReturnType<typeof readDrupalSourceData>>,
   audit: MigrationAudit,
-): Promise<Map<string, number>> {
+): Promise<Map<number, number>> {
   log('Migrating users');
 
   const listingOwnerUids = new Set(data.listings.map((listing) => listing.uid));
@@ -725,7 +708,7 @@ async function migrateUsers(
     return map;
   }, new Map<number, number[]>());
 
-  const importedUserIdsByEmail = new Map<string, number>();
+  const importedUserIdsByDrupalUid = new Map<number, number>();
 
   for (const user of data.users) {
     const normalizedEmail = normalizeEmail(user.mail || '');
@@ -749,27 +732,61 @@ async function migrateUsers(
 
     const name = splitName(user.name);
     const shouldKeepDrupalPassword = !isItattiEmail(normalizedEmail);
-    const existingUser = await prisma.user.findUnique({
-      where: { email: normalizedEmail },
+    let existingUser = await prisma.user.findUnique({
+      where: { legacy_drupal_uid: user.uid },
       select: {
         id: true,
         email: true,
+        legacy_drupal_uid: true,
         password: true,
-        auth0_user_id: true,
         last_login: true,
         profile_photo_path: true,
         profile_photo_url: true,
+        first_name: true,
+        last_name: true,
+        roles: true,
+        preferred_language: true,
+        phone_number: true,
+        mobile_number: true,
       },
     });
+    let linkedExistingAccountByEmail = false;
+
+    if (!existingUser) {
+      existingUser = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+        select: {
+          id: true,
+          email: true,
+          legacy_drupal_uid: true,
+          password: true,
+          last_login: true,
+          profile_photo_path: true,
+          profile_photo_url: true,
+          first_name: true,
+          last_name: true,
+          roles: true,
+          preferred_language: true,
+          phone_number: true,
+          mobile_number: true,
+        },
+      });
+      linkedExistingAccountByEmail = Boolean(existingUser);
+    }
 
     const drupalLastLogin = user.login > 0 ? new Date(user.login * 1000) : null;
-    const commonUserData = {
+    const importedUserProfile = {
+      uid: user.uid,
       first_name: name.first_name,
       last_name: name.last_name,
       roles,
       preferred_language: parseDrupalLanguage(user.language),
       phone_number: user.phone_number || null,
       mobile_number: user.mobile_number || null,
+      password: user.pass || null,
+      shouldKeepDrupalPassword,
+      last_login: drupalLastLogin,
+      processedUserPicture: null,
     };
 
     const shouldBackfillProfilePhoto =
@@ -781,48 +798,38 @@ async function migrateUsers(
         processedUserPicture = await processDrupalUserPicture(userPictureByUid.get(user.uid));
       }
 
+      importedUserProfile.processedUserPicture = processedUserPicture;
+
+      const migrationPlan = existingUser
+        ? planExistingUserMigrationUpdate(existingUser as ExistingDrupalUser, importedUserProfile)
+        : null;
+
       const migratedUser = existingUser
         ? await prisma.user.update({
             where: { id: existingUser.id },
-            data: {
-              ...commonUserData,
-              ...(!existingUser.last_login && drupalLastLogin ? { last_login: drupalLastLogin } : {}),
-              ...(shouldKeepDrupalPassword && user.pass && !existingUser.password
-                ? { password: user.pass }
-                : {}),
-              ...(processedUserPicture
-                ? {
-                    profile_photo_path: processedUserPicture.filePath,
-                    profile_photo_url: processedUserPicture.url,
-                  }
-                : {}),
-            },
+            data: migrationPlan!.data,
             select: {
               id: true,
               email: true,
             },
           })
         : await prisma.user.create({
-            data: {
-              email: normalizedEmail,
-              ...commonUserData,
-              ...(shouldKeepDrupalPassword && user.pass ? { password: user.pass } : {}),
-              ...(processedUserPicture
-                ? {
-                    profile_photo_path: processedUserPicture.filePath,
-                    profile_photo_url: processedUserPicture.url,
-                  }
-                : {}),
-              created_at: new Date(user.created * 1000),
-              last_login: drupalLastLogin,
-            },
+            data: buildNewUserMigrationCreate(normalizedEmail, importedUserProfile, new Date(user.created * 1000)),
             select: {
               id: true,
               email: true,
             },
           });
 
-      importedUserIdsByEmail.set(migratedUser.email, migratedUser.id);
+      importedUserIdsByDrupalUid.set(user.uid, migratedUser.id);
+
+      if (linkedExistingAccountByEmail) {
+        audit.users.linked_existing_account_uids.push(user.uid);
+      }
+
+      if (migrationPlan?.preservedLocalState) {
+        audit.users.preserved_local_state_uids.push(user.uid);
+      }
 
       if (shouldKeepDrupalPassword && user.pass?.startsWith('$S$')) {
         audit.users.legacy_hash_uids.push(user.uid);
@@ -844,25 +851,18 @@ async function migrateUsers(
     }
   }
 
-  return importedUserIdsByEmail;
+  return importedUserIdsByDrupalUid;
 }
 
 async function migrateListings(
   data: Awaited<ReturnType<typeof readDrupalSourceData>>,
-  importedUserIdsByEmail: Map<string, number>,
+  importedUserIdsByDrupalUid: Map<number, number>,
   audit: MigrationAudit,
 ): Promise<void> {
   log('Migrating listings');
 
-  const userEmailByUid = new Map(
-    data.users
-      .filter((user) => user.mail)
-      .map((user) => [user.uid, normalizeEmail(user.mail)]),
-  );
-
   for (const listing of data.listings) {
-    const ownerEmail = userEmailByUid.get(listing.uid) || null;
-    const ownerId = ownerEmail ? importedUserIdsByEmail.get(ownerEmail) : undefined;
+    const ownerId = importedUserIdsByDrupalUid.get(listing.uid);
 
     if (!ownerId) {
       audit.listings.missing_owners.push({ nid: listing.nid, owner_uid: listing.uid || null });
@@ -870,10 +870,11 @@ async function migrateListings(
     }
 
     const alias = data.aliasBySource.get(`node/${listing.nid}`) || null;
-    const slug = buildListingSlug(alias, listing.title, listing.nid);
+    const preferredSlug = buildDrupalListingSlug(alias, listing.title, listing.nid);
     if (!alias) {
-      audit.listings.missing_aliases.push({ nid: listing.nid, fallback_slug: slug });
+      audit.listings.missing_aliases.push({ nid: listing.nid, fallback_slug: preferredSlug });
     }
+    const createdAt = new Date(listing.created * 1000);
 
     if (listing.language) {
       audit.listings.listing_languages.push({ nid: listing.nid, language: listing.language });
@@ -919,61 +920,94 @@ async function migrateListings(
     const address = data.addressByListingId.get(listing.nid);
     const latLon = data.latLonByListingId.get(listing.nid);
 
-    const upsertedListing = await prisma.listing.upsert({
-      where: { slug },
-      update: {
-        title: listing.title || `Listing ${listing.nid}`,
-        description: listing.description || '',
-        address_1: address?.thoroughfare || 'Unknown address',
-        address_2: [address?.premise, address?.sub_premise].filter(Boolean).join(', ') || null,
-        postal_code: address?.postal_code || '',
-        city: address?.locality || '',
-        province: address?.administrative_area || '',
-        latitude: toNullableNumber(latLon?.latitude) ?? null,
-        longitude: toNullableNumber(latLon?.longitude) ?? null,
-        monthly_rent: data.priceByListingId.get(listing.nid) ?? 0,
-        deposit: data.depositByListingId.get(listing.nid) ?? null,
-        condominium_expenses: data.condominiumExpensesByListingId.get(listing.nid) ?? null,
-        accommodation_type: accommodationType || 'apartment',
-        floor: floor || 'ground',
-        bathrooms: data.bathroomsByListingId.get(listing.nid) ?? 1,
-        bedrooms: data.bedroomsByListingId.get(listing.nid) ?? 1,
-        floor_space: data.floorSpaceByListingId.get(listing.nid) ?? null,
-        published: listing.status === 1,
-        owner_id: ownerId,
-        ...featureState,
-        ...utilityState,
-      },
-      create: {
-        title: listing.title || `Listing ${listing.nid}`,
-        slug,
-        description: listing.description || '',
-        address_1: address?.thoroughfare || 'Unknown address',
-        address_2: [address?.premise, address?.sub_premise].filter(Boolean).join(', ') || null,
-        postal_code: address?.postal_code || '',
-        city: address?.locality || '',
-        province: address?.administrative_area || '',
-        latitude: toNullableNumber(latLon?.latitude) ?? null,
-        longitude: toNullableNumber(latLon?.longitude) ?? null,
-        monthly_rent: data.priceByListingId.get(listing.nid) ?? 0,
-        deposit: data.depositByListingId.get(listing.nid) ?? null,
-        condominium_expenses: data.condominiumExpensesByListingId.get(listing.nid) ?? null,
-        accommodation_type: accommodationType || 'apartment',
-        floor: floor || 'ground',
-        bathrooms: data.bathroomsByListingId.get(listing.nid) ?? 1,
-        bedrooms: data.bedroomsByListingId.get(listing.nid) ?? 1,
-        floor_space: data.floorSpaceByListingId.get(listing.nid) ?? null,
-        published: listing.status === 1,
-        owner_id: ownerId,
-        created_at: new Date(listing.created * 1000),
-        ...featureState,
-        ...utilityState,
-      },
+    const listingData = {
+      legacy_drupal_nid: listing.nid,
+      title: listing.title || `Listing ${listing.nid}`,
+      description: listing.description || '',
+      address_1: address?.thoroughfare || 'Unknown address',
+      address_2: [address?.premise, address?.sub_premise].filter(Boolean).join(', ') || null,
+      postal_code: address?.postal_code || '',
+      city: address?.locality || '',
+      province: address?.administrative_area || '',
+      latitude: toNullableNumber(latLon?.latitude) ?? null,
+      longitude: toNullableNumber(latLon?.longitude) ?? null,
+      monthly_rent: data.priceByListingId.get(listing.nid) ?? 0,
+      deposit: data.depositByListingId.get(listing.nid) ?? null,
+      condominium_expenses: data.condominiumExpensesByListingId.get(listing.nid) ?? null,
+      accommodation_type: accommodationType || 'apartment',
+      floor: floor || 'ground',
+      bathrooms: data.bathroomsByListingId.get(listing.nid) ?? 1,
+      bedrooms: data.bedroomsByListingId.get(listing.nid) ?? 1,
+      floor_space: data.floorSpaceByListingId.get(listing.nid) ?? null,
+      published: listing.status === 1,
+      owner_id: ownerId,
+      ...featureState,
+      ...utilityState,
+    };
+
+    let targetListing = await prisma.listing.findUnique({
+      where: { legacy_drupal_nid: listing.nid },
       select: {
         id: true,
         slug: true,
+        owner_id: true,
+        created_at: true,
+        legacy_drupal_nid: true,
       },
     });
+
+    if (!targetListing) {
+      const candidates = await prisma.listing.findMany({
+        where: {
+          slug: preferredSlug,
+          owner_id: ownerId,
+          created_at: createdAt,
+        },
+        select: {
+          id: true,
+          slug: true,
+          owner_id: true,
+          created_at: true,
+          legacy_drupal_nid: true,
+        },
+      });
+      targetListing = findUnambiguousLegacyListingMatch(candidates, preferredSlug, ownerId, createdAt);
+      if (targetListing) {
+        audit.listings.linked_existing_listing_nids.push(listing.nid);
+      }
+    }
+
+    let upsertedListing: { id: number; slug: string };
+    if (targetListing) {
+      upsertedListing = await prisma.listing.update({
+        where: { id: targetListing.id },
+        data: listingData,
+        select: {
+          id: true,
+          slug: true,
+        },
+      });
+    } else {
+      const { slug, collided } = await generateUniqueDrupalListingSlug(prisma, preferredSlug);
+      if (collided) {
+        audit.listings.slug_collisions.push({
+          nid: listing.nid,
+          preferred_slug: preferredSlug,
+          resolved_slug: slug,
+        });
+      }
+      upsertedListing = await prisma.listing.create({
+        data: {
+          ...listingData,
+          slug,
+          created_at: createdAt,
+        },
+        select: {
+          id: true,
+          slug: true,
+        },
+      });
+    }
 
     const existingPhotos = await prisma.listingPhoto.findMany({
       where: { listing_id: upsertedListing.id },
@@ -1072,6 +1106,8 @@ async function main(): Promise<void> {
       imported_itatti_with_listing_uids: [],
       skipped_itatti_without_listing_uids: [],
       external_without_listing_uids: [],
+      linked_existing_account_uids: [],
+      preserved_local_state_uids: [],
       blocked_user_uids: [],
       legacy_hash_uids: [],
       missing_emails: [],
@@ -1079,7 +1115,9 @@ async function main(): Promise<void> {
     listings: {
       imported: [],
       missing_owners: [],
+      linked_existing_listing_nids: [],
       missing_aliases: [],
+      slug_collisions: [],
       listing_languages: [],
       unmapped_listing_types: [],
       missing_photos: [],
@@ -1101,8 +1139,8 @@ async function main(): Promise<void> {
       fid: picture.fid,
     }));
 
-    const importedUserIdsByEmail = await migrateUsers(drupalData, audit);
-    await migrateListings(drupalData, importedUserIdsByEmail, audit);
+    const importedUserIdsByDrupalUid = await migrateUsers(drupalData, audit);
+    await migrateListings(drupalData, importedUserIdsByDrupalUid, audit);
   } finally {
     await connection.end();
     await prisma.$disconnect();
@@ -1113,7 +1151,11 @@ async function main(): Promise<void> {
   log(`Imported ${audit.users.imported_external_uids.length} external users`);
   log(`Imported ${audit.users.imported_itatti_with_listing_uids.length} @itatti.harvard.edu users with listings`);
   log(`Skipped ${audit.users.skipped_itatti_without_listing_uids.length} @itatti.harvard.edu users without listings`);
+  log(`Linked ${audit.users.linked_existing_account_uids.length} existing users by email`);
+  log(`Preserved local state for ${audit.users.preserved_local_state_uids.length} existing users`);
   log(`Imported ${audit.listings.imported.length} listings`);
+  log(`Linked ${audit.listings.linked_existing_listing_nids.length} existing listings by legacy match`);
+  log(`Resolved ${audit.listings.slug_collisions.length} listing slug collisions`);
   log(`Recorded ${audit.listings.missing_photos.length} missing listing photos`);
   log(`Audit written to ${AUDIT_FILE}`);
 }
