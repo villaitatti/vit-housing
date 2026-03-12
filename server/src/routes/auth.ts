@@ -7,6 +7,7 @@ import { validate } from '../middleware/validate.js';
 import { loginSchema, registerSchema, vitIdCallbackSchema } from '@vithousing/shared';
 import { Role as PrismaRole } from '../generated/prisma/client.js';
 import { getUserAuth0Roles } from '../services/auth0.service.js';
+import { verifyAuth0Token } from '../lib/auth0-jwt.js';
 import { hashInvitationToken, getInvitationStatus } from '../lib/invitations.js';
 import { normalizeEmail } from '../lib/email.js';
 import { hashPassword, needsPasswordRehash, validatePasswordPolicy, verifyPassword } from '../lib/password.js';
@@ -20,6 +21,12 @@ const COOKIE_OPTIONS = {
   maxAge: 8 * 60 * 60 * 1000, // 8 hours
   path: '/',
 };
+const loginRateLimit = createRateLimitMiddleware({
+  windowMs: 15 * 60 * 1000,
+  maxRequests: 10,
+  code: 'RATE_LIMITED',
+  message: 'Too many login attempts. Please try again later.',
+});
 const registrationRateLimit = createRateLimitMiddleware({
   windowMs: 15 * 60 * 1000,
   maxRequests: 10,
@@ -42,7 +49,7 @@ class EmailExistsError extends Error {
 }
 
 // POST /api/v1/auth/login — Local email/password login
-router.post('/login', validate(loginSchema), async (req: Request, res: Response) => {
+router.post('/login', loginRateLimit, validate(loginSchema), async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
     const normalizedEmail = normalizeEmail(email);
@@ -195,28 +202,15 @@ router.post('/register', registrationRateLimit, validate(registerSchema), async 
 // POST /api/v1/auth/vit-id/callback — Auth0 VIT ID callback
 router.post('/vit-id/callback', validate(vitIdCallbackSchema), async (req: Request, res: Response) => {
   try {
-    // Validate Auth0 token using express-oauth2-jwt-bearer
-    // For now, we extract the user info from the token
     const { access_token } = req.body;
 
-    // Decode the Auth0 JWT to get user info
-    // In production, this should be validated against Auth0 JWKS
-    const parts = access_token.split('.');
-    if (parts.length !== 3) {
-      sendError(res, 'Invalid token format', 'INVALID_TOKEN', 400);
-      return;
-    }
-
-    let auth0Payload: { sub?: string; email?: string; given_name?: string; family_name?: string };
+    // Verify Auth0 JWT signature against JWKS + validate issuer, audience, expiry, email_verified
+    let auth0Payload: Awaited<ReturnType<typeof verifyAuth0Token>>;
     try {
-      auth0Payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
-    } catch {
-      sendError(res, 'Invalid token', 'INVALID_TOKEN', 400);
-      return;
-    }
-
-    if (!auth0Payload.sub || !auth0Payload.email) {
-      sendError(res, 'Token missing required claims', 'INVALID_TOKEN', 400);
+      auth0Payload = await verifyAuth0Token(access_token);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Invalid token';
+      sendError(res, message, 'INVALID_TOKEN', 401);
       return;
     }
 

@@ -200,6 +200,17 @@ router.patch(
   validate(adminUpdateUserSchema),
   async (req: Request, res: Response) => {
     try {
+      // Privilege ceiling: only HOUSE_IT_ADMIN callers can assign the HOUSE_IT_ADMIN role
+      const callerRoles = req.user!.roles;
+      if (
+        req.body.roles &&
+        req.body.roles.includes('HOUSE_IT_ADMIN') &&
+        !callerRoles.includes('HOUSE_IT_ADMIN')
+      ) {
+        sendError(res, 'Only IT admins can assign the IT admin role', 'FORBIDDEN', 403);
+        return;
+      }
+
       const id = parseInt(req.params.id as string);
       const user = await prisma.user.update({
         where: { id },

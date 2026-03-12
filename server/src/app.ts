@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import apiRouter from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { authenticate } from './middleware/authenticate.js';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -45,7 +46,9 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(cookieParser());
 
-app.use('/uploads', express.static(path.resolve('uploads')));
+// Profile photos require authentication; listing photos are public
+app.use('/uploads/profiles', authenticate, express.static(path.resolve('uploads/profiles')));
+app.use('/uploads/listings', express.static(path.resolve('uploads/listings')));
 
 app.use('/api/v1', apiRouter);
 
