@@ -17,6 +17,7 @@ const AUDIT_FILE = path.resolve('server/scripts/drupal-migration-audit.json');
 
 const ITATTI_EMAIL_DOMAIN = '@itatti.harvard.edu';
 const DRUPAL_FILES_ROOT = path.resolve(process.env.DRUPAL_FILES_ROOT || 'drupal7-import/files/files_live');
+const RESOLVED_DRUPAL_FILES_ROOT = path.resolve(DRUPAL_FILES_ROOT);
 
 const DRUPAL_ROLE_MAP: Record<number, Role> = {
   3: Role.HOUSE_ADMIN,
@@ -342,6 +343,23 @@ async function ensureDrupalFilesRoot(): Promise<void> {
   await fs.access(DRUPAL_FILES_ROOT);
 }
 
+function isPathInsideRoot(rootPath: string, candidatePath: string): boolean {
+  const relativePath = path.relative(rootPath, candidatePath);
+  return relativePath !== '' && !relativePath.startsWith('..') && !path.isAbsolute(relativePath)
+    || candidatePath === rootPath;
+}
+
+function resolveDrupalPublicFilePath(uri: string): string {
+  const relativeFilePath = uri.replace(/^public:\/\//, '');
+  const absoluteDrupalFilePath = path.resolve(RESOLVED_DRUPAL_FILES_ROOT, relativeFilePath);
+
+  if (!isPathInsideRoot(RESOLVED_DRUPAL_FILES_ROOT, absoluteDrupalFilePath)) {
+    throw new Error(`Path escapes Drupal files root: ${uri}`);
+  }
+
+  return absoluteDrupalFilePath;
+}
+
 async function processDrupalUserPicture(
   picture: DrupalUserPictureRow | undefined,
 ): Promise<ProcessedUserPicture | null> {
@@ -350,8 +368,7 @@ async function processDrupalUserPicture(
   }
 
   try {
-    const relativeFilePath = picture.uri.replace(/^public:\/\//, '');
-    const absoluteDrupalPhotoPath = path.join(DRUPAL_FILES_ROOT, relativeFilePath);
+    const absoluteDrupalPhotoPath = resolveDrupalPublicFilePath(picture.uri);
     const fileBuffer = await fs.readFile(absoluteDrupalPhotoPath);
     const savedPhoto = await processAndSaveProfilePhoto(fileBuffer);
 
@@ -739,11 +756,13 @@ async function migrateUsers(
         email: true,
         password: true,
         auth0_user_id: true,
+        last_login: true,
         profile_photo_path: true,
         profile_photo_url: true,
       },
     });
 
+    const drupalLastLogin = user.login > 0 ? new Date(user.login * 1000) : null;
     const commonUserData = {
       first_name: name.first_name,
       last_name: name.last_name,
@@ -751,7 +770,6 @@ async function migrateUsers(
       preferred_language: parseDrupalLanguage(user.language),
       phone_number: user.phone_number || null,
       mobile_number: user.mobile_number || null,
-      last_login: user.login > 0 ? new Date(user.login * 1000) : null,
     };
 
     const shouldBackfillProfilePhoto =
@@ -768,6 +786,7 @@ async function migrateUsers(
             where: { id: existingUser.id },
             data: {
               ...commonUserData,
+              ...(!existingUser.last_login && drupalLastLogin ? { last_login: drupalLastLogin } : {}),
               ...(shouldKeepDrupalPassword && user.pass && !existingUser.password
                 ? { password: user.pass }
                 : {}),
@@ -795,6 +814,7 @@ async function migrateUsers(
                   }
                 : {}),
               created_at: new Date(user.created * 1000),
+              last_login: drupalLastLogin,
             },
             select: {
               id: true,
@@ -962,18 +982,18 @@ async function migrateListings(
 
     const photoRows = data.photosByListingId.get(listing.nid) || [];
     const processedPhotos: ProcessedListingPhoto[] = [];
+    let photoFailures = 0;
 
     try {
       for (const photo of photoRows) {
         if (!photo.uri) {
           audit.listings.missing_photos.push({ nid: listing.nid, fid: photo.fid });
+          photoFailures += 1;
           continue;
         }
 
-        const relativeFilePath = photo.uri.replace(/^public:\/\//, '');
-        const absoluteDrupalPhotoPath = path.join(DRUPAL_FILES_ROOT, relativeFilePath);
-
         try {
+          const absoluteDrupalPhotoPath = resolveDrupalPublicFilePath(photo.uri);
           const fileBuffer = await fs.readFile(absoluteDrupalPhotoPath);
           const savedPhoto = await processAndSaveImage(fileBuffer);
 
@@ -984,10 +1004,12 @@ async function migrateListings(
           });
         } catch {
           audit.listings.missing_photos.push({ nid: listing.nid, fid: photo.fid });
+          photoFailures += 1;
         }
       }
 
       const availabilityRows = data.availabilityByListingId.get(listing.nid) || [];
+      const shouldReplacePhotos = photoFailures === 0;
       await prisma.$transaction(async (tx) => {
         await tx.availableDate.deleteMany({ where: { listing_id: upsertedListing.id } });
 
@@ -1001,27 +1023,34 @@ async function migrateListings(
           });
         }
 
-        await tx.listingPhoto.deleteMany({ where: { listing_id: upsertedListing.id } });
+        if (shouldReplacePhotos) {
+          await tx.listingPhoto.deleteMany({ where: { listing_id: upsertedListing.id } });
 
-        if (processedPhotos.length > 0) {
-          await tx.listingPhoto.createMany({
-            data: processedPhotos.map((photo) => ({
-              listing_id: upsertedListing.id,
-              file_path: photo.filePath,
-              url: photo.url,
-              sort_order: photo.sort_order,
-            })),
-          });
+          if (processedPhotos.length > 0) {
+            await tx.listingPhoto.createMany({
+              data: processedPhotos.map((photo) => ({
+                listing_id: upsertedListing.id,
+                file_path: photo.filePath,
+                url: photo.url,
+                sort_order: photo.sort_order,
+              })),
+            });
+          }
         }
       });
 
-      await Promise.all(existingPhotos.map(async (photo) => {
-        try {
-          await deleteLocalFile(photo.file_path);
-        } catch {
-          // Ignore old-file cleanup failures after the DB swap succeeds.
-        }
-      }));
+      if (shouldReplacePhotos) {
+        await Promise.all(existingPhotos.map(async (photo) => {
+          try {
+            await deleteLocalFile(photo.file_path);
+          } catch {
+            // Ignore old-file cleanup failures after the DB swap succeeds.
+          }
+        }));
+      } else {
+        log(`Skipped photo replacement for listing nid=${listing.nid} due to ${photoFailures} source photo failure(s)`);
+        await Promise.all(processedPhotos.map((photo) => deleteLocalFile(photo.filePath)));
+      }
     } catch (err) {
       await Promise.all(processedPhotos.map((photo) => deleteLocalFile(photo.filePath)));
       throw err;

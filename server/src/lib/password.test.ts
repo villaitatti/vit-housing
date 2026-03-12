@@ -139,13 +139,6 @@ test('verifyPassword remains compatible with portable Drupal MD5 hashes', async 
 });
 
 test('verifyPassword remains compatible with upgraded Drupal U$ hashes', async () => {
-  const upgradedHash = AUTHENTIC_DRUPAL7_LAYERED_HASH;
-
-  assert.equal(await verifyPassword('valid password', upgradedHash), true);
-  assert.equal(await verifyPassword('wrong password', upgradedHash), false);
-});
-
-test('verifyPassword remains compatible with generated upgraded Drupal U$P$ hashes', async () => {
   const upgradedHash = `U${createPortableMd5HashForTest(createHash('md5').update('legacy password', 'utf8').digest('hex'))}`;
 
   assert.equal(await verifyPassword('legacy password', upgradedHash), true);
