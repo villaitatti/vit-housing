@@ -27,7 +27,7 @@ function getJWKS(domain: string) {
 export interface Auth0VerifiedPayload {
   sub: string;
   email: string;
-  email_verified?: boolean;
+  email_verified: true;
   given_name?: string;
   family_name?: string;
 }
@@ -50,14 +50,14 @@ export async function verifyAuth0Token(token: string): Promise<Auth0VerifiedPayl
     throw new Error('Token missing required claims (sub, email)');
   }
 
-  if (payload.email_verified === false) {
+  if (payload.email_verified !== true) {
     throw new Error('Email address has not been verified');
   }
 
   return {
     sub: payload.sub,
     email: payload.email as string,
-    email_verified: payload.email_verified as boolean | undefined,
+    email_verified: true,
     given_name: (payload as JWTPayload & Record<string, unknown>).given_name as string | undefined,
     family_name: (payload as JWTPayload & Record<string, unknown>).family_name as string | undefined,
   };

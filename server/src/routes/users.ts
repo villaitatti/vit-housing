@@ -200,7 +200,7 @@ router.patch(
   validate(adminUpdateUserSchema),
   async (req: Request, res: Response) => {
     try {
-      // Privilege ceiling: only HOUSE_IT_ADMIN callers can assign the HOUSE_IT_ADMIN role
+      // Privilege ceiling: only HOUSE_IT_ADMIN callers can assign or remove the HOUSE_IT_ADMIN role
       const callerRoles = req.user!.roles;
       if (
         req.body.roles &&
@@ -212,6 +212,19 @@ router.patch(
       }
 
       const id = parseInt(req.params.id as string);
+
+      if (req.body.roles && !callerRoles.includes('HOUSE_IT_ADMIN')) {
+        const targetUser = await prisma.user.findUnique({ where: { id }, select: { roles: true } });
+        if (
+          targetUser &&
+          targetUser.roles.includes('HOUSE_IT_ADMIN') &&
+          !req.body.roles.includes('HOUSE_IT_ADMIN')
+        ) {
+          sendError(res, 'Only IT admins can remove the IT admin role', 'FORBIDDEN', 403);
+          return;
+        }
+      }
+
       const user = await prisma.user.update({
         where: { id },
         data: req.body,
