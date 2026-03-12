@@ -28,6 +28,7 @@ export type AggregateListing = {
 
 export type ListingAvgAggregateOutputType = {
   id: number | null
+  legacy_drupal_nid: number | null
   latitude: number | null
   longitude: number | null
   monthly_rent: runtime.Decimal | null
@@ -41,6 +42,7 @@ export type ListingAvgAggregateOutputType = {
 
 export type ListingSumAggregateOutputType = {
   id: number | null
+  legacy_drupal_nid: number | null
   latitude: number | null
   longitude: number | null
   monthly_rent: runtime.Decimal | null
@@ -54,6 +56,7 @@ export type ListingSumAggregateOutputType = {
 
 export type ListingMinAggregateOutputType = {
   id: number | null
+  legacy_drupal_nid: number | null
   title: string | null
   slug: string | null
   description: string | null
@@ -101,6 +104,7 @@ export type ListingMinAggregateOutputType = {
 
 export type ListingMaxAggregateOutputType = {
   id: number | null
+  legacy_drupal_nid: number | null
   title: string | null
   slug: string | null
   description: string | null
@@ -148,6 +152,7 @@ export type ListingMaxAggregateOutputType = {
 
 export type ListingCountAggregateOutputType = {
   id: number
+  legacy_drupal_nid: number
   title: number
   slug: number
   description: number
@@ -197,6 +202,7 @@ export type ListingCountAggregateOutputType = {
 
 export type ListingAvgAggregateInputType = {
   id?: true
+  legacy_drupal_nid?: true
   latitude?: true
   longitude?: true
   monthly_rent?: true
@@ -210,6 +216,7 @@ export type ListingAvgAggregateInputType = {
 
 export type ListingSumAggregateInputType = {
   id?: true
+  legacy_drupal_nid?: true
   latitude?: true
   longitude?: true
   monthly_rent?: true
@@ -223,6 +230,7 @@ export type ListingSumAggregateInputType = {
 
 export type ListingMinAggregateInputType = {
   id?: true
+  legacy_drupal_nid?: true
   title?: true
   slug?: true
   description?: true
@@ -270,6 +278,7 @@ export type ListingMinAggregateInputType = {
 
 export type ListingMaxAggregateInputType = {
   id?: true
+  legacy_drupal_nid?: true
   title?: true
   slug?: true
   description?: true
@@ -317,6 +326,7 @@ export type ListingMaxAggregateInputType = {
 
 export type ListingCountAggregateInputType = {
   id?: true
+  legacy_drupal_nid?: true
   title?: true
   slug?: true
   description?: true
@@ -451,6 +461,7 @@ export type ListingGroupByArgs<ExtArgs extends runtime.Types.Extensions.Internal
 
 export type ListingGroupByOutputType = {
   id: number
+  legacy_drupal_nid: number | null
   title: string
   slug: string
   description: string
@@ -521,6 +532,7 @@ export type ListingWhereInput = {
   OR?: Prisma.ListingWhereInput[]
   NOT?: Prisma.ListingWhereInput | Prisma.ListingWhereInput[]
   id?: Prisma.IntFilter<"Listing"> | number
+  legacy_drupal_nid?: Prisma.IntNullableFilter<"Listing"> | number | null
   title?: Prisma.StringFilter<"Listing"> | string
   slug?: Prisma.StringFilter<"Listing"> | string
   description?: Prisma.StringFilter<"Listing"> | string
@@ -572,6 +584,7 @@ export type ListingWhereInput = {
 
 export type ListingOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  legacy_drupal_nid?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
   slug?: Prisma.SortOrder
   description?: Prisma.SortOrder
@@ -623,6 +636,7 @@ export type ListingOrderByWithRelationInput = {
 
 export type ListingWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  legacy_drupal_nid?: number
   slug?: string
   AND?: Prisma.ListingWhereInput | Prisma.ListingWhereInput[]
   OR?: Prisma.ListingWhereInput[]
@@ -673,10 +687,11 @@ export type ListingWhereUniqueInput = Prisma.AtLeast<{
   available_dates?: Prisma.AvailableDateListRelationFilter
   photos?: Prisma.ListingPhotoListRelationFilter
   favorites?: Prisma.FavoriteListingListRelationFilter
-}, "id" | "slug">
+}, "id" | "legacy_drupal_nid" | "slug">
 
 export type ListingOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  legacy_drupal_nid?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
   slug?: Prisma.SortOrder
   description?: Prisma.SortOrder
@@ -732,6 +747,7 @@ export type ListingScalarWhereWithAggregatesInput = {
   OR?: Prisma.ListingScalarWhereWithAggregatesInput[]
   NOT?: Prisma.ListingScalarWhereWithAggregatesInput | Prisma.ListingScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Listing"> | number
+  legacy_drupal_nid?: Prisma.IntNullableWithAggregatesFilter<"Listing"> | number | null
   title?: Prisma.StringWithAggregatesFilter<"Listing"> | string
   slug?: Prisma.StringWithAggregatesFilter<"Listing"> | string
   description?: Prisma.StringWithAggregatesFilter<"Listing"> | string
@@ -778,6 +794,7 @@ export type ListingScalarWhereWithAggregatesInput = {
 }
 
 export type ListingCreateInput = {
+  legacy_drupal_nid?: number | null
   title: string
   slug: string
   description: string
@@ -828,6 +845,7 @@ export type ListingCreateInput = {
 
 export type ListingUncheckedCreateInput = {
   id?: number
+  legacy_drupal_nid?: number | null
   title: string
   slug: string
   description: string
@@ -877,6 +895,7 @@ export type ListingUncheckedCreateInput = {
 }
 
 export type ListingUpdateInput = {
+  legacy_drupal_nid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
@@ -927,6 +946,7 @@ export type ListingUpdateInput = {
 
 export type ListingUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  legacy_drupal_nid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
@@ -977,6 +997,7 @@ export type ListingUncheckedUpdateInput = {
 
 export type ListingCreateManyInput = {
   id?: number
+  legacy_drupal_nid?: number | null
   title: string
   slug: string
   description: string
@@ -1023,6 +1044,7 @@ export type ListingCreateManyInput = {
 }
 
 export type ListingUpdateManyMutationInput = {
+  legacy_drupal_nid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1069,6 +1091,7 @@ export type ListingUpdateManyMutationInput = {
 
 export type ListingUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  legacy_drupal_nid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1126,6 +1149,7 @@ export type ListingOrderByRelationAggregateInput = {
 
 export type ListingCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  legacy_drupal_nid?: Prisma.SortOrder
   title?: Prisma.SortOrder
   slug?: Prisma.SortOrder
   description?: Prisma.SortOrder
@@ -1173,6 +1197,7 @@ export type ListingCountOrderByAggregateInput = {
 
 export type ListingAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  legacy_drupal_nid?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   monthly_rent?: Prisma.SortOrder
@@ -1186,6 +1211,7 @@ export type ListingAvgOrderByAggregateInput = {
 
 export type ListingMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  legacy_drupal_nid?: Prisma.SortOrder
   title?: Prisma.SortOrder
   slug?: Prisma.SortOrder
   description?: Prisma.SortOrder
@@ -1233,6 +1259,7 @@ export type ListingMaxOrderByAggregateInput = {
 
 export type ListingMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  legacy_drupal_nid?: Prisma.SortOrder
   title?: Prisma.SortOrder
   slug?: Prisma.SortOrder
   description?: Prisma.SortOrder
@@ -1280,6 +1307,7 @@ export type ListingMinOrderByAggregateInput = {
 
 export type ListingSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  legacy_drupal_nid?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   monthly_rent?: Prisma.SortOrder
@@ -1405,6 +1433,7 @@ export type ListingUpdateOneRequiredWithoutPhotosNestedInput = {
 }
 
 export type ListingCreateWithoutOwnerInput = {
+  legacy_drupal_nid?: number | null
   title: string
   slug: string
   description: string
@@ -1454,6 +1483,7 @@ export type ListingCreateWithoutOwnerInput = {
 
 export type ListingUncheckedCreateWithoutOwnerInput = {
   id?: number
+  legacy_drupal_nid?: number | null
   title: string
   slug: string
   description: string
@@ -1532,6 +1562,7 @@ export type ListingScalarWhereInput = {
   OR?: Prisma.ListingScalarWhereInput[]
   NOT?: Prisma.ListingScalarWhereInput | Prisma.ListingScalarWhereInput[]
   id?: Prisma.IntFilter<"Listing"> | number
+  legacy_drupal_nid?: Prisma.IntNullableFilter<"Listing"> | number | null
   title?: Prisma.StringFilter<"Listing"> | string
   slug?: Prisma.StringFilter<"Listing"> | string
   description?: Prisma.StringFilter<"Listing"> | string
@@ -1578,6 +1609,7 @@ export type ListingScalarWhereInput = {
 }
 
 export type ListingCreateWithoutFavoritesInput = {
+  legacy_drupal_nid?: number | null
   title: string
   slug: string
   description: string
@@ -1627,6 +1659,7 @@ export type ListingCreateWithoutFavoritesInput = {
 
 export type ListingUncheckedCreateWithoutFavoritesInput = {
   id?: number
+  legacy_drupal_nid?: number | null
   title: string
   slug: string
   description: string
@@ -1691,6 +1724,7 @@ export type ListingUpdateToOneWithWhereWithoutFavoritesInput = {
 }
 
 export type ListingUpdateWithoutFavoritesInput = {
+  legacy_drupal_nid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1740,6 +1774,7 @@ export type ListingUpdateWithoutFavoritesInput = {
 
 export type ListingUncheckedUpdateWithoutFavoritesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  legacy_drupal_nid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1788,6 +1823,7 @@ export type ListingUncheckedUpdateWithoutFavoritesInput = {
 }
 
 export type ListingCreateWithoutAvailable_datesInput = {
+  legacy_drupal_nid?: number | null
   title: string
   slug: string
   description: string
@@ -1837,6 +1873,7 @@ export type ListingCreateWithoutAvailable_datesInput = {
 
 export type ListingUncheckedCreateWithoutAvailable_datesInput = {
   id?: number
+  legacy_drupal_nid?: number | null
   title: string
   slug: string
   description: string
@@ -1901,6 +1938,7 @@ export type ListingUpdateToOneWithWhereWithoutAvailable_datesInput = {
 }
 
 export type ListingUpdateWithoutAvailable_datesInput = {
+  legacy_drupal_nid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1950,6 +1988,7 @@ export type ListingUpdateWithoutAvailable_datesInput = {
 
 export type ListingUncheckedUpdateWithoutAvailable_datesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  legacy_drupal_nid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1998,6 +2037,7 @@ export type ListingUncheckedUpdateWithoutAvailable_datesInput = {
 }
 
 export type ListingCreateWithoutPhotosInput = {
+  legacy_drupal_nid?: number | null
   title: string
   slug: string
   description: string
@@ -2047,6 +2087,7 @@ export type ListingCreateWithoutPhotosInput = {
 
 export type ListingUncheckedCreateWithoutPhotosInput = {
   id?: number
+  legacy_drupal_nid?: number | null
   title: string
   slug: string
   description: string
@@ -2111,6 +2152,7 @@ export type ListingUpdateToOneWithWhereWithoutPhotosInput = {
 }
 
 export type ListingUpdateWithoutPhotosInput = {
+  legacy_drupal_nid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2160,6 +2202,7 @@ export type ListingUpdateWithoutPhotosInput = {
 
 export type ListingUncheckedUpdateWithoutPhotosInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  legacy_drupal_nid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2209,6 +2252,7 @@ export type ListingUncheckedUpdateWithoutPhotosInput = {
 
 export type ListingCreateManyOwnerInput = {
   id?: number
+  legacy_drupal_nid?: number | null
   title: string
   slug: string
   description: string
@@ -2254,6 +2298,7 @@ export type ListingCreateManyOwnerInput = {
 }
 
 export type ListingUpdateWithoutOwnerInput = {
+  legacy_drupal_nid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2303,6 +2348,7 @@ export type ListingUpdateWithoutOwnerInput = {
 
 export type ListingUncheckedUpdateWithoutOwnerInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  legacy_drupal_nid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2352,6 +2398,7 @@ export type ListingUncheckedUpdateWithoutOwnerInput = {
 
 export type ListingUncheckedUpdateManyWithoutOwnerInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  legacy_drupal_nid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2447,6 +2494,7 @@ export type ListingCountOutputTypeCountFavoritesArgs<ExtArgs extends runtime.Typ
 
 export type ListingSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  legacy_drupal_nid?: boolean
   title?: boolean
   slug?: boolean
   description?: boolean
@@ -2499,6 +2547,7 @@ export type ListingSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
 
 export type ListingSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  legacy_drupal_nid?: boolean
   title?: boolean
   slug?: boolean
   description?: boolean
@@ -2547,6 +2596,7 @@ export type ListingSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
 
 export type ListingSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  legacy_drupal_nid?: boolean
   title?: boolean
   slug?: boolean
   description?: boolean
@@ -2595,6 +2645,7 @@ export type ListingSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
 
 export type ListingSelectScalar = {
   id?: boolean
+  legacy_drupal_nid?: boolean
   title?: boolean
   slug?: boolean
   description?: boolean
@@ -2640,7 +2691,7 @@ export type ListingSelectScalar = {
   owner_id?: boolean
 }
 
-export type ListingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "slug" | "description" | "address_1" | "address_2" | "postal_code" | "city" | "province" | "latitude" | "longitude" | "monthly_rent" | "deposit" | "condominium_expenses" | "utility_electricity" | "utility_gas" | "utility_water" | "utility_telephone" | "utility_internet" | "accommodation_type" | "floor" | "bathrooms" | "bedrooms" | "floor_space" | "feature_storage_room" | "feature_basement" | "feature_garden" | "feature_balcony" | "feature_air_con" | "feature_washing_machine" | "feature_dryer" | "feature_fireplace" | "feature_dishwasher" | "feature_elevator" | "feature_tv" | "feature_telephone" | "feature_wifi" | "feature_wired_internet" | "feature_parking" | "feature_pets_allowed" | "published" | "created_at" | "updated_at" | "owner_id", ExtArgs["result"]["listing"]>
+export type ListingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacy_drupal_nid" | "title" | "slug" | "description" | "address_1" | "address_2" | "postal_code" | "city" | "province" | "latitude" | "longitude" | "monthly_rent" | "deposit" | "condominium_expenses" | "utility_electricity" | "utility_gas" | "utility_water" | "utility_telephone" | "utility_internet" | "accommodation_type" | "floor" | "bathrooms" | "bedrooms" | "floor_space" | "feature_storage_room" | "feature_basement" | "feature_garden" | "feature_balcony" | "feature_air_con" | "feature_washing_machine" | "feature_dryer" | "feature_fireplace" | "feature_dishwasher" | "feature_elevator" | "feature_tv" | "feature_telephone" | "feature_wifi" | "feature_wired_internet" | "feature_parking" | "feature_pets_allowed" | "published" | "created_at" | "updated_at" | "owner_id", ExtArgs["result"]["listing"]>
 export type ListingInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   available_dates?: boolean | Prisma.Listing$available_datesArgs<ExtArgs>
@@ -2665,6 +2716,7 @@ export type $ListingPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
+    legacy_drupal_nid: number | null
     title: string
     slug: string
     description: string
@@ -3136,6 +3188,7 @@ export interface Prisma__ListingClient<T, Null = never, ExtArgs extends runtime.
  */
 export interface ListingFieldRefs {
   readonly id: Prisma.FieldRef<"Listing", 'Int'>
+  readonly legacy_drupal_nid: Prisma.FieldRef<"Listing", 'Int'>
   readonly title: Prisma.FieldRef<"Listing", 'String'>
   readonly slug: Prisma.FieldRef<"Listing", 'String'>
   readonly description: Prisma.FieldRef<"Listing", 'String'>

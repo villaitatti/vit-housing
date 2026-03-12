@@ -28,15 +28,18 @@ export type AggregateUser = {
 
 export type UserAvgAggregateOutputType = {
   id: number | null
+  legacy_drupal_uid: number | null
 }
 
 export type UserSumAggregateOutputType = {
   id: number | null
+  legacy_drupal_uid: number | null
 }
 
 export type UserMinAggregateOutputType = {
   id: number | null
   email: string | null
+  legacy_drupal_uid: number | null
   password: string | null
   auth0_user_id: string | null
   profile_photo_path: string | null
@@ -54,6 +57,7 @@ export type UserMinAggregateOutputType = {
 export type UserMaxAggregateOutputType = {
   id: number | null
   email: string | null
+  legacy_drupal_uid: number | null
   password: string | null
   auth0_user_id: string | null
   profile_photo_path: string | null
@@ -71,6 +75,7 @@ export type UserMaxAggregateOutputType = {
 export type UserCountAggregateOutputType = {
   id: number
   email: number
+  legacy_drupal_uid: number
   password: number
   auth0_user_id: number
   profile_photo_path: number
@@ -90,15 +95,18 @@ export type UserCountAggregateOutputType = {
 
 export type UserAvgAggregateInputType = {
   id?: true
+  legacy_drupal_uid?: true
 }
 
 export type UserSumAggregateInputType = {
   id?: true
+  legacy_drupal_uid?: true
 }
 
 export type UserMinAggregateInputType = {
   id?: true
   email?: true
+  legacy_drupal_uid?: true
   password?: true
   auth0_user_id?: true
   profile_photo_path?: true
@@ -116,6 +124,7 @@ export type UserMinAggregateInputType = {
 export type UserMaxAggregateInputType = {
   id?: true
   email?: true
+  legacy_drupal_uid?: true
   password?: true
   auth0_user_id?: true
   profile_photo_path?: true
@@ -133,6 +142,7 @@ export type UserMaxAggregateInputType = {
 export type UserCountAggregateInputType = {
   id?: true
   email?: true
+  legacy_drupal_uid?: true
   password?: true
   auth0_user_id?: true
   profile_photo_path?: true
@@ -238,6 +248,7 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 export type UserGroupByOutputType = {
   id: number
   email: string
+  legacy_drupal_uid: number | null
   password: string | null
   auth0_user_id: string | null
   profile_photo_path: string | null
@@ -279,6 +290,7 @@ export type UserWhereInput = {
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   id?: Prisma.IntFilter<"User"> | number
   email?: Prisma.StringFilter<"User"> | string
+  legacy_drupal_uid?: Prisma.IntNullableFilter<"User"> | number | null
   password?: Prisma.StringNullableFilter<"User"> | string | null
   auth0_user_id?: Prisma.StringNullableFilter<"User"> | string | null
   profile_photo_path?: Prisma.StringNullableFilter<"User"> | string | null
@@ -301,6 +313,7 @@ export type UserWhereInput = {
 export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  legacy_drupal_uid?: Prisma.SortOrderInput | Prisma.SortOrder
   password?: Prisma.SortOrderInput | Prisma.SortOrder
   auth0_user_id?: Prisma.SortOrderInput | Prisma.SortOrder
   profile_photo_path?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -323,6 +336,7 @@ export type UserOrderByWithRelationInput = {
 export type UserWhereUniqueInput = Prisma.AtLeast<{
   id?: number
   email?: string
+  legacy_drupal_uid?: number
   auth0_user_id?: string
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
@@ -343,11 +357,12 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   favorite_listings?: Prisma.FavoriteListingListRelationFilter
   invitations_sent?: Prisma.InvitationListRelationFilter
   configs_updated?: Prisma.ServiceConfigListRelationFilter
-}, "id" | "email" | "auth0_user_id">
+}, "id" | "email" | "legacy_drupal_uid" | "auth0_user_id">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  legacy_drupal_uid?: Prisma.SortOrderInput | Prisma.SortOrder
   password?: Prisma.SortOrderInput | Prisma.SortOrder
   auth0_user_id?: Prisma.SortOrderInput | Prisma.SortOrder
   profile_photo_path?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -374,6 +389,7 @@ export type UserScalarWhereWithAggregatesInput = {
   NOT?: Prisma.UserScalarWhereWithAggregatesInput | Prisma.UserScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"User"> | number
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
+  legacy_drupal_uid?: Prisma.IntNullableWithAggregatesFilter<"User"> | number | null
   password?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   auth0_user_id?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   profile_photo_path?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
@@ -391,6 +407,7 @@ export type UserScalarWhereWithAggregatesInput = {
 
 export type UserCreateInput = {
   email: string
+  legacy_drupal_uid?: number | null
   password?: string | null
   auth0_user_id?: string | null
   profile_photo_path?: string | null
@@ -413,6 +430,7 @@ export type UserCreateInput = {
 export type UserUncheckedCreateInput = {
   id?: number
   email: string
+  legacy_drupal_uid?: number | null
   password?: string | null
   auth0_user_id?: string | null
   profile_photo_path?: string | null
@@ -434,6 +452,7 @@ export type UserUncheckedCreateInput = {
 
 export type UserUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  legacy_drupal_uid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -456,6 +475,7 @@ export type UserUpdateInput = {
 export type UserUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  legacy_drupal_uid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -478,6 +498,7 @@ export type UserUncheckedUpdateInput = {
 export type UserCreateManyInput = {
   id?: number
   email: string
+  legacy_drupal_uid?: number | null
   password?: string | null
   auth0_user_id?: string | null
   profile_photo_path?: string | null
@@ -495,6 +516,7 @@ export type UserCreateManyInput = {
 
 export type UserUpdateManyMutationInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  legacy_drupal_uid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -513,6 +535,7 @@ export type UserUpdateManyMutationInput = {
 export type UserUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  legacy_drupal_uid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -539,6 +562,7 @@ export type EnumRoleNullableListFilter<$PrismaModel = never> = {
 export type UserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  legacy_drupal_uid?: Prisma.SortOrder
   password?: Prisma.SortOrder
   auth0_user_id?: Prisma.SortOrder
   profile_photo_path?: Prisma.SortOrder
@@ -556,11 +580,13 @@ export type UserCountOrderByAggregateInput = {
 
 export type UserAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  legacy_drupal_uid?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  legacy_drupal_uid?: Prisma.SortOrder
   password?: Prisma.SortOrder
   auth0_user_id?: Prisma.SortOrder
   profile_photo_path?: Prisma.SortOrder
@@ -578,6 +604,7 @@ export type UserMaxOrderByAggregateInput = {
 export type UserMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  legacy_drupal_uid?: Prisma.SortOrder
   password?: Prisma.SortOrder
   auth0_user_id?: Prisma.SortOrder
   profile_photo_path?: Prisma.SortOrder
@@ -594,6 +621,7 @@ export type UserMinOrderByAggregateInput = {
 
 export type UserSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  legacy_drupal_uid?: Prisma.SortOrder
 }
 
 export type UserNullableScalarRelationFilter = {
@@ -612,6 +640,14 @@ export type UserCreaterolesInput = {
 
 export type StringFieldUpdateOperationsInput = {
   set?: string
+}
+
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
 }
 
 export type NullableStringFieldUpdateOperationsInput = {
@@ -705,6 +741,7 @@ export type UserUpdateOneWithoutConfigs_updatedNestedInput = {
 
 export type UserCreateWithoutInvitations_sentInput = {
   email: string
+  legacy_drupal_uid?: number | null
   password?: string | null
   auth0_user_id?: string | null
   profile_photo_path?: string | null
@@ -726,6 +763,7 @@ export type UserCreateWithoutInvitations_sentInput = {
 export type UserUncheckedCreateWithoutInvitations_sentInput = {
   id?: number
   email: string
+  legacy_drupal_uid?: number | null
   password?: string | null
   auth0_user_id?: string | null
   profile_photo_path?: string | null
@@ -762,6 +800,7 @@ export type UserUpdateToOneWithWhereWithoutInvitations_sentInput = {
 
 export type UserUpdateWithoutInvitations_sentInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  legacy_drupal_uid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -783,6 +822,7 @@ export type UserUpdateWithoutInvitations_sentInput = {
 export type UserUncheckedUpdateWithoutInvitations_sentInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  legacy_drupal_uid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -803,6 +843,7 @@ export type UserUncheckedUpdateWithoutInvitations_sentInput = {
 
 export type UserCreateWithoutListingsInput = {
   email: string
+  legacy_drupal_uid?: number | null
   password?: string | null
   auth0_user_id?: string | null
   profile_photo_path?: string | null
@@ -824,6 +865,7 @@ export type UserCreateWithoutListingsInput = {
 export type UserUncheckedCreateWithoutListingsInput = {
   id?: number
   email: string
+  legacy_drupal_uid?: number | null
   password?: string | null
   auth0_user_id?: string | null
   profile_photo_path?: string | null
@@ -860,6 +902,7 @@ export type UserUpdateToOneWithWhereWithoutListingsInput = {
 
 export type UserUpdateWithoutListingsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  legacy_drupal_uid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -881,6 +924,7 @@ export type UserUpdateWithoutListingsInput = {
 export type UserUncheckedUpdateWithoutListingsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  legacy_drupal_uid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -901,6 +945,7 @@ export type UserUncheckedUpdateWithoutListingsInput = {
 
 export type UserCreateWithoutFavorite_listingsInput = {
   email: string
+  legacy_drupal_uid?: number | null
   password?: string | null
   auth0_user_id?: string | null
   profile_photo_path?: string | null
@@ -922,6 +967,7 @@ export type UserCreateWithoutFavorite_listingsInput = {
 export type UserUncheckedCreateWithoutFavorite_listingsInput = {
   id?: number
   email: string
+  legacy_drupal_uid?: number | null
   password?: string | null
   auth0_user_id?: string | null
   profile_photo_path?: string | null
@@ -958,6 +1004,7 @@ export type UserUpdateToOneWithWhereWithoutFavorite_listingsInput = {
 
 export type UserUpdateWithoutFavorite_listingsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  legacy_drupal_uid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -979,6 +1026,7 @@ export type UserUpdateWithoutFavorite_listingsInput = {
 export type UserUncheckedUpdateWithoutFavorite_listingsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  legacy_drupal_uid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -999,6 +1047,7 @@ export type UserUncheckedUpdateWithoutFavorite_listingsInput = {
 
 export type UserCreateWithoutConfigs_updatedInput = {
   email: string
+  legacy_drupal_uid?: number | null
   password?: string | null
   auth0_user_id?: string | null
   profile_photo_path?: string | null
@@ -1020,6 +1069,7 @@ export type UserCreateWithoutConfigs_updatedInput = {
 export type UserUncheckedCreateWithoutConfigs_updatedInput = {
   id?: number
   email: string
+  legacy_drupal_uid?: number | null
   password?: string | null
   auth0_user_id?: string | null
   profile_photo_path?: string | null
@@ -1056,6 +1106,7 @@ export type UserUpdateToOneWithWhereWithoutConfigs_updatedInput = {
 
 export type UserUpdateWithoutConfigs_updatedInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  legacy_drupal_uid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1077,6 +1128,7 @@ export type UserUpdateWithoutConfigs_updatedInput = {
 export type UserUncheckedUpdateWithoutConfigs_updatedInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  legacy_drupal_uid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1156,6 +1208,7 @@ export type UserCountOutputTypeCountConfigs_updatedArgs<ExtArgs extends runtime.
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   email?: boolean
+  legacy_drupal_uid?: boolean
   password?: boolean
   auth0_user_id?: boolean
   profile_photo_path?: boolean
@@ -1179,6 +1232,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
 export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   email?: boolean
+  legacy_drupal_uid?: boolean
   password?: boolean
   auth0_user_id?: boolean
   profile_photo_path?: boolean
@@ -1197,6 +1251,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   email?: boolean
+  legacy_drupal_uid?: boolean
   password?: boolean
   auth0_user_id?: boolean
   profile_photo_path?: boolean
@@ -1215,6 +1270,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 export type UserSelectScalar = {
   id?: boolean
   email?: boolean
+  legacy_drupal_uid?: boolean
   password?: boolean
   auth0_user_id?: boolean
   profile_photo_path?: boolean
@@ -1230,7 +1286,7 @@ export type UserSelectScalar = {
   last_login?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "auth0_user_id" | "profile_photo_path" | "profile_photo_url" | "first_name" | "last_name" | "roles" | "preferred_language" | "phone_number" | "mobile_number" | "created_at" | "updated_at" | "last_login", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "legacy_drupal_uid" | "password" | "auth0_user_id" | "profile_photo_path" | "profile_photo_url" | "first_name" | "last_name" | "roles" | "preferred_language" | "phone_number" | "mobile_number" | "created_at" | "updated_at" | "last_login", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   listings?: boolean | Prisma.User$listingsArgs<ExtArgs>
   favorite_listings?: boolean | Prisma.User$favorite_listingsArgs<ExtArgs>
@@ -1252,6 +1308,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     email: string
+    legacy_drupal_uid: number | null
     password: string | null
     auth0_user_id: string | null
     profile_photo_path: string | null
@@ -1694,6 +1751,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
 export interface UserFieldRefs {
   readonly id: Prisma.FieldRef<"User", 'Int'>
   readonly email: Prisma.FieldRef<"User", 'String'>
+  readonly legacy_drupal_uid: Prisma.FieldRef<"User", 'Int'>
   readonly password: Prisma.FieldRef<"User", 'String'>
   readonly auth0_user_id: Prisma.FieldRef<"User", 'String'>
   readonly profile_photo_path: Prisma.FieldRef<"User", 'String'>
