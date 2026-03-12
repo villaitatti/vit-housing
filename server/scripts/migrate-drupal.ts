@@ -699,6 +699,22 @@ async function migrateUsers(
 ): Promise<Map<number, number>> {
   log('Migrating users');
 
+  const existingUserSelect = {
+    id: true,
+    email: true,
+    legacy_drupal_uid: true,
+    password: true,
+    last_login: true,
+    profile_photo_path: true,
+    profile_photo_url: true,
+    first_name: true,
+    last_name: true,
+    roles: true,
+    preferred_language: true,
+    phone_number: true,
+    mobile_number: true,
+  } as const;
+
   const listingOwnerUids = new Set(data.listings.map((listing) => listing.uid));
   const userPictureByUid = new Map(data.userPictures.map((picture) => [picture.uid, picture]));
   const roleIdsByUser = data.userRoles.reduce((map, row) => {
@@ -734,42 +750,14 @@ async function migrateUsers(
     const shouldKeepDrupalPassword = !isItattiEmail(normalizedEmail);
     let existingUser = await prisma.user.findUnique({
       where: { legacy_drupal_uid: user.uid },
-      select: {
-        id: true,
-        email: true,
-        legacy_drupal_uid: true,
-        password: true,
-        last_login: true,
-        profile_photo_path: true,
-        profile_photo_url: true,
-        first_name: true,
-        last_name: true,
-        roles: true,
-        preferred_language: true,
-        phone_number: true,
-        mobile_number: true,
-      },
+      select: existingUserSelect,
     });
     let linkedExistingAccountByEmail = false;
 
     if (!existingUser) {
       existingUser = await prisma.user.findUnique({
         where: { email: normalizedEmail },
-        select: {
-          id: true,
-          email: true,
-          legacy_drupal_uid: true,
-          password: true,
-          last_login: true,
-          profile_photo_path: true,
-          profile_photo_url: true,
-          first_name: true,
-          last_name: true,
-          roles: true,
-          preferred_language: true,
-          phone_number: true,
-          mobile_number: true,
-        },
+        select: existingUserSelect,
       });
       linkedExistingAccountByEmail = Boolean(existingUser);
     }

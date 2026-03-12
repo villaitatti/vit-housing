@@ -65,6 +65,41 @@ test('planExistingUserMigrationUpdate preserves local profile state while backfi
   });
 });
 
+test('planExistingUserMigrationUpdate compares roles as sets, not arrays with duplicates', () => {
+  const plan = planExistingUserMigrationUpdate(
+    {
+      id: 42,
+      email: 'person@example.com',
+      legacy_drupal_uid: null,
+      password: null,
+      last_login: null,
+      profile_photo_path: null,
+      profile_photo_url: null,
+      first_name: 'Local',
+      last_name: 'Admin',
+      roles: [Role.HOUSE_ADMIN, Role.HOUSE_ADMIN],
+      preferred_language: 'EN',
+      phone_number: null,
+      mobile_number: null,
+    },
+    {
+      uid: 7,
+      first_name: 'Local',
+      last_name: 'Admin',
+      roles: [Role.HOUSE_ADMIN],
+      preferred_language: 'EN',
+      phone_number: null,
+      mobile_number: null,
+      password: null,
+      shouldKeepDrupalPassword: true,
+      last_login: null,
+      processedUserPicture: null,
+    },
+  );
+
+  assert.equal(plan.preservedLocalState, false);
+});
+
 test('buildNewUserMigrationCreate keeps the imported Drupal profile for new users', () => {
   const createdAt = new Date('2026-03-02T10:00:00.000Z');
   const data = buildNewUserMigrationCreate(

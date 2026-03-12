@@ -49,12 +49,14 @@ export interface LegacyListingMatchCandidate {
 }
 
 function sameRoleSet(left: Role[], right: Role[]): boolean {
-  if (left.length !== right.length) {
+  const leftSet = new Set(left);
+  const rightSet = new Set(right);
+
+  if (leftSet.size !== rightSet.size) {
     return false;
   }
 
-  const rightSet = new Set(right);
-  return left.every((role) => rightSet.has(role));
+  return [...leftSet].every((role) => rightSet.has(role));
 }
 
 export function buildFallbackListingSlug(title: string, nid: number): string {
