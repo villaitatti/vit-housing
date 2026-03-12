@@ -729,7 +729,7 @@ async function migrateUsers(
 
   for (const user of data.users) {
     const normalizedEmail = normalizeEmail(user.mail || '');
-    const roles = mapDrupalUserRoles(roleIdsByUser.get(user.uid) || [2]);
+    const roles = mapDrupalUserRoles(roleIdsByUser.get(user.uid) || []);
     const ownsListing = listingOwnerUids.has(user.uid);
 
     if (!normalizedEmail) {
