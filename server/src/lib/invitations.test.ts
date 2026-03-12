@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { normalizeEmail } from './email.js';
 import {
   buildInvitationExpiryDate,
   generateInvitationToken,
   getInvitationStatus,
   hashInvitationToken,
-  normalizeEmail,
 } from './invitations.js';
 
 test('normalizeEmail trims and lowercases addresses', () => {

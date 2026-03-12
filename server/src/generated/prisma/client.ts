@@ -57,6 +57,11 @@ export type Invitation = Prisma.InvitationModel
  */
 export type Listing = Prisma.ListingModel
 /**
+ * Model FavoriteListing
+ * 
+ */
+export type FavoriteListing = Prisma.FavoriteListingModel
+/**
  * Model AvailableDate
  * 
  */

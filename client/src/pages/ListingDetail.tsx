@@ -19,8 +19,10 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FavoriteListingDialog } from '@/components/listings/FavoriteListingDialog';
 import { canUseFavoriteListings } from '@vithousing/shared';
+import { getInitials } from '@/lib/avatar';
 
 // Swiper
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -46,6 +48,7 @@ interface ListingOwner {
   email: string;
   phone_number: string | null;
   mobile_number: string | null;
+  avatar_url: string | null;
 }
 
 interface ListingDetail {
@@ -399,6 +402,12 @@ export function ListingDetailPage() {
               <CardTitle className="text-lg">{t('listingDetail.ownerInfo')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              {listing.owner?.avatar_url ? (
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={listing.owner.avatar_url} alt={`${listing.owner.first_name} ${listing.owner.last_name}`} />
+                  <AvatarFallback>{getInitials(listing.owner.first_name, listing.owner.last_name)}</AvatarFallback>
+                </Avatar>
+              ) : null}
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-muted-foreground" />
                 <span>

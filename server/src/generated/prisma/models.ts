@@ -11,6 +11,7 @@
 export type * from './models/User'
 export type * from './models/Invitation'
 export type * from './models/Listing'
+export type * from './models/FavoriteListing'
 export type * from './models/AvailableDate'
 export type * from './models/ListingPhoto'
 export type * from './models/ServiceConfig'

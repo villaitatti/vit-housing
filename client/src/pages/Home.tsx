@@ -31,7 +31,7 @@ export function HomePage() {
   const { lang } = useParams();
   const { user } = useAuth();
   const canAddListing = user?.roles?.some((role) =>
-    MANAGED_LISTING_ROLES.includes(role),
+    MANAGED_LISTING_ROLES.some((managedRole) => managedRole === role),
   );
 
   const { data, isLoading } = useQuery<PaginatedData<HomeListing>>({

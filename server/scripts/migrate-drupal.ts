@@ -1,302 +1,1124 @@
-/**
- * Drupal 7 to Villa I Tatti Housing Migration Script
- *
- * Migrates users, listings, and photos from a legacy Drupal 7 MySQL database
- * to the new PostgreSQL database via Prisma.
- *
- * Usage: npx tsx server/scripts/migrate-drupal.ts
- *
- * Requirements:
- * - DRUPAL_DB_URL must be set in server/.env
- * - DATABASE_URL must be set for Prisma
- * - server/uploads/listings/ directory will be created for photo storage
- *
- * This script is idempotent — safe to run multiple times.
- */
+import '../src/lib/loadEnv.js';
+import path from 'path';
+import fs from 'fs/promises';
+import { appendFileSync, writeFileSync } from 'fs';
+import { createConnection, type Connection, type RowDataPacket } from 'mysql2/promise';
+import { Role } from '../src/generated/prisma/enums.js';
+import { normalizeEmail } from '../src/lib/email.js';
+import { prisma } from '../src/lib/prisma.js';
+import {
+  deleteLocalFile,
+  processAndSaveImage,
+  processAndSaveProfilePhoto,
+} from '../src/services/upload.service.js';
 
-import { PrismaClient, Role } from '@prisma/client';
-import { createConnection, Connection } from 'mysql2/promise';
-import { writeFileSync, appendFileSync, mkdirSync } from 'fs';
-import { processAndSaveImage } from '../src/services/upload.service.js';
-import { generateUniqueListingSlug } from '../src/services/listingSlug.service.js';
+const LOG_FILE = path.resolve('server/scripts/drupal-migration-log.txt');
+const AUDIT_FILE = path.resolve('server/scripts/drupal-migration-audit.json');
 
-const prisma = new PrismaClient();
-const LOG_FILE = 'server/scripts/migration-log.txt';
+const ITATTI_EMAIL_DOMAIN = '@itatti.harvard.edu';
+const DRUPAL_FILES_ROOT = path.resolve(process.env.DRUPAL_FILES_ROOT || 'drupal7-import/files/files_live');
+const RESOLVED_DRUPAL_FILES_ROOT = path.resolve(DRUPAL_FILES_ROOT);
 
-// ---- CONFIGURATION ----
-// Map Drupal role IDs to new roles
-// TODO: Verify these role ID mappings against your Drupal database
 const DRUPAL_ROLE_MAP: Record<number, Role> = {
-  // 1: anonymous — skip
-  // 2: authenticated — map to HOUSE_USER
-  2: 'HOUSE_USER',
-  // TODO: Add actual Drupal role IDs for landlord/admin
-  // 3: 'HOUSE_LANDLORD',
-  // 4: 'HOUSE_ADMIN',
+  3: Role.HOUSE_ADMIN,
+  4: Role.HOUSE_LANDLORD,
+  5: Role.HOUSE_USER,
 };
 
-// Skip these Drupal user IDs
-const SKIP_UIDS = [0, 1]; // anonymous + superuser
+const BUILDING_TYPE_MAP: Record<string, string> = {
+  Apartment: 'apartment',
+  House: 'house',
+  Studio: 'studio',
+  Room: 'room',
+};
 
-// Drupal public files base path (for downloading images)
-// TODO: Set this to the correct Drupal public files URL
-const DRUPAL_FILES_BASE_URL = 'https://old-site.example.com/sites/default/files';
+const FLOOR_MAP: Record<string, string> = {
+  '-1': 'basement',
+  '0': 'ground',
+  '1': '1',
+  '2': '2',
+  '3': '3',
+  '4': '4',
+  '5': '5',
+  '6': '6',
+};
 
-function log(message: string) {
-  const timestamp = new Date().toISOString();
-  const line = `[${timestamp}] ${message}`;
+const FEATURE_MAP: Record<string, keyof ListingFeatureState> = {
+  'Storage Room': 'feature_storage_room',
+  Basement: 'feature_basement',
+  Garden: 'feature_garden',
+  'Balcony / Terrace': 'feature_balcony',
+  'Air Conditioning': 'feature_air_con',
+  'Washing Machine': 'feature_washing_machine',
+  Dryer: 'feature_dryer',
+  Fireplace: 'feature_fireplace',
+  Dishwasher: 'feature_dishwasher',
+  Elevator: 'feature_elevator',
+  TV: 'feature_tv',
+  Telephone: 'feature_telephone',
+  'WiFi internet': 'feature_wifi',
+  'Wired internet': 'feature_wired_internet',
+  Parking: 'feature_parking',
+  'Pets allowed': 'feature_pets_allowed',
+};
+
+const UTILITY_MAP: Record<string, keyof ListingUtilityState> = {
+  Electricity: 'utility_electricity',
+  Gas: 'utility_gas',
+  Water: 'utility_water',
+  Telephone: 'utility_telephone',
+  Internet: 'utility_internet',
+};
+
+interface DrupalUserRow extends RowDataPacket {
+  uid: number;
+  name: string;
+  mail: string;
+  pass: string;
+  created: number;
+  login: number;
+  status: number;
+  language: string;
+  picture: number;
+  phone_number: string | null;
+  mobile_number: string | null;
+}
+
+interface DrupalRoleRow extends RowDataPacket {
+  uid: number;
+  rid: number;
+}
+
+interface DrupalListingRow extends RowDataPacket {
+  nid: number;
+  title: string;
+  uid: number;
+  status: number;
+  created: number;
+  changed: number;
+  language: string;
+  description: string | null;
+}
+
+interface DrupalAliasRow extends RowDataPacket {
+  source: string;
+  alias: string;
+  language: string;
+}
+
+interface DrupalValueRow<T> extends RowDataPacket {
+  entity_id: number;
+  value: T;
+}
+
+interface DrupalAvailabilityRow extends RowDataPacket {
+  entity_id: number;
+  delta: number;
+  available_from: Date | string | null;
+  available_to: Date | string | null;
+}
+
+interface DrupalPhotoRow extends RowDataPacket {
+  entity_id: number;
+  delta: number;
+  fid: number | null;
+  alt: string | null;
+  title: string | null;
+  width: number | null;
+  height: number | null;
+  uri: string | null;
+  filename: string | null;
+}
+
+interface DrupalAddressRow extends RowDataPacket {
+  entity_id: number;
+  country: string | null;
+  administrative_area: string | null;
+  locality: string | null;
+  postal_code: string | null;
+  thoroughfare: string | null;
+  premise: string | null;
+  sub_premise: string | null;
+}
+
+interface DrupalLatLonRow extends RowDataPacket {
+  entity_id: number;
+  latitude: string | null;
+  longitude: string | null;
+}
+
+interface DrupalUserPictureRow extends RowDataPacket {
+  uid: number;
+  email: string;
+  fid: number;
+  uri: string;
+}
+
+interface ListingFeatureState {
+  feature_storage_room: boolean;
+  feature_basement: boolean;
+  feature_garden: boolean;
+  feature_balcony: boolean;
+  feature_air_con: boolean;
+  feature_washing_machine: boolean;
+  feature_dryer: boolean;
+  feature_fireplace: boolean;
+  feature_dishwasher: boolean;
+  feature_elevator: boolean;
+  feature_tv: boolean;
+  feature_telephone: boolean;
+  feature_wifi: boolean;
+  feature_wired_internet: boolean;
+  feature_parking: boolean;
+  feature_pets_allowed: boolean;
+}
+
+interface ListingUtilityState {
+  utility_electricity: boolean;
+  utility_gas: boolean;
+  utility_water: boolean;
+  utility_telephone: boolean;
+  utility_internet: boolean;
+}
+
+interface MigrationAudit {
+  started_at: string;
+  files_root: string;
+  users: {
+    imported_external_uids: number[];
+    imported_itatti_with_listing_uids: number[];
+    skipped_itatti_without_listing_uids: number[];
+    external_without_listing_uids: number[];
+    blocked_user_uids: number[];
+    legacy_hash_uids: number[];
+    missing_emails: number[];
+  };
+  listings: {
+    imported: Array<{ nid: number; slug: string }>;
+    missing_owners: Array<{ nid: number; owner_uid: number | null }>;
+    missing_aliases: Array<{ nid: number; fallback_slug: string }>;
+    listing_languages: Array<{ nid: number; language: string }>;
+    unmapped_listing_types: Array<{ nid: number; value: number }>;
+    missing_photos: Array<{ nid: number; fid: number | null }>;
+    unmapped_building_types: Array<{ nid: number; value: string }>;
+    unmapped_floors: Array<{ nid: number; value: number }>;
+    unmapped_features: Array<{ nid: number; value: string }>;
+    unmapped_utilities: Array<{ nid: number; value: string }>;
+  };
+  user_pictures: Array<{ uid: number; fid: number }>;
+}
+
+interface ProcessedListingPhoto {
+  filePath: string;
+  url: string;
+  sort_order: number;
+}
+
+interface ProcessedUserPicture {
+  filePath: string;
+  url: string;
+}
+
+function log(message: string): void {
+  const line = `[${new Date().toISOString()}] ${message}`;
   console.log(line);
-  appendFileSync(LOG_FILE, line + '\n');
+  appendFileSync(LOG_FILE, `${line}\n`);
+}
+
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function isItattiEmail(email: string): boolean {
+  return normalizeEmail(email).endsWith(ITATTI_EMAIL_DOMAIN);
+}
+
+function mapDrupalUserRoles(roleIds: number[]): Role[] {
+  const mapped = roleIds
+    .map((roleId) => DRUPAL_ROLE_MAP[roleId])
+    .filter((role): role is Role => Boolean(role));
+
+  if (mapped.length === 0) {
+    return [Role.HOUSE_USER];
+  }
+
+  return [...new Set(mapped)];
+}
+
+function splitName(fullName: string): { first_name: string; last_name: string } {
+  const trimmed = fullName.trim();
+  if (!trimmed) {
+    return { first_name: 'Unknown', last_name: 'User' };
+  }
+
+  const parts = trimmed.split(/\s+/);
+  return {
+    first_name: parts[0] || 'Unknown',
+    last_name: parts.slice(1).join(' ') || 'User',
+  };
+}
+
+function parseDrupalLanguage(language: string): 'EN' | 'IT' {
+  return language?.toLowerCase() === 'it' ? 'IT' : 'EN';
+}
+
+function buildFallbackListingSlug(title: string, nid: number): string {
+  const slugBase = slugify(title) || `listing-${nid}`;
+  return `${slugBase}-${nid}`;
+}
+
+function buildListingSlug(alias: string | null | undefined, title: string, nid: number): string {
+  if (!alias) {
+    return buildFallbackListingSlug(title, nid);
+  }
+
+  const withoutPrefix = alias.startsWith('listing/') ? alias.slice('listing/'.length) : alias;
+  const slug = slugify(withoutPrefix);
+  return slug || buildFallbackListingSlug(title, nid);
+}
+
+function makeDefaultFeatureState(): ListingFeatureState {
+  return {
+    feature_storage_room: false,
+    feature_basement: false,
+    feature_garden: false,
+    feature_balcony: false,
+    feature_air_con: false,
+    feature_washing_machine: false,
+    feature_dryer: false,
+    feature_fireplace: false,
+    feature_dishwasher: false,
+    feature_elevator: false,
+    feature_tv: false,
+    feature_telephone: false,
+    feature_wifi: false,
+    feature_wired_internet: false,
+    feature_parking: false,
+    feature_pets_allowed: false,
+  };
+}
+
+function makeDefaultUtilityState(): ListingUtilityState {
+  return {
+    utility_electricity: false,
+    utility_gas: false,
+    utility_water: false,
+    utility_telephone: false,
+    utility_internet: false,
+  };
+}
+
+function toNullableDate(value: Date | string | null): Date | null {
+  if (!value) {
+    return null;
+  }
+
+  return value instanceof Date ? value : new Date(value);
+}
+
+function toNullableNumber(value: string | number | null): number | null {
+  if (value === null || value === '') {
+    return null;
+  }
+
+  const numberValue = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(numberValue) ? numberValue : null;
 }
 
 async function connectDrupal(): Promise<Connection> {
-  const url = process.env.DRUPAL_DB_URL;
-  if (!url) {
-    throw new Error('DRUPAL_DB_URL environment variable is not set');
-  }
-  return createConnection(url);
-}
-
-async function migrateUsers(drupal: Connection) {
-  log('--- Starting user migration ---');
-
-  const [rows] = await drupal.query(`
-    SELECT u.uid, u.name, u.mail, u.created, u.login,
-           GROUP_CONCAT(ur.rid) as role_ids
-    FROM users u
-    LEFT JOIN users_roles ur ON u.uid = ur.uid
-    WHERE u.uid NOT IN (${SKIP_UIDS.join(',')})
-    GROUP BY u.uid
-  `) as any;
-
-  let migrated = 0;
-  let skipped = 0;
-
-  for (const row of rows) {
-    try {
-      if (!row.mail) {
-        log(`SKIP user uid=${row.uid} (no email)`);
-        skipped++;
-        continue;
-      }
-
-      // Determine roles from Drupal role IDs
-      const roleIds = row.role_ids ? row.role_ids.split(',').map(Number) : [2];
-      const unmappedRids = roleIds.filter((rid: number) => rid !== 1 && !(rid in DRUPAL_ROLE_MAP));
-      if (unmappedRids.length > 0) {
-        log(`SKIP user uid=${row.uid} email=${row.mail} — unmapped Drupal RIDs: ${unmappedRids.join(',')}`);
-        skipped++;
-        continue;
-      }
-      const mappedRoles = [...new Set(
-        roleIds.map((rid: number) => DRUPAL_ROLE_MAP[rid]).filter(Boolean),
-      )] as Role[];
-      const roles: Role[] = mappedRoles.length > 0 ? mappedRoles : ['HOUSE_USER'];
-
-      // TODO: Split Drupal username into first/last name if possible
-      // For now, use the username as first name
-      const nameParts = (row.name || 'Unknown').split(' ');
-      const firstName = nameParts[0] || 'Unknown';
-      const lastName = nameParts.slice(1).join(' ') || '';
-
-      await prisma.user.upsert({
-        where: { email: row.mail },
-        update: {
-          first_name: firstName,
-          last_name: lastName,
-        },
-        create: {
-          email: row.mail,
-          first_name: firstName,
-          last_name: lastName,
-          roles,
-          // No password — users will authenticate via Auth0 or invitation
-          created_at: new Date(row.created * 1000),
-          last_login: row.login > 0 ? new Date(row.login * 1000) : null,
-        },
-      });
-
-      log(`OK user uid=${row.uid} email=${row.mail} roles=${roles.join(',')}`);
-      migrated++;
-    } catch (err) {
-      log(`ERROR user uid=${row.uid}: ${err}`);
-    }
+  if (!process.env.DRUPAL_DB_URL) {
+    throw new Error('DRUPAL_DB_URL is required');
   }
 
-  log(`Users: ${migrated} migrated, ${skipped} skipped`);
+  return createConnection(process.env.DRUPAL_DB_URL);
 }
 
-async function migrateListings(drupal: Connection) {
-  log('--- Starting listing migration ---');
+async function ensureDrupalFilesRoot(): Promise<void> {
+  await fs.access(DRUPAL_FILES_ROOT);
+}
 
-  // TODO: Adjust these field names to match your Drupal field table structure
-  const [rows] = await drupal.query(`
-    SELECT n.nid, n.title, n.uid, n.created, n.changed,
-           b.body_value as description
-    FROM node n
-    LEFT JOIN field_data_body b ON n.nid = b.entity_id AND b.entity_type = 'node'
-    WHERE n.type = 'listing' AND n.status = 1
-    ORDER BY n.nid
-  `) as any;
+function isPathInsideRoot(rootPath: string, candidatePath: string): boolean {
+  const relativePath = path.relative(rootPath, candidatePath);
+  return relativePath !== '' && !relativePath.startsWith('..') && !path.isAbsolute(relativePath)
+    || candidatePath === rootPath;
+}
 
-  let migrated = 0;
+function resolveDrupalPublicFilePath(uri: string): string {
+  const relativeFilePath = uri.replace(/^public:\/\//, '');
+  const absoluteDrupalFilePath = path.resolve(RESOLVED_DRUPAL_FILES_ROOT, relativeFilePath);
 
-  for (const row of rows) {
-    try {
-      // Find the owner by looking up the Drupal user's email
-      const [userRows] = await drupal.query(
-        'SELECT mail FROM users WHERE uid = ?',
-        [row.uid],
-      ) as any;
-
-      if (!userRows.length || !userRows[0].mail) {
-        log(`SKIP listing nid=${row.nid} (owner uid=${row.uid} not found)`);
-        continue;
-      }
-
-      const owner = await prisma.user.findUnique({
-        where: { email: userRows[0].mail },
-      });
-
-      if (!owner) {
-        log(`SKIP listing nid=${row.nid} (owner ${userRows[0].mail} not in new DB)`);
-        continue;
-      }
-
-      const existingListing = await prisma.listing.findUnique({
-        where: { id: row.nid },
-        select: { id: true, slug: true },
-      });
-
-      // TODO: Map these Drupal field tables to the actual field names in your DB
-      // The field names below are placeholders — adjust to your Drupal schema
-      if (existingListing) {
-        const generatedSlug = existingListing.slug
-          ? undefined
-          : await generateUniqueListingSlug(prisma, row.title || 'Untitled');
-
-        await prisma.listing.update({
-          where: { id: row.nid },
-          data: {
-            title: row.title || 'Untitled',
-            ...(generatedSlug ? { slug: generatedSlug } : {}),
-            description: row.description || '',
-            updated_at: new Date(row.changed * 1000),
-          },
-        });
-      } else {
-        await prisma.listing.create({
-          data: {
-            id: row.nid,
-            title: row.title || 'Untitled',
-            slug: await generateUniqueListingSlug(prisma, row.title || 'Untitled'),
-            description: row.description || '',
-            address_1: '', // TODO: Map from field_data_field_address
-            postal_code: '', // TODO: Map from field_data_field_address
-            city: '', // TODO: Map from field_data_field_address
-            province: 'Firenze', // TODO: Map from field_data_field_address
-            monthly_rent: 0, // TODO: Map from field_data_field_rent
-            accommodation_type: 'apartment', // TODO: Map from field_data_field_type
-            floor: 'ground', // TODO: Map from field_data_field_floor
-            bathrooms: 1, // TODO: Map from field_data_field_bathrooms
-            bedrooms: 1, // TODO: Map from field_data_field_bedrooms
-            owner_id: owner.id,
-            created_at: new Date(row.created * 1000),
-          },
-        });
-      }
-
-      log(`OK listing nid=${row.nid} title="${row.title}"`);
-      migrated++;
-    } catch (err) {
-      log(`ERROR listing nid=${row.nid}: ${err}`);
-    }
+  if (!isPathInsideRoot(RESOLVED_DRUPAL_FILES_ROOT, absoluteDrupalFilePath)) {
+    throw new Error(`Path escapes Drupal files root: ${uri}`);
   }
 
-  log(`Listings: ${migrated} migrated`);
+  return absoluteDrupalFilePath;
 }
 
-async function migratePhotos(drupal: Connection) {
-  log('--- Starting photo migration ---');
-
-  mkdirSync('uploads/listings', { recursive: true });
-
-  // TODO: Adjust the query to match your Drupal file field structure
-  const [rows] = await drupal.query(`
-    SELECT fi.entity_id as nid, fm.uri, fm.filename, fm.filemime,
-           fi.delta as sort_order
-    FROM field_data_field_images fi
-    JOIN file_managed fm ON fi.field_images_fid = fm.fid
-    WHERE fi.entity_type = 'node'
-    ORDER BY fi.entity_id, fi.delta
-  `) as any;
-
-  let migrated = 0;
-
-  for (const row of rows) {
-    try {
-      // Check if listing exists in new DB
-      const listing = await prisma.listing.findUnique({ where: { id: row.nid } });
-      if (!listing) {
-        log(`SKIP photo for nid=${row.nid} (listing not in new DB)`);
-        continue;
-      }
-
-      // Download from Drupal
-      const drupalPath = (row.uri || '').replace('public://', '');
-      const downloadUrl = `${DRUPAL_FILES_BASE_URL}/${drupalPath}`;
-
-      const response = await fetch(downloadUrl);
-      if (!response.ok) {
-        log(`SKIP photo ${row.filename} (download failed: ${response.status})`);
-        continue;
-      }
-
-      const buffer = Buffer.from(await response.arrayBuffer());
-
-      // Process and save locally
-      const { filePath, url } = await processAndSaveImage(buffer);
-
-      // Create ListingPhoto record
-      await prisma.listingPhoto.create({
-        data: {
-          listing_id: row.nid,
-          file_path: filePath,
-          url,
-          sort_order: row.sort_order || 0,
-        },
-      });
-
-      log(`OK photo ${row.filename} -> ${filePath}`);
-      migrated++;
-    } catch (err) {
-      log(`ERROR photo ${row.filename} for nid=${row.nid}: ${err}`);
-    }
+async function processDrupalUserPicture(
+  picture: DrupalUserPictureRow | undefined,
+): Promise<ProcessedUserPicture | null> {
+  if (!picture?.uri) {
+    return null;
   }
-
-  log(`Photos: ${migrated} migrated`);
-}
-
-async function main() {
-  // Initialize log file
-  writeFileSync(LOG_FILE, `Migration started at ${new Date().toISOString()}\n`);
-
-  const drupal = await connectDrupal();
-  log('Connected to Drupal MySQL database');
 
   try {
-    await migrateUsers(drupal);
-    await migrateListings(drupal);
-    await migratePhotos(drupal);
+    const absoluteDrupalPhotoPath = resolveDrupalPublicFilePath(picture.uri);
+    const fileBuffer = await fs.readFile(absoluteDrupalPhotoPath);
+    const savedPhoto = await processAndSaveProfilePhoto(fileBuffer);
+
+    return {
+      filePath: savedPhoto.filePath,
+      url: savedPhoto.url,
+    };
+  } catch (err) {
+    log(`Skipping Drupal user picture uid=${picture.uid} fid=${picture.fid}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    return null;
+  }
+}
+
+async function fetchRows<T extends RowDataPacket>(connection: Connection, query: string): Promise<T[]> {
+  const [rows] = await connection.query<T[]>(query);
+  return rows;
+}
+
+function groupValues<T>(rows: Array<{ entity_id: number; value: T }>): Map<number, T[]> {
+  const result = new Map<number, T[]>();
+
+  for (const row of rows) {
+    const current = result.get(row.entity_id) || [];
+    current.push(row.value);
+    result.set(row.entity_id, current);
+  }
+
+  return result;
+}
+
+function indexByEntityId<T extends { entity_id: number }>(rows: T[]): Map<number, T> {
+  return new Map(rows.map((row) => [row.entity_id, row]));
+}
+
+async function readDrupalSourceData(connection: Connection) {
+  const [
+    users,
+    userRoles,
+    listings,
+    aliases,
+    addresses,
+    latLons,
+    prices,
+    deposits,
+    condominiumExpenses,
+    buildingTypes,
+    floors,
+    bathrooms,
+    bedrooms,
+    floorSpaces,
+    listingTypes,
+    features,
+    utilities,
+    availability,
+    photos,
+    userPictures,
+  ] = await Promise.all([
+    fetchRows<DrupalUserRow>(
+      connection,
+      `
+        SELECT
+          u.uid,
+          u.name,
+          u.mail,
+          u.pass,
+          u.created,
+          u.login,
+          u.status,
+          u.language,
+          u.picture,
+          phone.field_phone_value AS phone_number,
+          mobile.field_mobile_value AS mobile_number
+        FROM users u
+        LEFT JOIN field_data_field_phone phone
+          ON phone.entity_id = u.uid
+         AND phone.entity_type = 'user'
+         AND phone.deleted = 0
+        LEFT JOIN field_data_field_mobile mobile
+          ON mobile.entity_id = u.uid
+         AND mobile.entity_type = 'user'
+         AND mobile.deleted = 0
+      `,
+    ),
+    fetchRows<DrupalRoleRow>(connection, 'SELECT uid, rid FROM users_roles'),
+    fetchRows<DrupalListingRow>(
+      connection,
+      `
+        SELECT
+          n.nid,
+          n.title,
+          n.uid,
+          n.status,
+          n.created,
+          n.changed,
+          n.language,
+          body.body_value AS description
+        FROM node n
+        LEFT JOIN field_data_body body
+          ON body.entity_id = n.nid
+         AND body.entity_type = 'node'
+         AND body.deleted = 0
+        WHERE n.type = 'listing'
+      `,
+    ),
+    fetchRows<DrupalAliasRow>(
+      connection,
+      `
+        SELECT source, alias, language
+        FROM url_alias
+        WHERE source LIKE 'node/%'
+          AND alias LIKE 'listing/%'
+      `,
+    ),
+    fetchRows<DrupalAddressRow>(
+      connection,
+      `
+        SELECT
+          entity_id,
+          field_address_country AS country,
+          field_address_administrative_area AS administrative_area,
+          field_address_locality AS locality,
+          field_address_postal_code AS postal_code,
+          field_address_thoroughfare AS thoroughfare,
+          field_address_premise AS premise,
+          field_address_sub_premise AS sub_premise
+        FROM field_data_field_address
+        WHERE entity_type = 'node'
+          AND bundle = 'listing'
+          AND deleted = 0
+      `,
+    ),
+    fetchRows<DrupalLatLonRow>(
+      connection,
+      `
+        SELECT
+          entity_id,
+          field_latlon_lat AS latitude,
+          field_latlon_lon AS longitude
+        FROM field_data_field_latlon
+        WHERE entity_type = 'node'
+          AND bundle = 'listing'
+          AND deleted = 0
+      `,
+    ),
+    fetchRows<DrupalValueRow<number>>(
+      connection,
+      `
+        SELECT entity_id, field_price_value AS value
+        FROM field_data_field_price
+        WHERE entity_type = 'node'
+          AND bundle = 'listing'
+          AND deleted = 0
+      `,
+    ),
+    fetchRows<DrupalValueRow<number>>(
+      connection,
+      `
+        SELECT entity_id, field_deposit_value AS value
+        FROM field_data_field_deposit
+        WHERE entity_type = 'node'
+          AND bundle = 'listing'
+          AND deleted = 0
+      `,
+    ),
+    fetchRows<DrupalValueRow<number>>(
+      connection,
+      `
+        SELECT entity_id, field_condominium_expenses_value AS value
+        FROM field_data_field_condominium_expenses
+        WHERE entity_type = 'node'
+          AND bundle = 'listing'
+          AND deleted = 0
+      `,
+    ),
+    fetchRows<DrupalValueRow<string>>(
+      connection,
+      `
+        SELECT entity_id, field_building_type_value AS value
+        FROM field_data_field_building_type
+        WHERE entity_type = 'node'
+          AND bundle = 'listing'
+          AND deleted = 0
+      `,
+    ),
+    fetchRows<DrupalValueRow<number>>(
+      connection,
+      `
+        SELECT entity_id, field_floor_value AS value
+        FROM field_data_field_floor
+        WHERE entity_type = 'node'
+          AND bundle = 'listing'
+          AND deleted = 0
+      `,
+    ),
+    fetchRows<DrupalValueRow<number>>(
+      connection,
+      `
+        SELECT entity_id, field_bathrooms_value AS value
+        FROM field_data_field_bathrooms
+        WHERE entity_type = 'node'
+          AND bundle = 'listing'
+          AND deleted = 0
+      `,
+    ),
+    fetchRows<DrupalValueRow<number>>(
+      connection,
+      `
+        SELECT entity_id, field_bedrooms_value AS value
+        FROM field_data_field_bedrooms
+        WHERE entity_type = 'node'
+          AND bundle = 'listing'
+          AND deleted = 0
+      `,
+    ),
+    fetchRows<DrupalValueRow<number>>(
+      connection,
+      `
+        SELECT entity_id, field_floor_space_value AS value
+        FROM field_data_field_floor_space
+        WHERE entity_type = 'node'
+          AND bundle = 'listing'
+          AND deleted = 0
+      `,
+    ),
+    fetchRows<DrupalValueRow<number>>(
+      connection,
+      `
+        SELECT entity_id, field_listing_type_value AS value
+        FROM field_data_field_listing_type
+        WHERE entity_type = 'node'
+          AND bundle = 'listing'
+          AND deleted = 0
+      `,
+    ),
+    fetchRows<DrupalValueRow<string>>(
+      connection,
+      `
+        SELECT entity_id, field_features_value AS value
+        FROM field_data_field_features
+        WHERE entity_type = 'node'
+          AND bundle = 'listing'
+          AND deleted = 0
+      `,
+    ),
+    fetchRows<DrupalValueRow<string>>(
+      connection,
+      `
+        SELECT entity_id, field_utilities_included_value AS value
+        FROM field_data_field_utilities_included
+        WHERE entity_type = 'node'
+          AND bundle = 'listing'
+          AND deleted = 0
+      `,
+    ),
+    fetchRows<DrupalAvailabilityRow>(
+      connection,
+      `
+        SELECT
+          entity_id,
+          delta,
+          field_available_from_value AS available_from,
+          field_available_from_value2 AS available_to
+        FROM field_data_field_available_from
+        WHERE entity_type = 'node'
+          AND bundle = 'listing'
+          AND deleted = 0
+        ORDER BY entity_id, delta
+      `,
+    ),
+    fetchRows<DrupalPhotoRow>(
+      connection,
+      `
+        SELECT
+          photos.entity_id,
+          photos.delta,
+          photos.field_photos_fid AS fid,
+          photos.field_photos_alt AS alt,
+          photos.field_photos_title AS title,
+          photos.field_photos_width AS width,
+          photos.field_photos_height AS height,
+          files.uri,
+          files.filename
+        FROM field_data_field_photos photos
+        LEFT JOIN file_managed files
+          ON files.fid = photos.field_photos_fid
+        WHERE photos.entity_type = 'node'
+          AND photos.bundle = 'listing'
+          AND photos.deleted = 0
+        ORDER BY photos.entity_id, photos.delta
+      `,
+    ),
+    fetchRows<DrupalUserPictureRow>(
+      connection,
+      `
+        SELECT
+          u.uid,
+          u.mail AS email,
+          fm.fid,
+          fm.uri
+        FROM users u
+        JOIN file_managed fm
+          ON fm.fid = u.picture
+        WHERE u.picture > 0
+      `,
+    ),
+  ]);
+
+  return {
+    users,
+    userRoles,
+    listings,
+    aliasBySource: new Map(aliases.map((alias) => [alias.source, alias.alias])),
+    addressByListingId: indexByEntityId(addresses),
+    latLonByListingId: indexByEntityId(latLons),
+    priceByListingId: new Map(prices.map((row) => [row.entity_id, row.value])),
+    depositByListingId: new Map(deposits.map((row) => [row.entity_id, row.value])),
+    condominiumExpensesByListingId: new Map(condominiumExpenses.map((row) => [row.entity_id, row.value])),
+    buildingTypeByListingId: new Map(buildingTypes.map((row) => [row.entity_id, row.value])),
+    floorByListingId: new Map(floors.map((row) => [row.entity_id, row.value])),
+    bathroomsByListingId: new Map(bathrooms.map((row) => [row.entity_id, row.value])),
+    bedroomsByListingId: new Map(bedrooms.map((row) => [row.entity_id, row.value])),
+    floorSpaceByListingId: new Map(floorSpaces.map((row) => [row.entity_id, row.value])),
+    listingTypeByListingId: new Map(listingTypes.map((row) => [row.entity_id, row.value])),
+    featuresByListingId: groupValues(features),
+    utilitiesByListingId: groupValues(utilities),
+    availabilityByListingId: availability.reduce((map, row) => {
+      const current = map.get(row.entity_id) || [];
+      current.push(row);
+      map.set(row.entity_id, current);
+      return map;
+    }, new Map<number, DrupalAvailabilityRow[]>()),
+    photosByListingId: photos.reduce((map, row) => {
+      const current = map.get(row.entity_id) || [];
+      current.push(row);
+      map.set(row.entity_id, current);
+      return map;
+    }, new Map<number, DrupalPhotoRow[]>()),
+    userPictures,
+  };
+}
+
+async function migrateUsers(
+  data: Awaited<ReturnType<typeof readDrupalSourceData>>,
+  audit: MigrationAudit,
+): Promise<Map<string, number>> {
+  log('Migrating users');
+
+  const listingOwnerUids = new Set(data.listings.map((listing) => listing.uid));
+  const userPictureByUid = new Map(data.userPictures.map((picture) => [picture.uid, picture]));
+  const roleIdsByUser = data.userRoles.reduce((map, row) => {
+    const current = map.get(row.uid) || [];
+    current.push(row.rid);
+    map.set(row.uid, current);
+    return map;
+  }, new Map<number, number[]>());
+
+  const importedUserIdsByEmail = new Map<string, number>();
+
+  for (const user of data.users) {
+    const normalizedEmail = normalizeEmail(user.mail || '');
+    const roles = mapDrupalUserRoles(roleIdsByUser.get(user.uid) || []);
+    const ownsListing = listingOwnerUids.has(user.uid);
+
+    if (!normalizedEmail) {
+      audit.users.missing_emails.push(user.uid);
+      continue;
+    }
+
+    if (user.status !== 1) {
+      audit.users.blocked_user_uids.push(user.uid);
+      continue;
+    }
+
+    if (isItattiEmail(normalizedEmail) && !ownsListing) {
+      audit.users.skipped_itatti_without_listing_uids.push(user.uid);
+      continue;
+    }
+
+    const name = splitName(user.name);
+    const shouldKeepDrupalPassword = !isItattiEmail(normalizedEmail);
+    const existingUser = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        auth0_user_id: true,
+        last_login: true,
+        profile_photo_path: true,
+        profile_photo_url: true,
+      },
+    });
+
+    const drupalLastLogin = user.login > 0 ? new Date(user.login * 1000) : null;
+    const commonUserData = {
+      first_name: name.first_name,
+      last_name: name.last_name,
+      roles,
+      preferred_language: parseDrupalLanguage(user.language),
+      phone_number: user.phone_number || null,
+      mobile_number: user.mobile_number || null,
+    };
+
+    const shouldBackfillProfilePhoto =
+      !existingUser || (!existingUser.profile_photo_path && !existingUser.profile_photo_url);
+    let processedUserPicture: ProcessedUserPicture | null = null;
+
+    try {
+      if (shouldBackfillProfilePhoto) {
+        processedUserPicture = await processDrupalUserPicture(userPictureByUid.get(user.uid));
+      }
+
+      const migratedUser = existingUser
+        ? await prisma.user.update({
+            where: { id: existingUser.id },
+            data: {
+              ...commonUserData,
+              ...(!existingUser.last_login && drupalLastLogin ? { last_login: drupalLastLogin } : {}),
+              ...(shouldKeepDrupalPassword && user.pass && !existingUser.password
+                ? { password: user.pass }
+                : {}),
+              ...(processedUserPicture
+                ? {
+                    profile_photo_path: processedUserPicture.filePath,
+                    profile_photo_url: processedUserPicture.url,
+                  }
+                : {}),
+            },
+            select: {
+              id: true,
+              email: true,
+            },
+          })
+        : await prisma.user.create({
+            data: {
+              email: normalizedEmail,
+              ...commonUserData,
+              ...(shouldKeepDrupalPassword && user.pass ? { password: user.pass } : {}),
+              ...(processedUserPicture
+                ? {
+                    profile_photo_path: processedUserPicture.filePath,
+                    profile_photo_url: processedUserPicture.url,
+                  }
+                : {}),
+              created_at: new Date(user.created * 1000),
+              last_login: drupalLastLogin,
+            },
+            select: {
+              id: true,
+              email: true,
+            },
+          });
+
+      importedUserIdsByEmail.set(migratedUser.email, migratedUser.id);
+
+      if (shouldKeepDrupalPassword && user.pass?.startsWith('$S$')) {
+        audit.users.legacy_hash_uids.push(user.uid);
+      }
+
+      if (isItattiEmail(normalizedEmail)) {
+        audit.users.imported_itatti_with_listing_uids.push(user.uid);
+      } else {
+        audit.users.imported_external_uids.push(user.uid);
+        if (!ownsListing) {
+          audit.users.external_without_listing_uids.push(user.uid);
+        }
+      }
+    } catch (err) {
+      if (processedUserPicture) {
+        await deleteLocalFile(processedUserPicture.filePath);
+      }
+      throw err;
+    }
+  }
+
+  return importedUserIdsByEmail;
+}
+
+async function migrateListings(
+  data: Awaited<ReturnType<typeof readDrupalSourceData>>,
+  importedUserIdsByEmail: Map<string, number>,
+  audit: MigrationAudit,
+): Promise<void> {
+  log('Migrating listings');
+
+  const userEmailByUid = new Map(
+    data.users
+      .filter((user) => user.mail)
+      .map((user) => [user.uid, normalizeEmail(user.mail)]),
+  );
+
+  for (const listing of data.listings) {
+    const ownerEmail = userEmailByUid.get(listing.uid) || null;
+    const ownerId = ownerEmail ? importedUserIdsByEmail.get(ownerEmail) : undefined;
+
+    if (!ownerId) {
+      audit.listings.missing_owners.push({ nid: listing.nid, owner_uid: listing.uid || null });
+      continue;
+    }
+
+    const alias = data.aliasBySource.get(`node/${listing.nid}`) || null;
+    const slug = buildListingSlug(alias, listing.title, listing.nid);
+    if (!alias) {
+      audit.listings.missing_aliases.push({ nid: listing.nid, fallback_slug: slug });
+    }
+
+    if (listing.language) {
+      audit.listings.listing_languages.push({ nid: listing.nid, language: listing.language });
+    }
+
+    const buildingTypeValue = data.buildingTypeByListingId.get(listing.nid) || '';
+    const accommodationType = BUILDING_TYPE_MAP[buildingTypeValue];
+    if (!accommodationType) {
+      audit.listings.unmapped_building_types.push({ nid: listing.nid, value: buildingTypeValue });
+    }
+
+    const floorValue = data.floorByListingId.get(listing.nid);
+    const floor = floorValue !== undefined ? FLOOR_MAP[String(floorValue)] : undefined;
+    if (!floor && floorValue !== undefined) {
+      audit.listings.unmapped_floors.push({ nid: listing.nid, value: floorValue });
+    }
+
+    const listingTypeValue = data.listingTypeByListingId.get(listing.nid);
+    if (listingTypeValue !== undefined && listingTypeValue !== 2) {
+      audit.listings.unmapped_listing_types.push({ nid: listing.nid, value: listingTypeValue });
+    }
+
+    const featureState = makeDefaultFeatureState();
+    for (const feature of data.featuresByListingId.get(listing.nid) || []) {
+      const featureKey = FEATURE_MAP[feature];
+      if (!featureKey) {
+        audit.listings.unmapped_features.push({ nid: listing.nid, value: feature });
+        continue;
+      }
+      featureState[featureKey] = true;
+    }
+
+    const utilityState = makeDefaultUtilityState();
+    for (const utility of data.utilitiesByListingId.get(listing.nid) || []) {
+      const utilityKey = UTILITY_MAP[utility];
+      if (!utilityKey) {
+        audit.listings.unmapped_utilities.push({ nid: listing.nid, value: utility });
+        continue;
+      }
+      utilityState[utilityKey] = true;
+    }
+
+    const address = data.addressByListingId.get(listing.nid);
+    const latLon = data.latLonByListingId.get(listing.nid);
+
+    const upsertedListing = await prisma.listing.upsert({
+      where: { slug },
+      update: {
+        title: listing.title || `Listing ${listing.nid}`,
+        description: listing.description || '',
+        address_1: address?.thoroughfare || 'Unknown address',
+        address_2: [address?.premise, address?.sub_premise].filter(Boolean).join(', ') || null,
+        postal_code: address?.postal_code || '',
+        city: address?.locality || '',
+        province: address?.administrative_area || '',
+        latitude: toNullableNumber(latLon?.latitude) ?? null,
+        longitude: toNullableNumber(latLon?.longitude) ?? null,
+        monthly_rent: data.priceByListingId.get(listing.nid) ?? 0,
+        deposit: data.depositByListingId.get(listing.nid) ?? null,
+        condominium_expenses: data.condominiumExpensesByListingId.get(listing.nid) ?? null,
+        accommodation_type: accommodationType || 'apartment',
+        floor: floor || 'ground',
+        bathrooms: data.bathroomsByListingId.get(listing.nid) ?? 1,
+        bedrooms: data.bedroomsByListingId.get(listing.nid) ?? 1,
+        floor_space: data.floorSpaceByListingId.get(listing.nid) ?? null,
+        published: listing.status === 1,
+        owner_id: ownerId,
+        ...featureState,
+        ...utilityState,
+      },
+      create: {
+        title: listing.title || `Listing ${listing.nid}`,
+        slug,
+        description: listing.description || '',
+        address_1: address?.thoroughfare || 'Unknown address',
+        address_2: [address?.premise, address?.sub_premise].filter(Boolean).join(', ') || null,
+        postal_code: address?.postal_code || '',
+        city: address?.locality || '',
+        province: address?.administrative_area || '',
+        latitude: toNullableNumber(latLon?.latitude) ?? null,
+        longitude: toNullableNumber(latLon?.longitude) ?? null,
+        monthly_rent: data.priceByListingId.get(listing.nid) ?? 0,
+        deposit: data.depositByListingId.get(listing.nid) ?? null,
+        condominium_expenses: data.condominiumExpensesByListingId.get(listing.nid) ?? null,
+        accommodation_type: accommodationType || 'apartment',
+        floor: floor || 'ground',
+        bathrooms: data.bathroomsByListingId.get(listing.nid) ?? 1,
+        bedrooms: data.bedroomsByListingId.get(listing.nid) ?? 1,
+        floor_space: data.floorSpaceByListingId.get(listing.nid) ?? null,
+        published: listing.status === 1,
+        owner_id: ownerId,
+        created_at: new Date(listing.created * 1000),
+        ...featureState,
+        ...utilityState,
+      },
+      select: {
+        id: true,
+        slug: true,
+      },
+    });
+
+    const existingPhotos = await prisma.listingPhoto.findMany({
+      where: { listing_id: upsertedListing.id },
+      select: { file_path: true },
+    });
+
+    const photoRows = data.photosByListingId.get(listing.nid) || [];
+    const processedPhotos: ProcessedListingPhoto[] = [];
+    let photoFailures = 0;
+
+    try {
+      for (const photo of photoRows) {
+        if (!photo.uri) {
+          audit.listings.missing_photos.push({ nid: listing.nid, fid: photo.fid });
+          photoFailures += 1;
+          continue;
+        }
+
+        try {
+          const absoluteDrupalPhotoPath = resolveDrupalPublicFilePath(photo.uri);
+          const fileBuffer = await fs.readFile(absoluteDrupalPhotoPath);
+          const savedPhoto = await processAndSaveImage(fileBuffer);
+
+          processedPhotos.push({
+            filePath: savedPhoto.filePath,
+            url: savedPhoto.url,
+            sort_order: photo.delta,
+          });
+        } catch {
+          audit.listings.missing_photos.push({ nid: listing.nid, fid: photo.fid });
+          photoFailures += 1;
+        }
+      }
+
+      const availabilityRows = data.availabilityByListingId.get(listing.nid) || [];
+      const shouldReplacePhotos = photoFailures === 0;
+      await prisma.$transaction(async (tx) => {
+        await tx.availableDate.deleteMany({ where: { listing_id: upsertedListing.id } });
+
+        if (availabilityRows.length > 0) {
+          await tx.availableDate.createMany({
+            data: availabilityRows.map((row) => ({
+              listing_id: upsertedListing.id,
+              available_from: toNullableDate(row.available_from) || new Date(listing.created * 1000),
+              available_to: toNullableDate(row.available_to),
+            })),
+          });
+        }
+
+        if (shouldReplacePhotos) {
+          await tx.listingPhoto.deleteMany({ where: { listing_id: upsertedListing.id } });
+
+          if (processedPhotos.length > 0) {
+            await tx.listingPhoto.createMany({
+              data: processedPhotos.map((photo) => ({
+                listing_id: upsertedListing.id,
+                file_path: photo.filePath,
+                url: photo.url,
+                sort_order: photo.sort_order,
+              })),
+            });
+          }
+        }
+      });
+
+      if (shouldReplacePhotos) {
+        await Promise.all(existingPhotos.map(async (photo) => {
+          try {
+            await deleteLocalFile(photo.file_path);
+          } catch {
+            // Ignore old-file cleanup failures after the DB swap succeeds.
+          }
+        }));
+      } else {
+        log(`Skipped photo replacement for listing nid=${listing.nid} due to ${photoFailures} source photo failure(s)`);
+        await Promise.all(processedPhotos.map((photo) => deleteLocalFile(photo.filePath)));
+      }
+    } catch (err) {
+      await Promise.all(processedPhotos.map((photo) => deleteLocalFile(photo.filePath)));
+      throw err;
+    }
+
+    audit.listings.imported.push({ nid: listing.nid, slug: upsertedListing.slug });
+  }
+}
+
+async function main(): Promise<void> {
+  writeFileSync(LOG_FILE, `Drupal migration started at ${new Date().toISOString()}\n`);
+  await ensureDrupalFilesRoot();
+
+  const audit: MigrationAudit = {
+    started_at: new Date().toISOString(),
+    files_root: DRUPAL_FILES_ROOT,
+    users: {
+      imported_external_uids: [],
+      imported_itatti_with_listing_uids: [],
+      skipped_itatti_without_listing_uids: [],
+      external_without_listing_uids: [],
+      blocked_user_uids: [],
+      legacy_hash_uids: [],
+      missing_emails: [],
+    },
+    listings: {
+      imported: [],
+      missing_owners: [],
+      missing_aliases: [],
+      listing_languages: [],
+      unmapped_listing_types: [],
+      missing_photos: [],
+      unmapped_building_types: [],
+      unmapped_floors: [],
+      unmapped_features: [],
+      unmapped_utilities: [],
+    },
+    user_pictures: [],
+  };
+
+  const connection = await connectDrupal();
+  log('Connected to Drupal database');
+
+  try {
+    const drupalData = await readDrupalSourceData(connection);
+    audit.user_pictures = drupalData.userPictures.map((picture) => ({
+      uid: picture.uid,
+      fid: picture.fid,
+    }));
+
+    const importedUserIdsByEmail = await migrateUsers(drupalData, audit);
+    await migrateListings(drupalData, importedUserIdsByEmail, audit);
   } finally {
-    await drupal.end();
+    await connection.end();
     await prisma.$disconnect();
   }
 
-  log('Migration complete!');
+  writeFileSync(AUDIT_FILE, `${JSON.stringify(audit, null, 2)}\n`);
+
+  log(`Imported ${audit.users.imported_external_uids.length} external users`);
+  log(`Imported ${audit.users.imported_itatti_with_listing_uids.length} @itatti.harvard.edu users with listings`);
+  log(`Skipped ${audit.users.skipped_itatti_without_listing_uids.length} @itatti.harvard.edu users without listings`);
+  log(`Imported ${audit.listings.imported.length} listings`);
+  log(`Recorded ${audit.listings.missing_photos.length} missing listing photos`);
+  log(`Audit written to ${AUDIT_FILE}`);
 }
 
-main().catch((err) => {
-  log(`FATAL: ${err}`);
+main().catch((error) => {
+  log(`FATAL ${error instanceof Error ? error.stack || error.message : String(error)}`);
   process.exit(1);
 });

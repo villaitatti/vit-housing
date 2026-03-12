@@ -39,6 +39,8 @@ export type UserMinAggregateOutputType = {
   email: string | null
   password: string | null
   auth0_user_id: string | null
+  profile_photo_path: string | null
+  profile_photo_url: string | null
   first_name: string | null
   last_name: string | null
   preferred_language: $Enums.Language | null
@@ -54,6 +56,8 @@ export type UserMaxAggregateOutputType = {
   email: string | null
   password: string | null
   auth0_user_id: string | null
+  profile_photo_path: string | null
+  profile_photo_url: string | null
   first_name: string | null
   last_name: string | null
   preferred_language: $Enums.Language | null
@@ -69,6 +73,8 @@ export type UserCountAggregateOutputType = {
   email: number
   password: number
   auth0_user_id: number
+  profile_photo_path: number
+  profile_photo_url: number
   first_name: number
   last_name: number
   roles: number
@@ -95,6 +101,8 @@ export type UserMinAggregateInputType = {
   email?: true
   password?: true
   auth0_user_id?: true
+  profile_photo_path?: true
+  profile_photo_url?: true
   first_name?: true
   last_name?: true
   preferred_language?: true
@@ -110,6 +118,8 @@ export type UserMaxAggregateInputType = {
   email?: true
   password?: true
   auth0_user_id?: true
+  profile_photo_path?: true
+  profile_photo_url?: true
   first_name?: true
   last_name?: true
   preferred_language?: true
@@ -125,6 +135,8 @@ export type UserCountAggregateInputType = {
   email?: true
   password?: true
   auth0_user_id?: true
+  profile_photo_path?: true
+  profile_photo_url?: true
   first_name?: true
   last_name?: true
   roles?: true
@@ -228,6 +240,8 @@ export type UserGroupByOutputType = {
   email: string
   password: string | null
   auth0_user_id: string | null
+  profile_photo_path: string | null
+  profile_photo_url: string | null
   first_name: string
   last_name: string
   roles: $Enums.Role[]
@@ -267,6 +281,8 @@ export type UserWhereInput = {
   email?: Prisma.StringFilter<"User"> | string
   password?: Prisma.StringNullableFilter<"User"> | string | null
   auth0_user_id?: Prisma.StringNullableFilter<"User"> | string | null
+  profile_photo_path?: Prisma.StringNullableFilter<"User"> | string | null
+  profile_photo_url?: Prisma.StringNullableFilter<"User"> | string | null
   first_name?: Prisma.StringFilter<"User"> | string
   last_name?: Prisma.StringFilter<"User"> | string
   roles?: Prisma.EnumRoleNullableListFilter<"User">
@@ -277,6 +293,7 @@ export type UserWhereInput = {
   updated_at?: Prisma.DateTimeFilter<"User"> | Date | string
   last_login?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   listings?: Prisma.ListingListRelationFilter
+  favorite_listings?: Prisma.FavoriteListingListRelationFilter
   invitations_sent?: Prisma.InvitationListRelationFilter
   configs_updated?: Prisma.ServiceConfigListRelationFilter
 }
@@ -286,6 +303,8 @@ export type UserOrderByWithRelationInput = {
   email?: Prisma.SortOrder
   password?: Prisma.SortOrderInput | Prisma.SortOrder
   auth0_user_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  profile_photo_path?: Prisma.SortOrderInput | Prisma.SortOrder
+  profile_photo_url?: Prisma.SortOrderInput | Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
   roles?: Prisma.SortOrder
@@ -296,6 +315,7 @@ export type UserOrderByWithRelationInput = {
   updated_at?: Prisma.SortOrder
   last_login?: Prisma.SortOrderInput | Prisma.SortOrder
   listings?: Prisma.ListingOrderByRelationAggregateInput
+  favorite_listings?: Prisma.FavoriteListingOrderByRelationAggregateInput
   invitations_sent?: Prisma.InvitationOrderByRelationAggregateInput
   configs_updated?: Prisma.ServiceConfigOrderByRelationAggregateInput
 }
@@ -308,6 +328,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   password?: Prisma.StringNullableFilter<"User"> | string | null
+  profile_photo_path?: Prisma.StringNullableFilter<"User"> | string | null
+  profile_photo_url?: Prisma.StringNullableFilter<"User"> | string | null
   first_name?: Prisma.StringFilter<"User"> | string
   last_name?: Prisma.StringFilter<"User"> | string
   roles?: Prisma.EnumRoleNullableListFilter<"User">
@@ -318,6 +340,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   updated_at?: Prisma.DateTimeFilter<"User"> | Date | string
   last_login?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   listings?: Prisma.ListingListRelationFilter
+  favorite_listings?: Prisma.FavoriteListingListRelationFilter
   invitations_sent?: Prisma.InvitationListRelationFilter
   configs_updated?: Prisma.ServiceConfigListRelationFilter
 }, "id" | "email" | "auth0_user_id">
@@ -327,6 +350,8 @@ export type UserOrderByWithAggregationInput = {
   email?: Prisma.SortOrder
   password?: Prisma.SortOrderInput | Prisma.SortOrder
   auth0_user_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  profile_photo_path?: Prisma.SortOrderInput | Prisma.SortOrder
+  profile_photo_url?: Prisma.SortOrderInput | Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
   roles?: Prisma.SortOrder
@@ -351,6 +376,8 @@ export type UserScalarWhereWithAggregatesInput = {
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
   password?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   auth0_user_id?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  profile_photo_path?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  profile_photo_url?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   first_name?: Prisma.StringWithAggregatesFilter<"User"> | string
   last_name?: Prisma.StringWithAggregatesFilter<"User"> | string
   roles?: Prisma.EnumRoleNullableListFilter<"User">
@@ -366,6 +393,8 @@ export type UserCreateInput = {
   email: string
   password?: string | null
   auth0_user_id?: string | null
+  profile_photo_path?: string | null
+  profile_photo_url?: string | null
   first_name: string
   last_name: string
   roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
@@ -376,6 +405,7 @@ export type UserCreateInput = {
   updated_at?: Date | string
   last_login?: Date | string | null
   listings?: Prisma.ListingCreateNestedManyWithoutOwnerInput
+  favorite_listings?: Prisma.FavoriteListingCreateNestedManyWithoutUserInput
   invitations_sent?: Prisma.InvitationCreateNestedManyWithoutInviterInput
   configs_updated?: Prisma.ServiceConfigCreateNestedManyWithoutUpdaterInput
 }
@@ -385,6 +415,8 @@ export type UserUncheckedCreateInput = {
   email: string
   password?: string | null
   auth0_user_id?: string | null
+  profile_photo_path?: string | null
+  profile_photo_url?: string | null
   first_name: string
   last_name: string
   roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
@@ -395,6 +427,7 @@ export type UserUncheckedCreateInput = {
   updated_at?: Date | string
   last_login?: Date | string | null
   listings?: Prisma.ListingUncheckedCreateNestedManyWithoutOwnerInput
+  favorite_listings?: Prisma.FavoriteListingUncheckedCreateNestedManyWithoutUserInput
   invitations_sent?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput
   configs_updated?: Prisma.ServiceConfigUncheckedCreateNestedManyWithoutUpdaterInput
 }
@@ -403,6 +436,8 @@ export type UserUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
   roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
@@ -413,6 +448,7 @@ export type UserUpdateInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listings?: Prisma.ListingUpdateManyWithoutOwnerNestedInput
+  favorite_listings?: Prisma.FavoriteListingUpdateManyWithoutUserNestedInput
   invitations_sent?: Prisma.InvitationUpdateManyWithoutInviterNestedInput
   configs_updated?: Prisma.ServiceConfigUpdateManyWithoutUpdaterNestedInput
 }
@@ -422,6 +458,8 @@ export type UserUncheckedUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
   roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
@@ -432,6 +470,7 @@ export type UserUncheckedUpdateInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listings?: Prisma.ListingUncheckedUpdateManyWithoutOwnerNestedInput
+  favorite_listings?: Prisma.FavoriteListingUncheckedUpdateManyWithoutUserNestedInput
   invitations_sent?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput
   configs_updated?: Prisma.ServiceConfigUncheckedUpdateManyWithoutUpdaterNestedInput
 }
@@ -441,6 +480,8 @@ export type UserCreateManyInput = {
   email: string
   password?: string | null
   auth0_user_id?: string | null
+  profile_photo_path?: string | null
+  profile_photo_url?: string | null
   first_name: string
   last_name: string
   roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
@@ -456,6 +497,8 @@ export type UserUpdateManyMutationInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
   roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
@@ -472,6 +515,8 @@ export type UserUncheckedUpdateManyInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
   roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
@@ -496,6 +541,8 @@ export type UserCountOrderByAggregateInput = {
   email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   auth0_user_id?: Prisma.SortOrder
+  profile_photo_path?: Prisma.SortOrder
+  profile_photo_url?: Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
   roles?: Prisma.SortOrder
@@ -516,6 +563,8 @@ export type UserMaxOrderByAggregateInput = {
   email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   auth0_user_id?: Prisma.SortOrder
+  profile_photo_path?: Prisma.SortOrder
+  profile_photo_url?: Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
   preferred_language?: Prisma.SortOrder
@@ -531,6 +580,8 @@ export type UserMinOrderByAggregateInput = {
   email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   auth0_user_id?: Prisma.SortOrder
+  profile_photo_path?: Prisma.SortOrder
+  profile_photo_url?: Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
   preferred_language?: Prisma.SortOrder
@@ -622,6 +673,20 @@ export type UserUpdateOneRequiredWithoutListingsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutListingsInput, Prisma.UserUpdateWithoutListingsInput>, Prisma.UserUncheckedUpdateWithoutListingsInput>
 }
 
+export type UserCreateNestedOneWithoutFavorite_listingsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutFavorite_listingsInput, Prisma.UserUncheckedCreateWithoutFavorite_listingsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFavorite_listingsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutFavorite_listingsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutFavorite_listingsInput, Prisma.UserUncheckedCreateWithoutFavorite_listingsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFavorite_listingsInput
+  upsert?: Prisma.UserUpsertWithoutFavorite_listingsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutFavorite_listingsInput, Prisma.UserUpdateWithoutFavorite_listingsInput>, Prisma.UserUncheckedUpdateWithoutFavorite_listingsInput>
+}
+
 export type UserCreateNestedOneWithoutConfigs_updatedInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutConfigs_updatedInput, Prisma.UserUncheckedCreateWithoutConfigs_updatedInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutConfigs_updatedInput
@@ -642,6 +707,8 @@ export type UserCreateWithoutInvitations_sentInput = {
   email: string
   password?: string | null
   auth0_user_id?: string | null
+  profile_photo_path?: string | null
+  profile_photo_url?: string | null
   first_name: string
   last_name: string
   roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
@@ -652,6 +719,7 @@ export type UserCreateWithoutInvitations_sentInput = {
   updated_at?: Date | string
   last_login?: Date | string | null
   listings?: Prisma.ListingCreateNestedManyWithoutOwnerInput
+  favorite_listings?: Prisma.FavoriteListingCreateNestedManyWithoutUserInput
   configs_updated?: Prisma.ServiceConfigCreateNestedManyWithoutUpdaterInput
 }
 
@@ -660,6 +728,8 @@ export type UserUncheckedCreateWithoutInvitations_sentInput = {
   email: string
   password?: string | null
   auth0_user_id?: string | null
+  profile_photo_path?: string | null
+  profile_photo_url?: string | null
   first_name: string
   last_name: string
   roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
@@ -670,6 +740,7 @@ export type UserUncheckedCreateWithoutInvitations_sentInput = {
   updated_at?: Date | string
   last_login?: Date | string | null
   listings?: Prisma.ListingUncheckedCreateNestedManyWithoutOwnerInput
+  favorite_listings?: Prisma.FavoriteListingUncheckedCreateNestedManyWithoutUserInput
   configs_updated?: Prisma.ServiceConfigUncheckedCreateNestedManyWithoutUpdaterInput
 }
 
@@ -693,6 +764,8 @@ export type UserUpdateWithoutInvitations_sentInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
   roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
@@ -703,6 +776,7 @@ export type UserUpdateWithoutInvitations_sentInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listings?: Prisma.ListingUpdateManyWithoutOwnerNestedInput
+  favorite_listings?: Prisma.FavoriteListingUpdateManyWithoutUserNestedInput
   configs_updated?: Prisma.ServiceConfigUpdateManyWithoutUpdaterNestedInput
 }
 
@@ -711,6 +785,8 @@ export type UserUncheckedUpdateWithoutInvitations_sentInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
   roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
@@ -721,6 +797,7 @@ export type UserUncheckedUpdateWithoutInvitations_sentInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listings?: Prisma.ListingUncheckedUpdateManyWithoutOwnerNestedInput
+  favorite_listings?: Prisma.FavoriteListingUncheckedUpdateManyWithoutUserNestedInput
   configs_updated?: Prisma.ServiceConfigUncheckedUpdateManyWithoutUpdaterNestedInput
 }
 
@@ -728,6 +805,8 @@ export type UserCreateWithoutListingsInput = {
   email: string
   password?: string | null
   auth0_user_id?: string | null
+  profile_photo_path?: string | null
+  profile_photo_url?: string | null
   first_name: string
   last_name: string
   roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
@@ -737,6 +816,7 @@ export type UserCreateWithoutListingsInput = {
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
+  favorite_listings?: Prisma.FavoriteListingCreateNestedManyWithoutUserInput
   invitations_sent?: Prisma.InvitationCreateNestedManyWithoutInviterInput
   configs_updated?: Prisma.ServiceConfigCreateNestedManyWithoutUpdaterInput
 }
@@ -746,6 +826,8 @@ export type UserUncheckedCreateWithoutListingsInput = {
   email: string
   password?: string | null
   auth0_user_id?: string | null
+  profile_photo_path?: string | null
+  profile_photo_url?: string | null
   first_name: string
   last_name: string
   roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
@@ -755,6 +837,7 @@ export type UserUncheckedCreateWithoutListingsInput = {
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
+  favorite_listings?: Prisma.FavoriteListingUncheckedCreateNestedManyWithoutUserInput
   invitations_sent?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput
   configs_updated?: Prisma.ServiceConfigUncheckedCreateNestedManyWithoutUpdaterInput
 }
@@ -779,6 +862,8 @@ export type UserUpdateWithoutListingsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
   roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
@@ -788,6 +873,7 @@ export type UserUpdateWithoutListingsInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  favorite_listings?: Prisma.FavoriteListingUpdateManyWithoutUserNestedInput
   invitations_sent?: Prisma.InvitationUpdateManyWithoutInviterNestedInput
   configs_updated?: Prisma.ServiceConfigUpdateManyWithoutUpdaterNestedInput
 }
@@ -797,6 +883,8 @@ export type UserUncheckedUpdateWithoutListingsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
   roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
@@ -806,14 +894,17 @@ export type UserUncheckedUpdateWithoutListingsInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  favorite_listings?: Prisma.FavoriteListingUncheckedUpdateManyWithoutUserNestedInput
   invitations_sent?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput
   configs_updated?: Prisma.ServiceConfigUncheckedUpdateManyWithoutUpdaterNestedInput
 }
 
-export type UserCreateWithoutConfigs_updatedInput = {
+export type UserCreateWithoutFavorite_listingsInput = {
   email: string
   password?: string | null
   auth0_user_id?: string | null
+  profile_photo_path?: string | null
+  profile_photo_url?: string | null
   first_name: string
   last_name: string
   roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
@@ -825,13 +916,16 @@ export type UserCreateWithoutConfigs_updatedInput = {
   last_login?: Date | string | null
   listings?: Prisma.ListingCreateNestedManyWithoutOwnerInput
   invitations_sent?: Prisma.InvitationCreateNestedManyWithoutInviterInput
+  configs_updated?: Prisma.ServiceConfigCreateNestedManyWithoutUpdaterInput
 }
 
-export type UserUncheckedCreateWithoutConfigs_updatedInput = {
+export type UserUncheckedCreateWithoutFavorite_listingsInput = {
   id?: number
   email: string
   password?: string | null
   auth0_user_id?: string | null
+  profile_photo_path?: string | null
+  profile_photo_url?: string | null
   first_name: string
   last_name: string
   roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
@@ -842,6 +936,105 @@ export type UserUncheckedCreateWithoutConfigs_updatedInput = {
   updated_at?: Date | string
   last_login?: Date | string | null
   listings?: Prisma.ListingUncheckedCreateNestedManyWithoutOwnerInput
+  invitations_sent?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput
+  configs_updated?: Prisma.ServiceConfigUncheckedCreateNestedManyWithoutUpdaterInput
+}
+
+export type UserCreateOrConnectWithoutFavorite_listingsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutFavorite_listingsInput, Prisma.UserUncheckedCreateWithoutFavorite_listingsInput>
+}
+
+export type UserUpsertWithoutFavorite_listingsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutFavorite_listingsInput, Prisma.UserUncheckedUpdateWithoutFavorite_listingsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutFavorite_listingsInput, Prisma.UserUncheckedCreateWithoutFavorite_listingsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutFavorite_listingsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutFavorite_listingsInput, Prisma.UserUncheckedUpdateWithoutFavorite_listingsInput>
+}
+
+export type UserUpdateWithoutFavorite_listingsInput = {
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  first_name?: Prisma.StringFieldUpdateOperationsInput | string
+  last_name?: Prisma.StringFieldUpdateOperationsInput | string
+  roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
+  preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
+  phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  listings?: Prisma.ListingUpdateManyWithoutOwnerNestedInput
+  invitations_sent?: Prisma.InvitationUpdateManyWithoutInviterNestedInput
+  configs_updated?: Prisma.ServiceConfigUpdateManyWithoutUpdaterNestedInput
+}
+
+export type UserUncheckedUpdateWithoutFavorite_listingsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  first_name?: Prisma.StringFieldUpdateOperationsInput | string
+  last_name?: Prisma.StringFieldUpdateOperationsInput | string
+  roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
+  preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
+  phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  listings?: Prisma.ListingUncheckedUpdateManyWithoutOwnerNestedInput
+  invitations_sent?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput
+  configs_updated?: Prisma.ServiceConfigUncheckedUpdateManyWithoutUpdaterNestedInput
+}
+
+export type UserCreateWithoutConfigs_updatedInput = {
+  email: string
+  password?: string | null
+  auth0_user_id?: string | null
+  profile_photo_path?: string | null
+  profile_photo_url?: string | null
+  first_name: string
+  last_name: string
+  roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
+  preferred_language?: $Enums.Language
+  phone_number?: string | null
+  mobile_number?: string | null
+  created_at?: Date | string
+  updated_at?: Date | string
+  last_login?: Date | string | null
+  listings?: Prisma.ListingCreateNestedManyWithoutOwnerInput
+  favorite_listings?: Prisma.FavoriteListingCreateNestedManyWithoutUserInput
+  invitations_sent?: Prisma.InvitationCreateNestedManyWithoutInviterInput
+}
+
+export type UserUncheckedCreateWithoutConfigs_updatedInput = {
+  id?: number
+  email: string
+  password?: string | null
+  auth0_user_id?: string | null
+  profile_photo_path?: string | null
+  profile_photo_url?: string | null
+  first_name: string
+  last_name: string
+  roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
+  preferred_language?: $Enums.Language
+  phone_number?: string | null
+  mobile_number?: string | null
+  created_at?: Date | string
+  updated_at?: Date | string
+  last_login?: Date | string | null
+  listings?: Prisma.ListingUncheckedCreateNestedManyWithoutOwnerInput
+  favorite_listings?: Prisma.FavoriteListingUncheckedCreateNestedManyWithoutUserInput
   invitations_sent?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput
 }
 
@@ -865,6 +1058,8 @@ export type UserUpdateWithoutConfigs_updatedInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
   roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
@@ -875,6 +1070,7 @@ export type UserUpdateWithoutConfigs_updatedInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listings?: Prisma.ListingUpdateManyWithoutOwnerNestedInput
+  favorite_listings?: Prisma.FavoriteListingUpdateManyWithoutUserNestedInput
   invitations_sent?: Prisma.InvitationUpdateManyWithoutInviterNestedInput
 }
 
@@ -883,6 +1079,8 @@ export type UserUncheckedUpdateWithoutConfigs_updatedInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
   roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
@@ -893,6 +1091,7 @@ export type UserUncheckedUpdateWithoutConfigs_updatedInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listings?: Prisma.ListingUncheckedUpdateManyWithoutOwnerNestedInput
+  favorite_listings?: Prisma.FavoriteListingUncheckedUpdateManyWithoutUserNestedInput
   invitations_sent?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput
 }
 
@@ -903,12 +1102,14 @@ export type UserUncheckedUpdateWithoutConfigs_updatedInput = {
 
 export type UserCountOutputType = {
   listings: number
+  favorite_listings: number
   invitations_sent: number
   configs_updated: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   listings?: boolean | UserCountOutputTypeCountListingsArgs
+  favorite_listings?: boolean | UserCountOutputTypeCountFavorite_listingsArgs
   invitations_sent?: boolean | UserCountOutputTypeCountInvitations_sentArgs
   configs_updated?: boolean | UserCountOutputTypeCountConfigs_updatedArgs
 }
@@ -933,6 +1134,13 @@ export type UserCountOutputTypeCountListingsArgs<ExtArgs extends runtime.Types.E
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountFavorite_listingsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FavoriteListingWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountInvitations_sentArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.InvitationWhereInput
 }
@@ -950,6 +1158,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   email?: boolean
   password?: boolean
   auth0_user_id?: boolean
+  profile_photo_path?: boolean
+  profile_photo_url?: boolean
   first_name?: boolean
   last_name?: boolean
   roles?: boolean
@@ -960,6 +1170,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   updated_at?: boolean
   last_login?: boolean
   listings?: boolean | Prisma.User$listingsArgs<ExtArgs>
+  favorite_listings?: boolean | Prisma.User$favorite_listingsArgs<ExtArgs>
   invitations_sent?: boolean | Prisma.User$invitations_sentArgs<ExtArgs>
   configs_updated?: boolean | Prisma.User$configs_updatedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -970,6 +1181,8 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   email?: boolean
   password?: boolean
   auth0_user_id?: boolean
+  profile_photo_path?: boolean
+  profile_photo_url?: boolean
   first_name?: boolean
   last_name?: boolean
   roles?: boolean
@@ -986,6 +1199,8 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   email?: boolean
   password?: boolean
   auth0_user_id?: boolean
+  profile_photo_path?: boolean
+  profile_photo_url?: boolean
   first_name?: boolean
   last_name?: boolean
   roles?: boolean
@@ -1002,6 +1217,8 @@ export type UserSelectScalar = {
   email?: boolean
   password?: boolean
   auth0_user_id?: boolean
+  profile_photo_path?: boolean
+  profile_photo_url?: boolean
   first_name?: boolean
   last_name?: boolean
   roles?: boolean
@@ -1013,9 +1230,10 @@ export type UserSelectScalar = {
   last_login?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "auth0_user_id" | "first_name" | "last_name" | "roles" | "preferred_language" | "phone_number" | "mobile_number" | "created_at" | "updated_at" | "last_login", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "auth0_user_id" | "profile_photo_path" | "profile_photo_url" | "first_name" | "last_name" | "roles" | "preferred_language" | "phone_number" | "mobile_number" | "created_at" | "updated_at" | "last_login", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   listings?: boolean | Prisma.User$listingsArgs<ExtArgs>
+  favorite_listings?: boolean | Prisma.User$favorite_listingsArgs<ExtArgs>
   invitations_sent?: boolean | Prisma.User$invitations_sentArgs<ExtArgs>
   configs_updated?: boolean | Prisma.User$configs_updatedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -1027,6 +1245,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   name: "User"
   objects: {
     listings: Prisma.$ListingPayload<ExtArgs>[]
+    favorite_listings: Prisma.$FavoriteListingPayload<ExtArgs>[]
     invitations_sent: Prisma.$InvitationPayload<ExtArgs>[]
     configs_updated: Prisma.$ServiceConfigPayload<ExtArgs>[]
   }
@@ -1035,6 +1254,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     email: string
     password: string | null
     auth0_user_id: string | null
+    profile_photo_path: string | null
+    profile_photo_url: string | null
     first_name: string
     last_name: string
     roles: $Enums.Role[]
@@ -1439,6 +1660,7 @@ readonly fields: UserFieldRefs;
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   listings<T extends Prisma.User$listingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$listingsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ListingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  favorite_listings<T extends Prisma.User$favorite_listingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$favorite_listingsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FavoriteListingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   invitations_sent<T extends Prisma.User$invitations_sentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$invitations_sentArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InvitationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   configs_updated<T extends Prisma.User$configs_updatedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$configs_updatedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ServiceConfigPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -1474,6 +1696,8 @@ export interface UserFieldRefs {
   readonly email: Prisma.FieldRef<"User", 'String'>
   readonly password: Prisma.FieldRef<"User", 'String'>
   readonly auth0_user_id: Prisma.FieldRef<"User", 'String'>
+  readonly profile_photo_path: Prisma.FieldRef<"User", 'String'>
+  readonly profile_photo_url: Prisma.FieldRef<"User", 'String'>
   readonly first_name: Prisma.FieldRef<"User", 'String'>
   readonly last_name: Prisma.FieldRef<"User", 'String'>
   readonly roles: Prisma.FieldRef<"User", 'Role[]'>
@@ -1892,6 +2116,30 @@ export type User$listingsArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   distinct?: Prisma.ListingScalarFieldEnum | Prisma.ListingScalarFieldEnum[]
+}
+
+/**
+ * User.favorite_listings
+ */
+export type User$favorite_listingsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FavoriteListing
+   */
+  select?: Prisma.FavoriteListingSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the FavoriteListing
+   */
+  omit?: Prisma.FavoriteListingOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FavoriteListingInclude<ExtArgs> | null
+  where?: Prisma.FavoriteListingWhereInput
+  orderBy?: Prisma.FavoriteListingOrderByWithRelationInput | Prisma.FavoriteListingOrderByWithRelationInput[]
+  cursor?: Prisma.FavoriteListingWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FavoriteListingScalarFieldEnum | Prisma.FavoriteListingScalarFieldEnum[]
 }
 
 /**
