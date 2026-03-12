@@ -11,6 +11,7 @@ import { createListingSchema, updateListingSchema, listingFiltersSchema, hasRole
 import { uploadMiddleware, processAndSaveImage, deleteLocalFile } from '../services/upload.service.js';
 import { geocodeAddress } from '../services/geocoding.service.js';
 import { generateUniqueListingSlug } from '../services/listingSlug.service.js';
+import { parseId } from '../lib/validators.js';
 
 const router = Router();
 
@@ -49,13 +50,6 @@ async function fetchFavoriteListingIds(userId: number, listingIds: number[]): Pr
 async function isFavoriteListing(userId: number, listingId: number): Promise<boolean> {
   const favoriteIds = await fetchFavoriteListingIds(userId, [listingId]);
   return favoriteIds.has(listingId);
-}
-
-function parseId(value: string): number | null {
-  const trimmed = value.trim();
-  if (!/^\d+$/.test(trimmed)) return null;
-  const id = Number(trimmed);
-  return id > 0 ? id : null;
 }
 
 function isSlugUniqueConstraintError(err: unknown): boolean {
@@ -400,6 +394,7 @@ router.post(
   requireRole('HOUSE_LANDLORD', 'HOUSE_ADMIN', 'HOUSE_IT_ADMIN'),
   uploadMiddleware.single('photo'),
   async (req: Request, res: Response) => {
+    let savedFilePath: string | null = null;
     try {
       const listingId = parseId(req.params.id as string);
       if (!listingId) { sendError(res, 'Invalid ID', 'BAD_REQUEST', 400); return; }
@@ -412,6 +407,7 @@ router.post(
       }
 
       const { filePath, url } = await processAndSaveImage(req.file.buffer);
+      savedFilePath = filePath;
 
       // Get current max sort order
       const maxPhoto = await prisma.listingPhoto.findFirst({
@@ -430,6 +426,9 @@ router.post(
 
       sendSuccess(res, { photo }, 201);
     } catch (err) {
+      if (savedFilePath) {
+        try { await deleteLocalFile(savedFilePath); } catch { /* best-effort cleanup */ }
+      }
       if (err instanceof Error && (err.message.includes('too small') || err.message.includes('dimensions') || err.message.includes('Invalid file'))) {
         sendError(res, err.message, 'VALIDATION_ERROR', 400);
         return;

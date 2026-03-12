@@ -13,6 +13,7 @@ import {
   processAndSaveProfilePhoto,
   uploadMiddleware,
 } from '../services/upload.service.js';
+import { parseId } from '../lib/validators.js';
 
 const router = Router();
 
@@ -211,7 +212,8 @@ router.patch(
         return;
       }
 
-      const id = parseInt(req.params.id as string);
+      const id = parseId(req.params.id as string);
+      if (!id) { sendError(res, 'Invalid user ID', 'BAD_REQUEST', 400); return; }
 
       if (req.body.roles && !callerRoles.includes('HOUSE_IT_ADMIN')) {
         const targetUser = await prisma.user.findUnique({ where: { id }, select: { roles: true } });
@@ -245,7 +247,8 @@ router.delete(
   requireRole('HOUSE_ADMIN', 'HOUSE_IT_ADMIN'),
   async (req: Request, res: Response) => {
     try {
-      const id = parseInt(req.params.id as string);
+      const id = parseId(req.params.id as string);
+      if (!id) { sendError(res, 'Invalid user ID', 'BAD_REQUEST', 400); return; }
 
       if (id === req.user!.userId) {
         sendError(res, 'Cannot delete your own account', 'SELF_DELETE', 400);
