@@ -10,7 +10,6 @@ import {
   findUnambiguousLegacyListingMatch,
   generateUniqueDrupalListingSlug,
   planExistingUserMigrationUpdate,
-  type ExistingDrupalUser,
   type ProcessedUserPicture,
 } from '../src/lib/drupalMigration.js';
 import { normalizeEmail } from '../src/lib/email.js';
@@ -788,26 +787,28 @@ async function migrateUsers(
 
       importedUserProfile.processedUserPicture = processedUserPicture;
 
-      const migrationPlan = existingUser
-        ? planExistingUserMigrationUpdate(existingUser as ExistingDrupalUser, importedUserProfile)
-        : null;
+      let migratedUser: { id: number; email: string };
+      let migrationPlan: ReturnType<typeof planExistingUserMigrationUpdate> | null = null;
 
-      const migratedUser = existingUser
-        ? await prisma.user.update({
-            where: { id: existingUser.id },
-            data: migrationPlan!.data,
-            select: {
-              id: true,
-              email: true,
-            },
-          })
-        : await prisma.user.create({
-            data: buildNewUserMigrationCreate(normalizedEmail, importedUserProfile, new Date(user.created * 1000)),
-            select: {
-              id: true,
-              email: true,
-            },
-          });
+      if (existingUser) {
+        migrationPlan = planExistingUserMigrationUpdate(existingUser, importedUserProfile);
+        migratedUser = await prisma.user.update({
+          where: { id: existingUser.id },
+          data: migrationPlan.data,
+          select: {
+            id: true,
+            email: true,
+          },
+        });
+      } else {
+        migratedUser = await prisma.user.create({
+          data: buildNewUserMigrationCreate(normalizedEmail, importedUserProfile, new Date(user.created * 1000)),
+          select: {
+            id: true,
+            email: true,
+          },
+        });
+      }
 
       importedUserIdsByDrupalUid.set(user.uid, migratedUser.id);
 
@@ -950,6 +951,7 @@ async function migrateListings(
           slug: preferredSlug,
           owner_id: ownerId,
           created_at: createdAt,
+          legacy_drupal_nid: null,
         },
         select: {
           id: true,
