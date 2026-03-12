@@ -855,9 +855,7 @@ async function migrateListings(
       audit.listings.missing_aliases.push({ nid: listing.nid, fallback_slug: slug });
     }
 
-    if (listing.language && !['und', 'en', 'it'].includes(listing.language)) {
-      audit.listings.listing_languages.push({ nid: listing.nid, language: listing.language });
-    } else if (listing.language) {
+    if (listing.language) {
       audit.listings.listing_languages.push({ nid: listing.nid, language: listing.language });
     }
 
