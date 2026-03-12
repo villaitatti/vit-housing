@@ -949,8 +949,6 @@ async function migrateListings(
       const candidates = await prisma.listing.findMany({
         where: {
           slug: preferredSlug,
-          owner_id: ownerId,
-          created_at: createdAt,
           legacy_drupal_nid: null,
         },
         select: {
