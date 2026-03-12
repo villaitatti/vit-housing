@@ -13,15 +13,9 @@ import {
   processAndSaveProfilePhoto,
   uploadMiddleware,
 } from '../services/upload.service.js';
+import { parseId } from '../lib/validators.js';
 
 const router = Router();
-
-function parseId(value: string): number | null {
-  const trimmed = value.trim();
-  if (!/^\d+$/.test(trimmed)) return null;
-  const id = Number(trimmed);
-  return id > 0 ? id : null;
-}
 
 const userProfileSelect = {
   id: true,

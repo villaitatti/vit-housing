@@ -11,6 +11,7 @@ import { createListingSchema, updateListingSchema, listingFiltersSchema, hasRole
 import { uploadMiddleware, processAndSaveImage, deleteLocalFile } from '../services/upload.service.js';
 import { geocodeAddress } from '../services/geocoding.service.js';
 import { generateUniqueListingSlug } from '../services/listingSlug.service.js';
+import { parseId } from '../lib/validators.js';
 
 const router = Router();
 
@@ -49,13 +50,6 @@ async function fetchFavoriteListingIds(userId: number, listingIds: number[]): Pr
 async function isFavoriteListing(userId: number, listingId: number): Promise<boolean> {
   const favoriteIds = await fetchFavoriteListingIds(userId, [listingId]);
   return favoriteIds.has(listingId);
-}
-
-function parseId(value: string): number | null {
-  const trimmed = value.trim();
-  if (!/^\d+$/.test(trimmed)) return null;
-  const id = Number(trimmed);
-  return id > 0 ? id : null;
 }
 
 function isSlugUniqueConstraintError(err: unknown): boolean {
