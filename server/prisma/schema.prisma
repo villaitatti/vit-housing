@@ -21,8 +21,8 @@ enum Language {
 
 model User {
   id                 Int          @id @default(autoincrement())
-  legacy_drupal_uid  Int?         @unique
   email              String       @unique
+  legacy_drupal_uid  Int?         @unique
   password           String?
   auth0_user_id      String?      @unique
   profile_photo_path String?
@@ -40,7 +40,6 @@ model User {
   favorite_listings  FavoriteListing[]
   invitations_sent   Invitation[]
   configs_updated    ServiceConfig[]
-  password_resets    PasswordReset[]
 }
 
 model Invitation {
@@ -156,18 +155,6 @@ model ServiceConfig {
   updater    User?    @relation(fields: [updated_by], references: [id])
 
   @@unique([service, key])
-}
-
-model PasswordReset {
-  id         Int      @id @default(autoincrement())
-  token_hash String   @unique
-  user_id    Int
-  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  used       Boolean  @default(false)
-  created_at DateTime @default(now())
-  expires_at DateTime
-
-  @@index([user_id, used, expires_at])
 }
 
 model Auth0RoleMapping {
