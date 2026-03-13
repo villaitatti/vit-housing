@@ -4,11 +4,13 @@ import { prisma } from '../lib/prisma.js';
 import { signToken } from '../lib/jwt.js';
 import { sendSuccess, sendError } from '../lib/response.js';
 import { validate } from '../middleware/validate.js';
-import { loginSchema, registerSchema, vitIdCallbackSchema } from '@vithousing/shared';
+import { loginSchema, registerSchema, vitIdCallbackSchema, forgotPasswordSchema, resetPasswordSchema } from '@vithousing/shared';
 import { Role as PrismaRole } from '../generated/prisma/client.js';
 import { getUserAuth0Roles } from '../services/auth0.service.js';
 import { verifyAuth0Token } from '../lib/auth0-jwt.js';
 import { hashInvitationToken, getInvitationStatus } from '../lib/invitations.js';
+import { generatePasswordResetToken, hashPasswordResetToken, buildPasswordResetExpiryDate } from '../lib/password-reset.js';
+import { sendPasswordResetEmail } from '../services/email.service.js';
 import { normalizeEmail } from '../lib/email.js';
 import { hashPassword, needsPasswordRehash, validatePasswordPolicy, verifyPassword } from '../lib/password.js';
 import { createRateLimitMiddleware } from '../middleware/rateLimit.js';
@@ -32,6 +34,12 @@ const registrationRateLimit = createRateLimitMiddleware({
   maxRequests: 10,
   code: 'RATE_LIMITED',
   message: 'Too many registration attempts. Please try again later.',
+});
+const passwordResetRateLimit = createRateLimitMiddleware({
+  windowMs: 15 * 60 * 1000,
+  maxRequests: 5,
+  code: 'RATE_LIMITED',
+  message: 'Too many password reset attempts. Please try again later.',
 });
 
 class InvitationUnavailableError extends Error {
@@ -313,6 +321,99 @@ router.post('/vit-id/callback', validate(vitIdCallbackSchema), async (req: Reque
     });
   } catch (err) {
     sendError(res, 'VIT ID login failed', 'VIT_ID_ERROR', 500);
+  }
+});
+
+// POST /api/v1/auth/forgot-password — Request a password reset email
+router.post('/forgot-password', passwordResetRateLimit, validate(forgotPasswordSchema), async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    const normalizedEmail = normalizeEmail(email);
+
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+
+    // If user not found or has no password (Auth0-only), return success anyway to prevent email enumeration
+    if (!user || !user.password) {
+      sendSuccess(res, { message: 'If an account exists, a reset link has been sent' });
+      return;
+    }
+
+    const token = generatePasswordResetToken();
+    const tokenHash = hashPasswordResetToken(token);
+    const expiresAt = buildPasswordResetExpiryDate();
+
+    // Invalidate any existing unused tokens for this user, then create new one
+    await prisma.$transaction([
+      prisma.passwordReset.updateMany({
+        where: { user_id: user.id, used: false },
+        data: { used: true },
+      }),
+      prisma.passwordReset.create({
+        data: {
+          token_hash: tokenHash,
+          user_id: user.id,
+          expires_at: expiresAt,
+        },
+      }),
+    ]);
+
+    const lang = user.preferred_language === 'IT' ? 'it' : 'en';
+    await sendPasswordResetEmail({
+      to: user.email,
+      token,
+      lang,
+      firstName: user.first_name,
+    });
+
+    sendSuccess(res, { message: 'If an account exists, a reset link has been sent' });
+  } catch (err) {
+    sendError(res, 'Password reset request failed', 'RESET_REQUEST_ERROR', 500);
+  }
+});
+
+// POST /api/v1/auth/reset-password — Reset password with token
+router.post('/reset-password', passwordResetRateLimit, validate(resetPasswordSchema), async (req: Request, res: Response) => {
+  try {
+    const { token, password } = req.body;
+
+    const passwordPolicyError = validatePasswordPolicy(password);
+    if (passwordPolicyError) {
+      sendError(res, passwordPolicyError, 'WEAK_PASSWORD', 400);
+      return;
+    }
+
+    const tokenHash = hashPasswordResetToken(token);
+    const now = new Date();
+
+    const passwordReset = await prisma.passwordReset.findFirst({
+      where: {
+        token_hash: tokenHash,
+        used: false,
+        expires_at: { gt: now },
+      },
+    });
+
+    if (!passwordReset) {
+      sendError(res, 'Invalid or expired reset token', 'INVALID_TOKEN', 400);
+      return;
+    }
+
+    const hashedPassword = await hashPassword(password);
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: passwordReset.user_id },
+        data: { password: hashedPassword },
+      }),
+      prisma.passwordReset.update({
+        where: { id: passwordReset.id },
+        data: { used: true },
+      }),
+    ]);
+
+    sendSuccess(res, { message: 'Password has been reset successfully' });
+  } catch (err) {
+    sendError(res, 'Password reset failed', 'RESET_ERROR', 500);
   }
 });
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth0 } from '@auth0/auth0-react';
@@ -170,13 +170,12 @@ export function LoginPage() {
                       </Label>
                     </div>
 
-                    <a
-                      href={`/${currentLang}/forgot-password`}
-                      onClick={(event) => event.preventDefault()}
+                    <Link
+                      to={`/${currentLang}/forgot-password`}
                       className="text-sm font-medium text-muted-foreground transition-colors hover:text-[color:var(--brand-anthracite)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                     >
                       {t('auth.forgotPassword')}
-                    </a>
+                    </Link>
                   </div>
 
                   {loginError && (

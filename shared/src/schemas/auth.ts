@@ -74,6 +74,25 @@ export const vitIdCallbackSchema = z.object({
   access_token: z.string().min(1, 'Access token is required'),
 });
 
+export const PASSWORD_RESET_EXPIRY_HOURS = 1;
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().trim().toLowerCase().email('Invalid email address'),
+});
+
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().min(1, 'Reset token is required'),
+    password: passwordSchema,
+    password_confirm: z.string().min(1, 'Please confirm your password'),
+  })
+  .refine((data) => data.password === data.password_confirm, {
+    message: 'Passwords do not match',
+    path: ['password_confirm'],
+  });
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type VitIdCallbackInput = z.infer<typeof vitIdCallbackSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

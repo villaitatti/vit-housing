@@ -15,6 +15,8 @@ import './lib/i18n';
 const HomePage = lazy(() => import('@/pages/Home').then((m) => ({ default: m.HomePage })));
 const LoginPage = lazy(() => import('@/pages/Login').then((m) => ({ default: m.LoginPage })));
 const RegisterPage = lazy(() => import('@/pages/Register').then((m) => ({ default: m.RegisterPage })));
+const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPassword').then((m) => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage = lazy(() => import('@/pages/ResetPassword').then((m) => ({ default: m.ResetPasswordPage })));
 const ListingsPage = lazy(() => import('@/pages/Listings').then((m) => ({ default: m.ListingsPage })));
 const ListingDetailPage = lazy(() => import('@/pages/ListingDetail').then((m) => ({ default: m.ListingDetailPage })));
 const MapSearchPage = lazy(() => import('@/pages/MapSearch').then((m) => ({ default: m.MapSearchPage })));
@@ -68,6 +70,8 @@ function App() {
               {/* Public routes */}
               <Route path="login" element={<Suspense fallback={<PageLoader />}><LoginPage /></Suspense>} />
               <Route path="register" element={<Suspense fallback={<PageLoader />}><RegisterPage /></Suspense>} />
+              <Route path="forgot-password" element={<Suspense fallback={<PageLoader />}><ForgotPasswordPage /></Suspense>} />
+              <Route path="reset-password" element={<Suspense fallback={<PageLoader />}><ResetPasswordPage /></Suspense>} />
 
               <Route
                 element={
