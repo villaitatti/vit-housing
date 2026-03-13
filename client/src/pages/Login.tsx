@@ -66,14 +66,12 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f3f0eb] text-foreground">
-      <div className="flex justify-end px-4 pt-4 sm:px-6 sm:pt-6 lg:px-10">
+    <div className="min-h-screen bg-[color:var(--brand-grey-light)] text-foreground">
+      <div className="relative grid min-h-screen lg:grid-cols-[minmax(0,1.05fr)_minmax(460px,0.95fr)]">
         <LanguageSwitch
-          buttonClassName="rounded-full border border-[#c8d0d6] bg-[#fcfbf8]/90 px-4 text-[color:var(--brand-anthracite)] shadow-sm backdrop-blur-sm hover:bg-white"
+          buttonClassName="rounded-full border border-[color:var(--brand-grey-medium)] bg-white/90 px-4 text-[color:var(--brand-anthracite)] shadow-sm backdrop-blur-sm hover:bg-white"
+          className="absolute top-4 right-4 z-10"
         />
-      </div>
-
-      <div className="grid min-h-[calc(100vh-4.5rem)] lg:grid-cols-[minmax(0,1.05fr)_minmax(460px,0.95fr)] lg:min-h-[calc(100vh-5.5rem)]">
         <motion.div
           initial={{ opacity: 0, scale: 1.02 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -91,7 +89,7 @@ export function LoginPage() {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.14, ease: 'easeOut' }}
-          className="flex w-full items-center justify-center bg-[#fcfbf8] px-6 py-10 sm:px-10 lg:px-16"
+          className="flex w-full items-center justify-center bg-white px-6 py-10 sm:px-10 lg:px-16"
         >
           <Card className="w-full max-w-[460px] gap-0 border-none bg-transparent py-0 shadow-none">
             <CardHeader className="space-y-3 px-0 pb-8">
@@ -119,7 +117,7 @@ export function LoginPage() {
                             type="email"
                             placeholder="name@example.com"
                             autoComplete="email"
-                            className="h-12 rounded-xl border-[#c8d0d6] bg-white px-4 shadow-none"
+                            className="h-12 rounded-xl border-[color:var(--brand-grey-medium)] bg-white px-4 shadow-none"
                             {...field}
                           />
                         </FormControl>
@@ -141,7 +139,7 @@ export function LoginPage() {
                             <Input
                               type={showPassword ? 'text' : 'password'}
                               autoComplete="current-password"
-                              className="h-12 rounded-xl border-[#c8d0d6] bg-white px-4 pr-12 shadow-none"
+                              className="h-12 rounded-xl border-[color:var(--brand-grey-medium)] bg-white px-4 pr-12 shadow-none"
                               {...field}
                             />
                             <button
@@ -175,7 +173,7 @@ export function LoginPage() {
                     <a
                       href={`/${currentLang}/forgot-password`}
                       onClick={(event) => event.preventDefault()}
-                      className="text-sm font-medium text-muted-foreground transition-colors hover:text-[color:var(--brand-anthracite)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[#fcfbf8]"
+                      className="text-sm font-medium text-muted-foreground transition-colors hover:text-[color:var(--brand-anthracite)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                     >
                       {t('auth.forgotPassword')}
                     </a>
@@ -198,10 +196,10 @@ export function LoginPage() {
               <div className="mt-8 space-y-5">
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <Separator className="w-full bg-[#d6dde2]" />
+                    <Separator className="w-full bg-[color:var(--brand-grey-medium)]" />
                   </div>
                   <div className="relative flex justify-center">
-                    <span className="bg-[#fcfbf8] px-4 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                    <span className="bg-white px-4 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                       {t('common.or')}
                     </span>
                   </div>
