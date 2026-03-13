@@ -1,5 +1,5 @@
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
-import { INVITATION_EXPIRY_DAYS } from '@vithousing/shared';
+import { INVITATION_EXPIRY_DAYS, PASSWORD_RESET_EXPIRY_HOURS } from '@vithousing/shared';
 import { getEffectiveConfigValue } from './config.service.js';
 
 let sesClient: SESClient | null = null;
@@ -154,6 +154,121 @@ ${ignoreCopy}`
 ${introCopy}
 
 Completa la registrazione come ${roleName}: ${registrationUrl}
+
+${expiryCopy}
+
+${ignoreCopy}`;
+
+  const command = new SendEmailCommand({
+    Source: config.fromAddress,
+    Destination: { ToAddresses: [to] },
+    Message: {
+      Subject: { Data: subject, Charset: 'UTF-8' },
+      Body: {
+        Html: { Data: htmlBody, Charset: 'UTF-8' },
+        Text: { Data: textBody, Charset: 'UTF-8' },
+      },
+    },
+  });
+
+  await client.send(command);
+}
+
+interface PasswordResetEmailParams {
+  to: string;
+  token: string;
+  lang: string;
+  firstName?: string;
+}
+
+export async function sendPasswordResetEmail({
+  to,
+  token,
+  lang,
+  firstName,
+}: PasswordResetEmailParams): Promise<void> {
+  const config = await getSESConfig();
+  const client = await getClient();
+  const language = lang.toLowerCase();
+  const resetUrl = `${config.invitationBaseUrl}/${language}/reset-password?token=${token}`;
+
+  const isEnglish = language === 'en';
+
+  const subject = isEnglish
+    ? 'Reset your Villa I Tatti Housing password'
+    : 'Reimposta la tua password di Villa I Tatti Housing';
+
+  const greeting = firstName
+    ? isEnglish
+      ? `Hello ${firstName},`
+      : `Ciao ${firstName},`
+    : isEnglish
+      ? 'Hello,'
+      : 'Ciao,';
+
+  const introCopy = isEnglish
+    ? 'We received a request to reset your password for Villa I Tatti Housing.'
+    : 'Abbiamo ricevuto una richiesta di reimpostazione della password per Villa I Tatti Housing.';
+
+  const ctaLabel = isEnglish ? 'Reset Password' : 'Reimposta Password';
+
+  const expiryCopy = isEnglish
+    ? `This link is single use and expires in ${PASSWORD_RESET_EXPIRY_HOURS} hour(s).`
+    : `Questo link è monouso e scade tra ${PASSWORD_RESET_EXPIRY_HOURS} ora/e.`;
+
+  const ignoreCopy = isEnglish
+    ? 'If you did not request a password reset, you can ignore this email.'
+    : 'Se non hai richiesto la reimpostazione della password, puoi ignorare questa email.';
+
+  const htmlBody = isEnglish
+    ? `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Reset Your Password</h2>
+        <p>${greeting}</p>
+        <p>${introCopy}</p>
+        <p>Click the button below to choose a new password.</p>
+        <p style="text-align: center; margin: 30px 0;">
+          <a href="${resetUrl}" style="background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+            ${ctaLabel}
+          </a>
+        </p>
+        <p style="color: #666; font-size: 14px;">${expiryCopy}</p>
+        <p style="color: #666; font-size: 14px;">If the button doesn't work, copy this link: <a href="${resetUrl}">${resetUrl}</a></p>
+        <p style="color: #666; font-size: 14px;">${ignoreCopy}</p>
+      </div>
+    `
+    : `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Reimposta la Tua Password</h2>
+        <p>${greeting}</p>
+        <p>${introCopy}</p>
+        <p>Clicca il pulsante qui sotto per scegliere una nuova password.</p>
+        <p style="text-align: center; margin: 30px 0;">
+          <a href="${resetUrl}" style="background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+            ${ctaLabel}
+          </a>
+        </p>
+        <p style="color: #666; font-size: 14px;">${expiryCopy}</p>
+        <p style="color: #666; font-size: 14px;">Se il pulsante non funziona, copia questo link: <a href="${resetUrl}">${resetUrl}</a></p>
+        <p style="color: #666; font-size: 14px;">${ignoreCopy}</p>
+      </div>
+    `;
+
+  const textBody = isEnglish
+    ? `${greeting}
+
+${introCopy}
+
+Reset your password: ${resetUrl}
+
+${expiryCopy}
+
+${ignoreCopy}`
+    : `${greeting}
+
+${introCopy}
+
+Reimposta la password: ${resetUrl}
 
 ${expiryCopy}
 
