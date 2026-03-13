@@ -367,7 +367,9 @@ router.post('/forgot-password', passwordResetRateLimit, validate(forgotPasswordS
 
     sendSuccess(res, { message: 'If an account exists, a reset link has been sent' });
   } catch (err) {
-    sendError(res, 'Password reset request failed', 'RESET_REQUEST_ERROR', 500);
+    console.error('Password reset request failed:', err);
+    // Always return success to prevent email enumeration
+    sendSuccess(res, { message: 'If an account exists, a reset link has been sent' });
   }
 });
 
@@ -383,33 +385,43 @@ router.post('/reset-password', passwordResetRateLimit, validate(resetPasswordSch
     }
 
     const tokenHash = hashPasswordResetToken(token);
-    const now = new Date();
+    const hashedPassword = await hashPassword(password);
 
-    const passwordReset = await prisma.passwordReset.findFirst({
-      where: {
-        token_hash: tokenHash,
-        used: false,
-        expires_at: { gt: now },
-      },
+    const result = await prisma.$transaction(async (tx) => {
+      const now = new Date();
+
+      // Atomically claim the token — if another request already marked it used, count will be 0
+      const claimed = await tx.passwordReset.updateMany({
+        where: {
+          token_hash: tokenHash,
+          used: false,
+          expires_at: { gt: now },
+        },
+        data: { used: true },
+      });
+
+      if (claimed.count === 0) return false;
+
+      // Token was valid and is now claimed; look up user_id and update password
+      const resetRecord = await tx.passwordReset.findUnique({
+        where: { token_hash: tokenHash },
+        select: { user_id: true },
+      });
+
+      if (!resetRecord) return false;
+
+      await tx.user.update({
+        where: { id: resetRecord.user_id },
+        data: { password: hashedPassword },
+      });
+
+      return true;
     });
 
-    if (!passwordReset) {
+    if (!result) {
       sendError(res, 'Invalid or expired reset token', 'INVALID_TOKEN', 400);
       return;
     }
-
-    const hashedPassword = await hashPassword(password);
-
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: passwordReset.user_id },
-        data: { password: hashedPassword },
-      }),
-      prisma.passwordReset.update({
-        where: { id: passwordReset.id },
-        data: { used: true },
-      }),
-    ]);
 
     sendSuccess(res, { message: 'Password has been reset successfully' });
   } catch (err) {

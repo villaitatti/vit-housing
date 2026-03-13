@@ -87,7 +87,7 @@ export function ResetPasswordPage() {
   const form = useForm<ResetPasswordInput>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
-      token: '',
+      token: resetToken,
       password: '',
       password_confirm: '',
     },
@@ -215,7 +215,7 @@ export function ResetPasswordPage() {
             <CardContent className="px-0">
               <Form {...form}>
                 <form
-                  onSubmit={form.handleSubmit((data) => mutation.mutate({ ...data, token: resetToken }))}
+                  onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
                   className="space-y-5"
                 >
                   <FormField
