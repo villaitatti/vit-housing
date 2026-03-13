@@ -53,6 +53,11 @@ export type ListingPhoto = Prisma.ListingPhotoModel
  */
 export type ServiceConfig = Prisma.ServiceConfigModel
 /**
+ * Model PasswordReset
+ * 
+ */
+export type PasswordReset = Prisma.PasswordResetModel
+/**
  * Model Auth0RoleMapping
  * 
  */

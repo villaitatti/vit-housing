@@ -58,6 +58,7 @@ export const ModelName = {
   AvailableDate: 'AvailableDate',
   ListingPhoto: 'ListingPhoto',
   ServiceConfig: 'ServiceConfig',
+  PasswordReset: 'PasswordReset',
   Auth0RoleMapping: 'Auth0RoleMapping'
 } as const
 
@@ -79,6 +80,7 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 
 export const UserScalarFieldEnum = {
   id: 'id',
+  legacy_drupal_uid: 'legacy_drupal_uid',
   email: 'email',
   password: 'password',
   auth0_user_id: 'auth0_user_id',
@@ -118,6 +120,7 @@ export type InvitationScalarFieldEnum = (typeof InvitationScalarFieldEnum)[keyof
 
 export const ListingScalarFieldEnum = {
   id: 'id',
+  legacy_drupal_nid: 'legacy_drupal_nid',
   title: 'title',
   slug: 'slug',
   description: 'description',
@@ -210,6 +213,18 @@ export const ServiceConfigScalarFieldEnum = {
 } as const
 
 export type ServiceConfigScalarFieldEnum = (typeof ServiceConfigScalarFieldEnum)[keyof typeof ServiceConfigScalarFieldEnum]
+
+
+export const PasswordResetScalarFieldEnum = {
+  id: 'id',
+  token_hash: 'token_hash',
+  user_id: 'user_id',
+  used: 'used',
+  created_at: 'created_at',
+  expires_at: 'expires_at'
+} as const
+
+export type PasswordResetScalarFieldEnum = (typeof PasswordResetScalarFieldEnum)[keyof typeof PasswordResetScalarFieldEnum]
 
 
 export const Auth0RoleMappingScalarFieldEnum = {
