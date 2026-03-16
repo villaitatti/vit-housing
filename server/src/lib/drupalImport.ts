@@ -10,6 +10,7 @@ import {
   findUnambiguousLegacyListingMatch,
   generateUniqueDrupalListingSlug,
   planExistingUserMigrationUpdate,
+  resolveExistingUserMigration,
   type ProcessedUserPicture,
 } from './drupalMigration.js';
 import { normalizeEmail } from './email.js';
@@ -38,6 +39,7 @@ export interface MigrationAudit {
     external_without_listing_uids: number[];
     linked_existing_account_uids: number[];
     preserved_local_state_uids: number[];
+    duplicate_email_alias_uids: Array<{ duplicate_uid: number; canonical_uid: number; email: string }>;
     blocked_user_uids: number[];
     legacy_hash_uids: number[];
     missing_emails: number[];
@@ -291,6 +293,7 @@ export function buildDrupalImportSummary(
     linked_existing_users: linkedExistingUsers,
     skipped_users:
       audit.users.skipped_itatti_without_listing_uids.length
+      + audit.users.duplicate_email_alias_uids.length
       + audit.users.blocked_user_uids.length
       + audit.users.missing_emails.length,
     imported_listings: audit.listings.imported.length - linkedExistingListings,
@@ -303,6 +306,7 @@ export function buildDrupalImportSummary(
       + audit.listings.unmapped_floors.length
       + audit.listings.unmapped_features.length
       + audit.listings.unmapped_utilities.length
+      + audit.users.duplicate_email_alias_uids.length
       + audit.users.missing_emails.length,
   };
 }
@@ -815,11 +819,12 @@ async function migrateUsers(
     map.set(row.uid, current);
     return map;
   }, new Map<number, number[]>());
+  const sortedUsers = [...data.users].sort((left, right) => left.uid - right.uid);
 
   const importedUserIdsByDrupalUid = new Map<number, number>();
   let processedUsers = 0;
 
-  for (const user of data.users) {
+  for (const user of sortedUsers) {
     processedUsers += 1;
     const normalizedEmail = normalizeEmail(user.mail || '');
     const roles = mapDrupalUserRoles(roleIdsByUser.get(user.uid) || []);
@@ -828,7 +833,7 @@ async function migrateUsers(
     if (!normalizedEmail) {
       audit.users.missing_emails.push(user.uid);
       emitProgress(context, {
-        detail_message: `Scanning Drupal user records (${processedUsers}/${data.users.length}) and collecting warnings.`,
+        detail_message: `Scanning Drupal user records (${processedUsers}/${sortedUsers.length}) and collecting warnings.`,
         summary: buildDrupalImportSummary(audit, sourceSummary),
       });
       continue;
@@ -837,7 +842,7 @@ async function migrateUsers(
     if (user.status !== 1) {
       audit.users.blocked_user_uids.push(user.uid);
       emitProgress(context, {
-        detail_message: `Scanning Drupal user records (${processedUsers}/${data.users.length}) and collecting warnings.`,
+        detail_message: `Scanning Drupal user records (${processedUsers}/${sortedUsers.length}) and collecting warnings.`,
         summary: buildDrupalImportSummary(audit, sourceSummary),
       });
       continue;
@@ -846,7 +851,7 @@ async function migrateUsers(
     if (isItattiEmail(normalizedEmail) && !ownsListing) {
       audit.users.skipped_itatti_without_listing_uids.push(user.uid);
       emitProgress(context, {
-        detail_message: `Scanning Drupal user records (${processedUsers}/${data.users.length}) and collecting warnings.`,
+        detail_message: `Scanning Drupal user records (${processedUsers}/${sortedUsers.length}) and collecting warnings.`,
         summary: buildDrupalImportSummary(audit, sourceSummary),
       });
       continue;
@@ -895,6 +900,28 @@ async function migrateUsers(
       processedUserPicture: null,
     };
 
+    let migrationPlan: ReturnType<typeof planExistingUserMigrationUpdate> | null = null;
+
+    if (existingUser) {
+      const resolution = resolveExistingUserMigration(existingUser, importedUserProfile, linkedExistingAccountByEmail);
+
+      if (resolution.mode === 'alias') {
+        importedUserIdsByDrupalUid.set(user.uid, existingUser.id);
+        audit.users.duplicate_email_alias_uids.push({
+          duplicate_uid: user.uid,
+          canonical_uid: resolution.canonicalDrupalUid,
+          email: normalizedEmail,
+        });
+        emitProgress(context, {
+          detail_message: `Processed ${processedUsers} of ${sortedUsers.length} Drupal users.`,
+          summary: buildDrupalImportSummary(audit, sourceSummary),
+        });
+        continue;
+      }
+
+      migrationPlan = resolution.plan;
+    }
+
     const shouldBackfillProfilePhoto =
       !existingUser || (!existingUser.profile_photo_path && !existingUser.profile_photo_url);
     let processedUserPicture: ProcessedUserPicture | null = null;
@@ -907,10 +934,12 @@ async function migrateUsers(
       importedUserProfile.processedUserPicture = processedUserPicture;
 
       let migratedUser: { id: number; email: string };
-      let migrationPlan: ReturnType<typeof planExistingUserMigrationUpdate> | null = null;
 
       if (existingUser) {
-        migrationPlan = planExistingUserMigrationUpdate(existingUser, importedUserProfile);
+        if (!migrationPlan) {
+          throw new Error(`Expected a migration plan for Drupal uid=${user.uid}`);
+        }
+
         migratedUser = await prisma.user.update({
           where: { id: existingUser.id },
           data: migrationPlan.data,
@@ -958,9 +987,9 @@ async function migrateUsers(
       throw err;
     }
 
-    if (processedUsers === data.users.length || processedUsers % 10 === 0) {
+    if (processedUsers === sortedUsers.length || processedUsers % 10 === 0) {
       emitProgress(context, {
-        detail_message: `Processed ${processedUsers} of ${data.users.length} Drupal users.`,
+        detail_message: `Processed ${processedUsers} of ${sortedUsers.length} Drupal users.`,
         summary: buildDrupalImportSummary(audit, sourceSummary),
       });
     }
@@ -1275,6 +1304,7 @@ function createEmptyAudit(filesRoot: string): MigrationAudit {
       external_without_listing_uids: [],
       linked_existing_account_uids: [],
       preserved_local_state_uids: [],
+      duplicate_email_alias_uids: [],
       blocked_user_uids: [],
       legacy_hash_uids: [],
       missing_emails: [],
@@ -1426,6 +1456,7 @@ export async function runDrupalImport(options: DrupalImportRunOptions): Promise<
   log(context, `Imported ${audit.users.imported_external_uids.length} external users`);
   log(context, `Imported ${audit.users.imported_itatti_with_listing_uids.length} @itatti.harvard.edu users with listings`);
   log(context, `Skipped ${audit.users.skipped_itatti_without_listing_uids.length} @itatti.harvard.edu users without listings`);
+  log(context, `Aliased ${audit.users.duplicate_email_alias_uids.length} duplicate-email Drupal users`);
   log(context, `Linked ${audit.users.linked_existing_account_uids.length} existing users by email`);
   log(context, `Preserved local state for ${audit.users.preserved_local_state_uids.length} existing users`);
   log(context, `Imported ${audit.listings.imported.length} listings`);

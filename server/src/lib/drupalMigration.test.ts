@@ -7,6 +7,7 @@ import {
   findUnambiguousLegacyListingMatch,
   generateUniqueDrupalListingSlug,
   planExistingUserMigrationUpdate,
+  resolveExistingUserMigration,
 } from './drupalMigration.js';
 
 function createMockSlugClient(existingSlugs: string[]) {
@@ -98,6 +99,85 @@ test('planExistingUserMigrationUpdate compares roles as sets, not arrays with du
   );
 
   assert.equal(plan.preservedLocalState, false);
+});
+
+test('resolveExistingUserMigration aliases duplicate Drupal emails to the already linked account', () => {
+  const resolution = resolveExistingUserMigration(
+    {
+      id: 42,
+      email: 'person@example.com',
+      legacy_drupal_uid: 25,
+      password: null,
+      last_login: null,
+      profile_photo_path: null,
+      profile_photo_url: null,
+      first_name: 'Local',
+      last_name: 'Admin',
+      roles: [Role.HOUSE_ADMIN],
+      preferred_language: 'EN',
+      phone_number: null,
+      mobile_number: null,
+    },
+    {
+      uid: 151,
+      first_name: 'Drupal',
+      last_name: 'User',
+      roles: [Role.HOUSE_USER],
+      preferred_language: 'EN',
+      phone_number: null,
+      mobile_number: null,
+      password: null,
+      shouldKeepDrupalPassword: true,
+      last_login: null,
+      processedUserPicture: null,
+    },
+    true,
+  );
+
+  assert.deepEqual(resolution, {
+    mode: 'alias',
+    canonicalDrupalUid: 25,
+  });
+});
+
+test('resolveExistingUserMigration still updates when the matched account is not a duplicate email conflict', () => {
+  const resolution = resolveExistingUserMigration(
+    {
+      id: 42,
+      email: 'person@example.com',
+      legacy_drupal_uid: null,
+      password: null,
+      last_login: null,
+      profile_photo_path: null,
+      profile_photo_url: null,
+      first_name: 'Local',
+      last_name: 'Admin',
+      roles: [Role.HOUSE_ADMIN],
+      preferred_language: 'EN',
+      phone_number: null,
+      mobile_number: null,
+    },
+    {
+      uid: 151,
+      first_name: 'Drupal',
+      last_name: 'User',
+      roles: [Role.HOUSE_USER],
+      preferred_language: 'EN',
+      phone_number: null,
+      mobile_number: null,
+      password: null,
+      shouldKeepDrupalPassword: true,
+      last_login: null,
+      processedUserPicture: null,
+    },
+    true,
+  );
+
+  assert.equal(resolution.mode, 'update');
+  if (resolution.mode !== 'update') {
+    assert.fail('Expected an update resolution');
+  }
+  assert.equal(resolution.plan.data.legacy_drupal_uid, 151);
 });
 
 test('buildNewUserMigrationCreate keeps the imported Drupal profile for new users', () => {

@@ -48,6 +48,16 @@ export interface LegacyListingMatchCandidate {
   legacy_drupal_nid: number | null;
 }
 
+export type ExistingUserMigrationResolution =
+  | {
+      mode: 'alias';
+      canonicalDrupalUid: number;
+    }
+  | {
+      mode: 'update';
+      plan: ReturnType<typeof planExistingUserMigrationUpdate>;
+    };
+
 function sameRoleSet(left: Role[], right: Role[]): boolean {
   const leftSet = new Set(left);
   const rightSet = new Set(right);
@@ -106,6 +116,28 @@ export function planExistingUserMigrationUpdate(existingUser: ExistingDrupalUser
         : {}),
     },
     preservedLocalState,
+  };
+}
+
+export function resolveExistingUserMigration(
+  existingUser: ExistingDrupalUser,
+  importedUser: DrupalImportedUserProfile,
+  linkedExistingAccountByEmail: boolean,
+): ExistingUserMigrationResolution {
+  if (
+    linkedExistingAccountByEmail &&
+    existingUser.legacy_drupal_uid !== null &&
+    existingUser.legacy_drupal_uid !== importedUser.uid
+  ) {
+    return {
+      mode: 'alias',
+      canonicalDrupalUid: existingUser.legacy_drupal_uid,
+    };
+  }
+
+  return {
+    mode: 'update',
+    plan: planExistingUserMigrationUpdate(existingUser, importedUser),
   };
 }
 
