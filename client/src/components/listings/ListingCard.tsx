@@ -155,7 +155,7 @@ export function ListingCard<TListing extends ListingCardListing>({
           <>
             <button
               type="button"
-              className="absolute top-1/2 left-2 -translate-y-1/2 rounded-full bg-background/80 p-1 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
+              className="absolute top-1/2 left-2 -translate-y-1/2 rounded-full bg-background/80 p-1 opacity-0 backdrop-blur transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPhotoIndex((i) => (i - 1 + totalPhotos) % totalPhotos); }}
               aria-label={t('listings.previousPhoto')}
             >
@@ -163,7 +163,7 @@ export function ListingCard<TListing extends ListingCardListing>({
             </button>
             <button
               type="button"
-              className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full bg-background/80 p-1 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
+              className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full bg-background/80 p-1 opacity-0 backdrop-blur transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPhotoIndex((i) => (i + 1) % totalPhotos); }}
               aria-label={t('listings.nextPhoto')}
             >
