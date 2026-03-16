@@ -375,6 +375,28 @@ export function DrupalImportPage() {
           <CardDescription>{t('admin.drupalImportUploadDescription')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="rounded-2xl border border-amber-300/70 bg-amber-50 px-4 py-4 text-amber-950">
+            <div className="flex items-center gap-2 font-medium">
+              <AlertTriangle className="h-4 w-4" />
+              {t('admin.drupalImportSetupTitle')}
+            </div>
+            <div className="mt-2 text-sm">{t('admin.drupalImportSetupDescription')}</div>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs font-medium">
+              {[
+                'DRUPAL_IMPORT_MYSQL_HOST',
+                'DRUPAL_IMPORT_MYSQL_PORT',
+                'DRUPAL_IMPORT_MYSQL_USER',
+                'DRUPAL_IMPORT_MYSQL_PASSWORD',
+                'DRUPAL_IMPORT_MYSQL_DATABASE',
+              ].map((envVar) => (
+                <code key={envVar} className="rounded-md border border-amber-300/70 bg-white/70 px-2 py-1">
+                  {envVar}
+                </code>
+              ))}
+            </div>
+            <div className="mt-3 text-sm">{t('admin.drupalImportSetupRestart')}</div>
+          </div>
+
           <ArtifactRow
             icon={<Database className="h-5 w-5" />}
             title={t('admin.drupalImportDatabaseLabel')}
