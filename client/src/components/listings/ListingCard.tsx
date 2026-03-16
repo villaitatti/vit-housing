@@ -157,6 +157,7 @@ export function ListingCard<TListing extends ListingCardListing>({
               type="button"
               className="absolute top-1/2 left-2 -translate-y-1/2 rounded-full bg-background/80 p-1 opacity-0 backdrop-blur transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPhotoIndex((i) => (i - 1 + totalPhotos) % totalPhotos); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); } }}
               aria-label={t('listings.previousPhoto')}
             >
               <ChevronLeft className="h-5 w-5" />
@@ -165,6 +166,7 @@ export function ListingCard<TListing extends ListingCardListing>({
               type="button"
               className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full bg-background/80 p-1 opacity-0 backdrop-blur transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPhotoIndex((i) => (i + 1) % totalPhotos); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); } }}
               aria-label={t('listings.nextPhoto')}
             >
               <ChevronRight className="h-5 w-5" />
@@ -220,7 +222,7 @@ export function ListingCard<TListing extends ListingCardListing>({
             <Bath className="h-4 w-4" />
             {listing.bathrooms}
           </span>
-          {listing.floor_space ? (
+          {listing.floor_space != null ? (
             <span className="flex items-center gap-1">
               <Ruler className="h-4 w-4" />
               {t('listings.floorSpaceValue', { value: listing.floor_space })}
