@@ -5,6 +5,7 @@ export const queryKeys = {
   listings: {
     all: ['listings'] as const,
     list: (filters: object) => ['listings', 'list', filters] as const,
+    admin: (filters: object) => ['listings', 'admin', filters] as const,
     detailById: (id: number) => ['listings', 'detail', 'id', id] as const,
     detailBySlug: (slug: string) => ['listings', 'detail', 'slug', slug] as const,
     mine: (filters: object) => ['listings', 'mine', filters] as const,

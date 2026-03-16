@@ -19,6 +19,10 @@ export interface PaginatedData<T> {
   totalPages: number;
 }
 
+export interface PaginatedDataWithStats<T, TStats> extends PaginatedData<T> {
+  stats: TStats;
+}
+
 import type { Role } from '../constants/roles';
 
 export interface JwtPayload {

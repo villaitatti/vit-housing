@@ -14,6 +14,7 @@ import {
   uploadMiddleware,
 } from '../services/upload.service.js';
 import { parseId } from '../lib/validators.js';
+import { buildAdminUserRoleStatsWhere, buildAdminUserWhere } from '../lib/adminUsers.js';
 
 const router = Router();
 
@@ -37,6 +38,8 @@ const userAdminListSelect = {
   ...userProfileSelect,
   _count: { select: { listings: true } },
 } satisfies Prisma.UserSelect;
+
+const userAdminDetailSelect = userAdminListSelect;
 
 // GET /api/v1/users/me — Current user profile
 router.get('/me', authenticate, async (req: Request, res: Response) => {
@@ -155,22 +158,9 @@ router.get('/', authenticate, requireRole('HOUSE_ADMIN', 'HOUSE_IT_ADMIN'), vali
   try {
     const { search, roles, sortBy, sortOrder, page, limit } = req.query as any;
     const skip = (page - 1) * limit;
+    const where = buildAdminUserWhere({ search, roles });
 
-    const where: any = {};
-
-    if (search) {
-      where.OR = [
-        { first_name: { contains: search, mode: 'insensitive' } },
-        { last_name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-
-    if (roles && Array.isArray(roles) && roles.length > 0) {
-      where.roles = { hasSome: roles };
-    }
-
-    const [users, total] = await Promise.all([
+    const [users, total, totalUsers, totalHouseUsers, totalHouseLandlords] = await Promise.all([
       prisma.user.findMany({
         where,
         skip,
@@ -179,6 +169,9 @@ router.get('/', authenticate, requireRole('HOUSE_ADMIN', 'HOUSE_IT_ADMIN'), vali
         select: userAdminListSelect,
       }),
       prisma.user.count({ where }),
+      prisma.user.count(),
+      prisma.user.count({ where: buildAdminUserRoleStatsWhere('HOUSE_USER') }),
+      prisma.user.count({ where: buildAdminUserRoleStatsWhere('HOUSE_LANDLORD') }),
     ]);
 
     sendSuccess(res, {
@@ -187,11 +180,43 @@ router.get('/', authenticate, requireRole('HOUSE_ADMIN', 'HOUSE_IT_ADMIN'), vali
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+      stats: {
+        totalUsers,
+        totalHouseUsers,
+        totalHouseLandlords,
+      },
     });
   } catch (err) {
     sendError(res, 'Failed to fetch users', 'FETCH_ERROR', 500);
   }
 });
+
+// GET /api/v1/users/:id — Admin: fetch a single user profile
+router.get(
+  '/:id',
+  authenticate,
+  requireRole('HOUSE_ADMIN', 'HOUSE_IT_ADMIN'),
+  async (req: Request, res: Response) => {
+    try {
+      const id = parseId(req.params.id as string);
+      if (!id) { sendError(res, 'Invalid user ID', 'BAD_REQUEST', 400); return; }
+
+      const user = await prisma.user.findUnique({
+        where: { id },
+        select: userAdminDetailSelect,
+      });
+
+      if (!user) {
+        sendError(res, 'User not found', 'NOT_FOUND', 404);
+        return;
+      }
+
+      sendSuccess(res, { user: serializeUserAvatar(user) });
+    } catch (err) {
+      sendError(res, 'Failed to fetch user', 'FETCH_ERROR', 500);
+    }
+  },
+);
 
 // PATCH /api/v1/users/:id — Admin: update user
 router.patch(
