@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { useEffect, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
@@ -69,6 +69,10 @@ export function ListingCard<TListing extends ListingCardListing>({
   const totalPhotos = photos.length;
   const currentPhoto = photos[photoIndex]?.url;
   const detailPath = getListingDetailPath(lang, listing.slug);
+
+  useEffect(() => {
+    setPhotoIndex(0);
+  }, [listing.id]);
 
   const openListing = () => {
     if (openInNewTab) {
@@ -153,7 +157,7 @@ export function ListingCard<TListing extends ListingCardListing>({
               type="button"
               className="absolute top-1/2 left-2 -translate-y-1/2 rounded-full bg-background/80 p-1 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPhotoIndex((i) => (i - 1 + totalPhotos) % totalPhotos); }}
-              aria-label="Previous photo"
+              aria-label={t('listings.previousPhoto')}
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
@@ -161,11 +165,14 @@ export function ListingCard<TListing extends ListingCardListing>({
               type="button"
               className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full bg-background/80 p-1 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPhotoIndex((i) => (i + 1) % totalPhotos); }}
-              aria-label="Next photo"
+              aria-label={t('listings.nextPhoto')}
             >
               <ChevronRight className="h-5 w-5" />
             </button>
-            <span className="absolute bottom-2 right-2 rounded-full bg-black/50 px-2 py-0.5 text-xs text-white">
+            <span
+              className="absolute bottom-2 right-2 rounded-full bg-black/50 px-2 py-0.5 text-xs text-white"
+              aria-label={t('listings.photoCounter', { current: photoIndex + 1, total: totalPhotos })}
+            >
               {photoIndex + 1}/{totalPhotos}
             </span>
           </>
@@ -215,7 +222,7 @@ export function ListingCard<TListing extends ListingCardListing>({
           {listing.floor_space ? (
             <span className="flex items-center gap-1">
               <Ruler className="h-4 w-4" />
-              {listing.floor_space} m²
+              {t('listings.floorSpaceValue', { value: listing.floor_space })}
             </span>
           ) : null}
         </div>

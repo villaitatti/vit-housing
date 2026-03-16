@@ -159,7 +159,11 @@
     "noListings": "Nessun annuncio disponibile",
     "noListingsDescription": "Al momento non ci sono annunci disponibili. Ricontrolla presto!",
     "noFilterResults": "Nessun annuncio corrisponde ai tuoi filtri",
-    "noFilterResultsDescription": "Prova a modificare o cancellare i criteri di ricerca per vedere più risultati."
+    "noFilterResultsDescription": "Prova a modificare o cancellare i criteri di ricerca per vedere più risultati.",
+    "previousPhoto": "Foto precedente",
+    "nextPhoto": "Foto successiva",
+    "photoCounter": "Foto {{current}} di {{total}}",
+    "floorSpaceValue": "{{value}} mq"
   },
   "favorites": {
     "title": "Preferiti",
