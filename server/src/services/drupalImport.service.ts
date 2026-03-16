@@ -34,6 +34,9 @@ type StoredDrupalImportStatus = DrupalImportStatus & {
   extracted_files_root: string | null;
   log_path: string | null;
   audit_path: string | null;
+  runner_token: string | null;
+  runner_kind: 'run' | 'preflight' | null;
+  runner_heartbeat_at: string | null;
 };
 
 type UploadedArtifactKind = 'database_dump' | 'files_archive';
@@ -55,10 +58,13 @@ const STATUS_FILE = path.join(RUNTIME_DIR, 'latest-status.json');
 const PREFLIGHT_LOG_FILE = path.join(RUNTIME_DIR, 'preflight.log');
 const MYSQL_CONNECT_TIMEOUT_MS = 10_000;
 const MYSQL_QUERY_TIMEOUT_MS = 60_000;
+const RUNNER_HEARTBEAT_INTERVAL_MS = 5_000;
+const RUNNER_HEARTBEAT_TTL_MS = Number(process.env.DRUPAL_IMPORT_RUNNER_TTL_MS || '30000');
 
 let activeRun: Promise<void> | null = null;
 let activePreflight: Promise<void> | null = null;
 let statusLock: Promise<void> = Promise.resolve();
+let startupRecoveryPromise: Promise<void> | null = null;
 
 async function withStatusLock<T>(callback: () => Promise<T>): Promise<T> {
   const previous = statusLock;
@@ -118,6 +124,81 @@ function createDefaultStatus(): StoredDrupalImportStatus {
     extracted_files_root: null,
     log_path: null,
     audit_path: null,
+    runner_token: null,
+    runner_kind: null,
+    runner_heartbeat_at: null,
+  };
+}
+
+function createRunnerToken(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function isRunnerHeartbeatFresh(status: StoredDrupalImportStatus): boolean {
+  if (!status.runner_token || !status.runner_heartbeat_at) {
+    return false;
+  }
+
+  const heartbeatAt = new Date(status.runner_heartbeat_at).getTime();
+  if (Number.isNaN(heartbeatAt)) {
+    return false;
+  }
+
+  return (Date.now() - heartbeatAt) <= RUNNER_HEARTBEAT_TTL_MS;
+}
+
+function clearRunnerState(status: StoredDrupalImportStatus): StoredDrupalImportStatus {
+  return {
+    ...status,
+    runner_token: null,
+    runner_kind: null,
+    runner_heartbeat_at: null,
+  };
+}
+
+function recoverInterruptedStatus(status: StoredDrupalImportStatus): StoredDrupalImportStatus {
+  if (status.runner_token && isRunnerHeartbeatFresh(status)) {
+    return status;
+  }
+
+  const recovered = clearRunnerState(status);
+  const hadInterruptedRun = status.status === 'running'
+    || status.status === 'cleaning_up'
+    || status.runner_kind === 'run';
+  const hadInterruptedPreflight = status.runner_kind === 'preflight';
+
+  if (!hadInterruptedRun && !hadInterruptedPreflight) {
+    return recovered;
+  }
+
+  const recoveryMessage = status.runner_kind === 'preflight'
+    ? 'A previous Drupal import preflight was interrupted and has been reset.'
+    : 'A previous Drupal import run was interrupted and has been marked as failed.';
+
+  if (status.runner_kind === 'preflight') {
+    return {
+      ...recovered,
+      status: 'preflight_failed',
+      phase: 'source_analysis',
+      progress_percent: 0,
+      current_step: 'Preflight interrupted',
+      detail_message: recoveryMessage,
+      error_summary: recoveryMessage,
+      summary: emptySummary(),
+      warnings: [],
+      preflight_checks: [],
+      preflight_ready_at: null,
+      extracted_files_root: null,
+    };
+  }
+
+  return {
+    ...recovered,
+    status: 'failed',
+    finished_at: new Date().toISOString(),
+    current_step: 'Drupal migration interrupted',
+    detail_message: recoveryMessage,
+    error_summary: recoveryMessage,
   };
 }
 
@@ -131,7 +212,7 @@ async function ensureRuntimeDirs(): Promise<void> {
   ]);
 }
 
-async function readStoredStatus(): Promise<StoredDrupalImportStatus> {
+async function readStoredStatusFile(): Promise<StoredDrupalImportStatus> {
   await ensureRuntimeDirs();
 
   try {
@@ -149,6 +230,41 @@ async function readStoredStatus(): Promise<StoredDrupalImportStatus> {
     throw error;
   }
 }
+
+async function ensureStartupRecovery(): Promise<void> {
+  if (!startupRecoveryPromise) {
+    startupRecoveryPromise = (async () => {
+      const stored = await readStoredStatusFile();
+      const recovered = recoverInterruptedStatus(stored);
+
+      if (recovered !== stored) {
+        await writeStoredStatus(recovered);
+      }
+    })().catch((error) => {
+      startupRecoveryPromise = null;
+      throw error;
+    });
+  }
+
+  await startupRecoveryPromise;
+}
+
+async function readStoredStatus(): Promise<StoredDrupalImportStatus> {
+  await ensureStartupRecovery();
+
+  const stored = await readStoredStatusFile();
+  const recovered = recoverInterruptedStatus(stored);
+  if (recovered !== stored) {
+    await writeStoredStatus(recovered);
+    return recovered;
+  }
+
+  return stored;
+}
+
+void ensureStartupRecovery().catch((error) => {
+  console.error('Failed to recover Drupal import status on startup:', error);
+});
 
 async function writeStoredStatus(status: StoredDrupalImportStatus): Promise<void> {
   await ensureRuntimeDirs();
@@ -180,6 +296,9 @@ function sanitizeStoredDrupalImportStatus(status: StoredDrupalImportStatus): Dru
     extracted_files_root: _extractedFilesRoot,
     log_path: _logPath,
     audit_path: _auditPath,
+    runner_token: _runnerToken,
+    runner_kind: _runnerKind,
+    runner_heartbeat_at: _runnerHeartbeatAt,
     ...publicStatus
   } = status;
 
@@ -392,6 +511,15 @@ async function appendPreflightLog(message: string): Promise<void> {
   await fs.appendFile(PREFLIGHT_LOG_FILE, `[${new Date().toISOString()}] ${message}\n`);
 }
 
+async function appendRunLog(logPath: string | null, message: string): Promise<void> {
+  if (!logPath) {
+    return;
+  }
+
+  await ensureRuntimeDirs();
+  await fs.appendFile(logPath, `[${new Date().toISOString()}] ${message}\n`);
+}
+
 function summarizeAudit(audit: MigrationAudit, sourceSummary: DrupalImportSummary): DrupalImportSummary {
   return {
     ...buildDrupalImportSummary(audit, sourceSummary),
@@ -529,8 +657,40 @@ async function cleanupSuccessfulRunArtifacts(status: StoredDrupalImportStatus, m
   await fs.mkdir(EXTRACTED_DIR, { recursive: true });
 }
 
+async function touchRunnerHeartbeat(token: string): Promise<void> {
+  await updateStoredStatus((stored) => (
+    stored.runner_token === token
+      ? {
+        ...stored,
+        runner_heartbeat_at: new Date().toISOString(),
+      }
+      : stored
+  ));
+}
+
+function startRunnerHeartbeat(token: string): () => void {
+  const timer = setInterval(() => {
+    void touchRunnerHeartbeat(token).catch((error) => {
+      console.error('Failed to update Drupal import heartbeat:', error);
+    });
+  }, RUNNER_HEARTBEAT_INTERVAL_MS);
+
+  timer.unref?.();
+
+  return () => {
+    clearInterval(timer);
+  };
+}
+
 function ensureNotRunning(status: StoredDrupalImportStatus): void {
-  if (status.status === 'running' || status.status === 'cleaning_up' || activeRun || activePreflight) {
+  if (
+    status.status === 'running'
+    || status.status === 'cleaning_up'
+    || status.runner_kind === 'preflight'
+    || (status.runner_token && isRunnerHeartbeatFresh(status))
+    || activeRun
+    || activePreflight
+  ) {
     throw new Error('A Drupal import is already running.');
   }
 }
@@ -540,16 +700,27 @@ export async function getDrupalImportStatus(): Promise<DrupalImportStatus> {
 }
 
 export async function initializeDrupalImportUploadSession(): Promise<DrupalImportStatus> {
-  const status = await updateStoredStatus((current) => ({
-    ...current,
-    status: current.status === 'running' ? current.status : 'idle',
-    current_step: 'Upload a Drupal database dump and files archive to begin.',
-    detail_message: 'Pantheon exports are accepted directly: *_database.sql.gz and *_files.tar.gz.',
-    error_summary: null,
-    warnings: current.status === 'running' ? current.warnings : [],
-    preflight_checks: current.status === 'running' ? current.preflight_checks : [],
-    preflight_ready_at: current.status === 'running' ? current.preflight_ready_at : null,
-  }));
+  const status = await updateStoredStatus((current) => {
+    const hasActiveWork = current.status === 'running'
+      || current.status === 'cleaning_up'
+      || current.runner_kind === 'preflight'
+      || (current.runner_token && isRunnerHeartbeatFresh(current));
+
+    if (hasActiveWork) {
+      return current;
+    }
+
+    return {
+      ...current,
+      status: 'idle',
+      current_step: 'Upload a Drupal database dump and files archive to begin.',
+      detail_message: 'Pantheon exports are accepted directly: *_database.sql.gz and *_files.tar.gz.',
+      error_summary: null,
+      warnings: [],
+      preflight_checks: [],
+      preflight_ready_at: null,
+    };
+  });
 
   return sanitizeStoredDrupalImportStatus(status);
 }
@@ -623,15 +794,36 @@ export async function saveDrupalImportUpload(
 }
 
 export async function runDrupalImportPreflight(): Promise<DrupalImportStatus> {
-  const current = await withStatusLock(async () => {
+  const preflightState = await withStatusLock(async () => {
     const stored = await readStoredStatus();
     ensureNotRunning(stored);
-    return stored;
+    const runnerToken = createRunnerToken();
+    const next: StoredDrupalImportStatus = {
+      ...stored,
+      status: 'uploading',
+      phase: 'source_analysis',
+      progress_percent: 0,
+      current_step: 'Running preflight checks',
+      detail_message: 'Validating the uploaded Pantheon artifacts before any housing data is changed.',
+      error_summary: null,
+      runner_token: runnerToken,
+      runner_kind: 'preflight',
+      runner_heartbeat_at: new Date().toISOString(),
+    };
+
+    await writeStoredStatus(next);
+
+    return {
+      state: next,
+      runnerToken,
+    };
   });
 
   activePreflight = (async () => {
+    const stopHeartbeat = startRunnerHeartbeat(preflightState.runnerToken);
+
     try {
-      const preflight = await runPreflightChecks(current);
+      const preflight = await runPreflightChecks(preflightState.state);
       await updateStoredStatus((stored) => ({
         ...stored,
         status: 'preflight_ready',
@@ -645,6 +837,9 @@ export async function runDrupalImportPreflight(): Promise<DrupalImportStatus> {
         preflight_checks: preflight.checks,
         preflight_ready_at: new Date().toISOString(),
         extracted_files_root: preflight.extractedFilesRoot,
+        runner_token: stored.runner_token === preflightState.runnerToken ? null : stored.runner_token,
+        runner_kind: stored.runner_token === preflightState.runnerToken ? null : stored.runner_kind,
+        runner_heartbeat_at: stored.runner_token === preflightState.runnerToken ? null : stored.runner_heartbeat_at,
       }));
     } catch (error) {
       await updateStoredStatus((stored) => ({
@@ -655,9 +850,17 @@ export async function runDrupalImportPreflight(): Promise<DrupalImportStatus> {
         current_step: 'Preflight failed',
         detail_message: 'The uploaded artifacts need attention before the migration can begin.',
         error_summary: error instanceof Error ? error.message : String(error),
-        preflight_checks: stored.preflight_checks,
+        summary: emptySummary(),
+        warnings: [],
+        preflight_checks: [],
+        preflight_ready_at: null,
+        extracted_files_root: null,
+        runner_token: stored.runner_token === preflightState.runnerToken ? null : stored.runner_token,
+        runner_kind: stored.runner_token === preflightState.runnerToken ? null : stored.runner_kind,
+        runner_heartbeat_at: stored.runner_token === preflightState.runnerToken ? null : stored.runner_heartbeat_at,
       }));
     } finally {
+      stopHeartbeat();
       activePreflight = null;
     }
   })();
@@ -747,10 +950,21 @@ async function executeDrupalImportRun(): Promise<void> {
     summary: summarizeAudit(audit, sourceSummary),
     log_available: true,
     audit_available: true,
+    runner_heartbeat_at: new Date().toISOString(),
   }));
 
   const afterRun = await readStoredStatus();
-  await cleanupSuccessfulRunArtifacts(afterRun, mysqlConfig);
+  try {
+    await cleanupSuccessfulRunArtifacts(afterRun, mysqlConfig);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Drupal import cleanup failed after a successful run:', error);
+    try {
+      await appendRunLog(afterRun.log_path, `Cleanup warning: ${message}`);
+    } catch (logError) {
+      console.error('Failed to write Drupal import cleanup warning to the run log:', logError);
+    }
+  }
 
   await updateStoredStatus((stored) => ({
     ...stored,
@@ -766,6 +980,9 @@ async function executeDrupalImportRun(): Promise<void> {
     database_dump_path: null,
     files_archive_path: null,
     extracted_files_root: null,
+    runner_token: null,
+    runner_kind: null,
+    runner_heartbeat_at: null,
   }));
 }
 
@@ -778,6 +995,7 @@ export async function startDrupalImportRun(): Promise<DrupalImportStatus> {
       throw new Error('Run a successful preflight before starting the migration.');
     }
 
+    const runnerToken = createRunnerToken();
     const next: StoredDrupalImportStatus = {
       ...current,
       status: 'running',
@@ -787,12 +1005,17 @@ export async function startDrupalImportRun(): Promise<DrupalImportStatus> {
       detail_message: 'The migration job has been queued and will begin preparing the temporary Drupal database immediately.',
       started_at: new Date().toISOString(),
       finished_at: null,
+      runner_token: runnerToken,
+      runner_kind: 'run',
+      runner_heartbeat_at: new Date().toISOString(),
     };
     await writeStoredStatus(next);
     return next;
   });
 
   activeRun = (async () => {
+    const stopHeartbeat = status.runner_token ? startRunnerHeartbeat(status.runner_token) : () => {};
+
     try {
       await executeDrupalImportRun();
     } catch (error) {
@@ -805,8 +1028,12 @@ export async function startDrupalImportRun(): Promise<DrupalImportStatus> {
         detail_message: 'The migration stopped before completion. Review the log and audit output for details.',
         log_available: Boolean(stored.log_path),
         audit_available: Boolean(stored.audit_path),
+        runner_token: null,
+        runner_kind: null,
+        runner_heartbeat_at: null,
       }));
     } finally {
+      stopHeartbeat();
       activeRun = null;
     }
   })();
