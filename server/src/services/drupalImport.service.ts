@@ -1,11 +1,11 @@
 import path from 'path';
 import fs from 'fs/promises';
-import { createReadStream, createWriteStream } from 'fs';
+import { createReadStream } from 'fs';
 import { createGunzip } from 'zlib';
 import readline from 'readline';
 import { promisify } from 'util';
 import { execFile } from 'child_process';
-import { createConnection } from 'mysql2/promise';
+import { createConnection, type Connection } from 'mysql2/promise';
 import type {
   DrupalImportArtifact,
   DrupalImportPreflightCheck,
@@ -53,8 +53,29 @@ const EXTRACTED_DIR = path.join(RUNTIME_DIR, 'extracted');
 const ARTIFACTS_DIR = path.join(RUNTIME_DIR, 'artifacts');
 const STATUS_FILE = path.join(RUNTIME_DIR, 'latest-status.json');
 const PREFLIGHT_LOG_FILE = path.join(RUNTIME_DIR, 'preflight.log');
+const MYSQL_CONNECT_TIMEOUT_MS = 10_000;
+const MYSQL_QUERY_TIMEOUT_MS = 60_000;
 
 let activeRun: Promise<void> | null = null;
+let statusLock: Promise<void> = Promise.resolve();
+
+async function withStatusLock<T>(callback: () => Promise<T>): Promise<T> {
+  const previous = statusLock;
+  let release: (() => void) | undefined;
+  statusLock = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+
+  await previous;
+
+  try {
+    return await callback();
+  } finally {
+    if (release) {
+      release();
+    }
+  }
+}
 
 function emptySummary(): DrupalImportSummary {
   return {
@@ -118,8 +139,13 @@ async function readStoredStatus(): Promise<StoredDrupalImportStatus> {
       ...createDefaultStatus(),
       ...JSON.parse(content) as StoredDrupalImportStatus,
     };
-  } catch {
-    return createDefaultStatus();
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return createDefaultStatus();
+    }
+
+    console.error('Failed to read stored Drupal import status:', error);
+    throw error;
   }
 }
 
@@ -131,9 +157,11 @@ async function writeStoredStatus(status: StoredDrupalImportStatus): Promise<void
 async function updateStoredStatus(
   updater: (current: StoredDrupalImportStatus) => StoredDrupalImportStatus,
 ): Promise<StoredDrupalImportStatus> {
-  const next = updater(await readStoredStatus());
-  await writeStoredStatus(next);
-  return next;
+  return withStatusLock(async () => {
+    const next = updater(await readStoredStatus());
+    await writeStoredStatus(next);
+    return next;
+  });
 }
 
 function buildArtifact(filePath: string, filename: string, sizeBytes: number): DrupalImportArtifact {
@@ -192,34 +220,44 @@ function buildDrupalDbUrl(config: MysqlImportConfig): string {
   return `mysql://${encodeURIComponent(config.user)}${passwordPart}@${config.host}:${config.port}/${config.database}`;
 }
 
-async function resetTemporaryDrupalDatabase(config: MysqlImportConfig): Promise<void> {
-  const connection = await createConnection({
+async function createMysqlRuntimeConnection(
+  config: MysqlImportConfig,
+  database?: string,
+): Promise<Connection> {
+  return createConnection({
     host: config.host,
     port: config.port,
     user: config.user,
     password: config.password,
+    database,
     multipleStatements: false,
+    connectTimeout: MYSQL_CONNECT_TIMEOUT_MS,
   });
+}
+
+async function runMysqlQuery(connection: Connection, sql: string): Promise<void> {
+  await connection.query({
+    sql,
+    timeout: MYSQL_QUERY_TIMEOUT_MS,
+  });
+}
+
+async function resetTemporaryDrupalDatabase(config: MysqlImportConfig): Promise<void> {
+  const connection = await createMysqlRuntimeConnection(config);
 
   try {
-    await connection.query(`DROP DATABASE IF EXISTS \`${config.database}\``);
-    await connection.query(`CREATE DATABASE \`${config.database}\``);
+    await runMysqlQuery(connection, `DROP DATABASE IF EXISTS \`${config.database}\``);
+    await runMysqlQuery(connection, `CREATE DATABASE \`${config.database}\``);
   } finally {
     await connection.end();
   }
 }
 
 async function dropTemporaryDrupalDatabase(config: MysqlImportConfig): Promise<void> {
-  const connection = await createConnection({
-    host: config.host,
-    port: config.port,
-    user: config.user,
-    password: config.password,
-    multipleStatements: false,
-  });
+  const connection = await createMysqlRuntimeConnection(config);
 
   try {
-    await connection.query(`DROP DATABASE IF EXISTS \`${config.database}\``);
+    await runMysqlQuery(connection, `DROP DATABASE IF EXISTS \`${config.database}\``);
   } finally {
     await connection.end();
   }
@@ -230,14 +268,7 @@ async function importSqlDumpIntoTemporaryDatabase(
   config: MysqlImportConfig,
   onProgress?: (statementCount: number) => Promise<void> | void,
 ): Promise<void> {
-  const connection = await createConnection({
-    host: config.host,
-    port: config.port,
-    user: config.user,
-    password: config.password,
-    database: config.database,
-    multipleStatements: false,
-  });
+  const connection = await createMysqlRuntimeConnection(config, config.database);
 
   let statementCount = 0;
   let delimiter = ';';
@@ -274,7 +305,10 @@ async function importSqlDumpIntoTemporaryDatabase(
         continue;
       }
 
-      await connection.query(statement);
+      await connection.query({
+        sql: statement,
+        timeout: MYSQL_QUERY_TIMEOUT_MS,
+      });
       statementCount += 1;
 
       if (statementCount % 50 === 0) {
@@ -283,7 +317,10 @@ async function importSqlDumpIntoTemporaryDatabase(
     }
 
     if (buffer.trim()) {
-      await connection.query(buffer.trim());
+      await connection.query({
+        sql: buffer.trim(),
+        timeout: MYSQL_QUERY_TIMEOUT_MS,
+      });
       statementCount += 1;
       await onProgress?.(statementCount);
     }
@@ -397,7 +434,7 @@ async function runPreflightChecks(state: StoredDrupalImportStatus): Promise<{
     detail: 'The server can write staging files, audit artifacts, and final upload directories.',
   });
 
-  await prisma.$queryRawUnsafe('SELECT 1');
+  await prisma.$queryRaw`SELECT 1`;
   pushCheck({
     id: 'housing_database',
     label: 'Housing database',
@@ -507,9 +544,6 @@ export async function saveDrupalImportUpload(
   kind: UploadedArtifactKind,
   uploadedFile: { path: string; originalname: string; size: number },
 ): Promise<DrupalImportStatus> {
-  const current = await readStoredStatus();
-  ensureNotRunning(current);
-
   const isValid = kind === 'database_dump'
     ? isValidDrupalDatabaseDumpFilename(uploadedFile.originalname)
     : isValidDrupalFilesArchiveFilename(uploadedFile.originalname);
@@ -524,43 +558,48 @@ export async function saveDrupalImportUpload(
 
   await ensureRuntimeDirs();
 
-  const targetName = `${kind}-${Date.now()}-${sanitizeFilename(uploadedFile.originalname)}`;
-  const targetPath = path.join(STAGING_DIR, targetName);
-  await fs.rename(uploadedFile.path, targetPath);
+  return withStatusLock(async () => {
+    const current = await readStoredStatus();
+    ensureNotRunning(current);
 
-  if (kind === 'database_dump' && current.database_dump_path) {
-    await fs.rm(current.database_dump_path, { force: true });
-  }
+    const targetName = `${kind}-${Date.now()}-${sanitizeFilename(uploadedFile.originalname)}`;
+    const targetPath = path.join(STAGING_DIR, targetName);
+    await fs.rename(uploadedFile.path, targetPath);
 
-  if (kind === 'files_archive' && current.files_archive_path) {
-    await fs.rm(current.files_archive_path, { force: true });
-  }
+    if (kind === 'database_dump' && current.database_dump_path) {
+      await fs.rm(current.database_dump_path, { force: true });
+    }
 
-  const artifact = buildArtifact(targetPath, uploadedFile.originalname, uploadedFile.size);
-  const status = await updateStoredStatus((stored) => ({
-    ...stored,
-    status: 'uploading',
-    current_step: kind === 'database_dump' ? 'Database dump uploaded' : 'Files archive uploaded',
-    detail_message: 'Run preflight after both Pantheon exports are uploaded.',
-    error_summary: null,
-    warnings: [],
-    preflight_checks: [],
-    preflight_ready_at: null,
-    summary: {
-      ...emptySummary(),
-      source_users: stored.summary.source_users,
-      source_listings: stored.summary.source_listings,
-      source_listing_photos: stored.summary.source_listing_photos,
-      source_user_pictures: stored.summary.source_user_pictures,
-    },
-    database_dump: kind === 'database_dump' ? artifact : stored.database_dump,
-    files_archive: kind === 'files_archive' ? artifact : stored.files_archive,
-    database_dump_path: kind === 'database_dump' ? targetPath : stored.database_dump_path,
-    files_archive_path: kind === 'files_archive' ? targetPath : stored.files_archive_path,
-    extracted_files_root: null,
-  }));
+    if (kind === 'files_archive' && current.files_archive_path) {
+      await fs.rm(current.files_archive_path, { force: true });
+    }
 
-  return status;
+    const artifact = buildArtifact(targetPath, uploadedFile.originalname, uploadedFile.size);
+    const status: StoredDrupalImportStatus = {
+      ...current,
+      status: 'uploading',
+      current_step: kind === 'database_dump' ? 'Database dump uploaded' : 'Files archive uploaded',
+      detail_message: 'Run preflight after both Pantheon exports are uploaded.',
+      error_summary: null,
+      warnings: [],
+      preflight_checks: [],
+      preflight_ready_at: null,
+      summary: {
+        ...emptySummary(),
+        source_users: current.summary.source_users,
+        source_listings: current.summary.source_listings,
+        source_listing_photos: current.summary.source_listing_photos,
+        source_user_pictures: current.summary.source_user_pictures,
+      },
+      database_dump: kind === 'database_dump' ? artifact : current.database_dump,
+      files_archive: kind === 'files_archive' ? artifact : current.files_archive,
+      database_dump_path: kind === 'database_dump' ? targetPath : current.database_dump_path,
+      files_archive_path: kind === 'files_archive' ? targetPath : current.files_archive_path,
+      extracted_files_root: null,
+    };
+    await writeStoredStatus(status);
+    return status;
+  });
 }
 
 export async function runDrupalImportPreflight(): Promise<DrupalImportStatus> {
@@ -701,12 +740,27 @@ async function executeDrupalImportRun(): Promise<void> {
 }
 
 export async function startDrupalImportRun(): Promise<DrupalImportStatus> {
-  const current = await readStoredStatus();
-  ensureNotRunning(current);
+  const status = await withStatusLock(async () => {
+    const current = await readStoredStatus();
+    ensureNotRunning(current);
 
-  if (current.status !== 'preflight_ready') {
-    throw new Error('Run a successful preflight before starting the migration.');
-  }
+    if (current.status !== 'preflight_ready') {
+      throw new Error('Run a successful preflight before starting the migration.');
+    }
+
+    const next: StoredDrupalImportStatus = {
+      ...current,
+      status: 'running',
+      phase: 'temp_db_preparation',
+      progress_percent: 2,
+      current_step: 'Starting Drupal migration',
+      detail_message: 'The migration job has been queued and will begin preparing the temporary Drupal database immediately.',
+      started_at: new Date().toISOString(),
+      finished_at: null,
+    };
+    await writeStoredStatus(next);
+    return next;
+  });
 
   activeRun = (async () => {
     try {
@@ -727,16 +781,7 @@ export async function startDrupalImportRun(): Promise<DrupalImportStatus> {
     }
   })();
 
-  return updateStoredStatus((stored) => ({
-    ...stored,
-    status: 'running',
-    phase: 'temp_db_preparation',
-    progress_percent: 2,
-    current_step: 'Starting Drupal migration',
-    detail_message: 'The migration job has been queued and will begin preparing the temporary Drupal database immediately.',
-    started_at: new Date().toISOString(),
-    finished_at: null,
-  }));
+  return status;
 }
 
 export async function getDrupalImportLogContent(): Promise<string> {
@@ -752,7 +797,7 @@ export async function getDrupalImportLogContent(): Promise<string> {
   }
 }
 
-export async function getDrupalImportAuditContent(): Promise<unknown | null> {
+export async function getDrupalImportAuditContent(): Promise<MigrationAudit | null> {
   const status = await readStoredStatus();
   if (!status.audit_path) {
     return null;
@@ -760,7 +805,7 @@ export async function getDrupalImportAuditContent(): Promise<unknown | null> {
 
   try {
     const content = await fs.readFile(status.audit_path, 'utf8');
-    return JSON.parse(content) as unknown;
+    return JSON.parse(content) as MigrationAudit;
   } catch {
     return null;
   }

@@ -30,6 +30,10 @@ Operational reminder for production:
 
 1. Upload the Pantheon database dump and files archive through the IT admin UI.
 2. Run preflight and review warnings/counts.
-3. Start the migration only after confirming the temporary import database is available.
-4. After a successful migration, verify the latest audit and log.
-5. Remove or disable the temporary MariaDB/MySQL import runtime when it is no longer needed.
+3. Before starting the migration, create and verify a full rollback checkpoint of the production housing database and uploaded files:
+   - store the backup in an offsite or versioned backup location
+   - record the backup identifier in the run notes
+   - validate the backup with a checksum or quick restore test
+4. Start the migration only after confirming the temporary import database is available.
+5. After a successful migration, verify the latest audit and log.
+6. Remove or disable the temporary MariaDB/MySQL import runtime when it is no longer needed.

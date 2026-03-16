@@ -27,6 +27,10 @@ import type {
 export interface MigrationAudit {
   started_at: string;
   files_root: string;
+  source_summary: Pick<
+    DrupalImportSummary,
+    'source_users' | 'source_listings' | 'source_listing_photos' | 'source_user_pictures'
+  >;
   users: {
     imported_external_uids: number[];
     imported_itatti_with_listing_uids: number[];
@@ -85,7 +89,7 @@ interface DrupalImportRuntimeContext {
 }
 
 const ITATTI_EMAIL_DOMAIN = '@itatti.harvard.edu';
-let runtimeContext: DrupalImportRuntimeContext | null = null;
+type DrupalImportSourceSummary = MigrationAudit['source_summary'];
 
 const DRUPAL_ROLE_MAP: Record<number, Role> = {
   3: Role.HOUSE_ADMIN,
@@ -269,32 +273,28 @@ interface ProcessedListingPhoto {
   sort_order: number;
 }
 
-function getRuntimeContext(): DrupalImportRuntimeContext {
-  if (!runtimeContext) {
-    throw new Error('Drupal import runtime context is not initialized');
-  }
-
-  return runtimeContext;
-}
-
 export function buildDrupalImportSummary(
   audit: MigrationAudit,
   sourceCounts?: Partial<DrupalImportSummary>,
 ): DrupalImportSummary {
+  const linkedExistingUsers = audit.users.linked_existing_account_uids.length;
+  const linkedExistingListings = audit.listings.linked_existing_listing_nids.length;
+
   return {
     source_users: sourceCounts?.source_users ?? 0,
     source_listings: sourceCounts?.source_listings ?? 0,
     source_listing_photos: sourceCounts?.source_listing_photos ?? 0,
     source_user_pictures: sourceCounts?.source_user_pictures ?? 0,
     imported_users:
-      audit.users.imported_external_uids.length + audit.users.imported_itatti_with_listing_uids.length,
-    linked_existing_users: audit.users.linked_existing_account_uids.length,
+      (audit.users.imported_external_uids.length + audit.users.imported_itatti_with_listing_uids.length)
+      - linkedExistingUsers,
+    linked_existing_users: linkedExistingUsers,
     skipped_users:
       audit.users.skipped_itatti_without_listing_uids.length
       + audit.users.blocked_user_uids.length
       + audit.users.missing_emails.length,
-    imported_listings: audit.listings.imported.length,
-    linked_existing_listings: audit.listings.linked_existing_listing_nids.length,
+    imported_listings: audit.listings.imported.length - linkedExistingListings,
+    linked_existing_listings: linkedExistingListings,
     slug_collisions: audit.listings.slug_collisions.length,
     missing_photos: audit.listings.missing_photos.length,
     warnings_count:
@@ -307,14 +307,13 @@ export function buildDrupalImportSummary(
   };
 }
 
-function emitProgress(update: DrupalImportProgressUpdate): void {
-  getRuntimeContext().onProgress?.(update);
+function emitProgress(context: DrupalImportRuntimeContext, update: DrupalImportProgressUpdate): void {
+  context.onProgress?.(update);
 }
 
-function log(message: string): void {
+function log(context: DrupalImportRuntimeContext, message: string): void {
   const line = `[${new Date().toISOString()}] ${message}`;
   console.log(line);
-  const context = getRuntimeContext();
   appendFileSync(context.logFile, `${line}\n`);
   context.onLog?.(line);
 }
@@ -400,12 +399,12 @@ function toNullableNumber(value: string | number | null): number | null {
   return Number.isFinite(numberValue) ? numberValue : null;
 }
 
-async function connectDrupal(): Promise<Connection> {
-  return createConnection(getRuntimeContext().drupalDbUrl);
+async function connectDrupal(context: DrupalImportRuntimeContext): Promise<Connection> {
+  return createConnection(context.drupalDbUrl);
 }
 
-async function ensureDrupalFilesRoot(): Promise<void> {
-  await fs.access(getRuntimeContext().drupalFilesRoot);
+async function ensureDrupalFilesRoot(context: DrupalImportRuntimeContext): Promise<void> {
+  await fs.access(context.drupalFilesRoot);
 }
 
 function isPathInsideRoot(rootPath: string, candidatePath: string): boolean {
@@ -414,9 +413,9 @@ function isPathInsideRoot(rootPath: string, candidatePath: string): boolean {
     || candidatePath === rootPath;
 }
 
-function resolveDrupalPublicFilePath(uri: string): string {
+function resolveDrupalPublicFilePath(context: DrupalImportRuntimeContext, uri: string): string {
   const relativeFilePath = uri.replace(/^public:\/\//, '');
-  const { resolvedDrupalFilesRoot } = getRuntimeContext();
+  const { resolvedDrupalFilesRoot } = context;
   const absoluteDrupalFilePath = path.resolve(resolvedDrupalFilesRoot, relativeFilePath);
 
   if (!isPathInsideRoot(resolvedDrupalFilesRoot, absoluteDrupalFilePath)) {
@@ -427,6 +426,7 @@ function resolveDrupalPublicFilePath(uri: string): string {
 }
 
 async function processDrupalUserPicture(
+  context: DrupalImportRuntimeContext,
   picture: DrupalUserPictureRow | undefined,
 ): Promise<ProcessedUserPicture | null> {
   if (!picture?.uri) {
@@ -434,7 +434,7 @@ async function processDrupalUserPicture(
   }
 
   try {
-    const absoluteDrupalPhotoPath = resolveDrupalPublicFilePath(picture.uri);
+    const absoluteDrupalPhotoPath = resolveDrupalPublicFilePath(context, picture.uri);
     const fileBuffer = await fs.readFile(absoluteDrupalPhotoPath);
     const savedPhoto = await processAndSaveProfilePhoto(fileBuffer);
 
@@ -443,7 +443,7 @@ async function processDrupalUserPicture(
       url: savedPhoto.url,
     };
   } catch (err) {
-    log(`Skipping Drupal user picture uid=${picture.uid} fid=${picture.fid}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    log(context, `Skipping Drupal user picture uid=${picture.uid} fid=${picture.fid}: ${err instanceof Error ? err.message : 'Unknown error'}`);
     return null;
   }
 }
@@ -777,12 +777,13 @@ async function readDrupalSourceData(connection: Connection) {
 }
 
 async function migrateUsers(
+  context: DrupalImportRuntimeContext,
   data: Awaited<ReturnType<typeof readDrupalSourceData>>,
   audit: MigrationAudit,
   sourceSummary: Partial<DrupalImportSummary>,
 ): Promise<Map<number, number>> {
-  log('Migrating users');
-  emitProgress({
+  log(context, 'Migrating users');
+  emitProgress(context, {
     phase: 'user_import',
     progress_percent: 56,
     current_step: 'Importing Drupal users',
@@ -826,7 +827,7 @@ async function migrateUsers(
 
     if (!normalizedEmail) {
       audit.users.missing_emails.push(user.uid);
-      emitProgress({
+      emitProgress(context, {
         detail_message: `Scanning Drupal user records (${processedUsers}/${data.users.length}) and collecting warnings.`,
         summary: buildDrupalImportSummary(audit, sourceSummary),
       });
@@ -835,7 +836,7 @@ async function migrateUsers(
 
     if (user.status !== 1) {
       audit.users.blocked_user_uids.push(user.uid);
-      emitProgress({
+      emitProgress(context, {
         detail_message: `Scanning Drupal user records (${processedUsers}/${data.users.length}) and collecting warnings.`,
         summary: buildDrupalImportSummary(audit, sourceSummary),
       });
@@ -844,7 +845,7 @@ async function migrateUsers(
 
     if (isItattiEmail(normalizedEmail) && !ownsListing) {
       audit.users.skipped_itatti_without_listing_uids.push(user.uid);
-      emitProgress({
+      emitProgress(context, {
         detail_message: `Scanning Drupal user records (${processedUsers}/${data.users.length}) and collecting warnings.`,
         summary: buildDrupalImportSummary(audit, sourceSummary),
       });
@@ -900,7 +901,7 @@ async function migrateUsers(
 
     try {
       if (shouldBackfillProfilePhoto) {
-        processedUserPicture = await processDrupalUserPicture(userPictureByUid.get(user.uid));
+        processedUserPicture = await processDrupalUserPicture(context, userPictureByUid.get(user.uid));
       }
 
       importedUserProfile.processedUserPicture = processedUserPicture;
@@ -958,7 +959,7 @@ async function migrateUsers(
     }
 
     if (processedUsers === data.users.length || processedUsers % 10 === 0) {
-      emitProgress({
+      emitProgress(context, {
         detail_message: `Processed ${processedUsers} of ${data.users.length} Drupal users.`,
         summary: buildDrupalImportSummary(audit, sourceSummary),
       });
@@ -969,13 +970,14 @@ async function migrateUsers(
 }
 
 async function migrateListings(
+  context: DrupalImportRuntimeContext,
   data: Awaited<ReturnType<typeof readDrupalSourceData>>,
   importedUserIdsByDrupalUid: Map<number, number>,
   audit: MigrationAudit,
   sourceSummary: Partial<DrupalImportSummary>,
 ): Promise<void> {
-  log('Migrating listings');
-  emitProgress({
+  log(context, 'Migrating listings');
+  emitProgress(context, {
     phase: 'listing_import',
     progress_percent: 74,
     current_step: 'Importing Drupal listings',
@@ -991,7 +993,7 @@ async function migrateListings(
 
     if (!ownerId) {
       audit.listings.missing_owners.push({ nid: listing.nid, owner_uid: listing.uid || null });
-      emitProgress({
+      emitProgress(context, {
         detail_message: `Processed ${processedListings} of ${data.listings.length} Drupal listings.`,
         summary: buildDrupalImportSummary(audit, sourceSummary),
       });
@@ -1164,7 +1166,7 @@ async function migrateListings(
 
     if (!photoPhaseEmitted && photoRows.length > 0) {
       photoPhaseEmitted = true;
-      emitProgress({
+      emitProgress(context, {
         phase: 'photo_import',
         progress_percent: 86,
         current_step: 'Importing listing photos',
@@ -1182,7 +1184,7 @@ async function migrateListings(
         }
 
         try {
-          const absoluteDrupalPhotoPath = resolveDrupalPublicFilePath(photo.uri);
+          const absoluteDrupalPhotoPath = resolveDrupalPublicFilePath(context, photo.uri);
           const fileBuffer = await fs.readFile(absoluteDrupalPhotoPath);
           const savedPhoto = await processAndSaveImage(fileBuffer);
 
@@ -1237,7 +1239,7 @@ async function migrateListings(
           }
         }));
       } else {
-        log(`Skipped photo replacement for listing nid=${listing.nid} due to ${photoFailures} source photo failure(s)`);
+        log(context, `Skipped photo replacement for listing nid=${listing.nid} due to ${photoFailures} source photo failure(s)`);
         await Promise.all(processedPhotos.map((photo) => deleteLocalFile(photo.filePath)));
       }
     } catch (err) {
@@ -1248,7 +1250,7 @@ async function migrateListings(
     audit.listings.imported.push({ nid: listing.nid, slug: upsertedListing.slug });
 
     if (processedListings === data.listings.length || processedListings % 5 === 0) {
-      emitProgress({
+      emitProgress(context, {
         detail_message: `Processed ${processedListings} of ${data.listings.length} Drupal listings.`,
         summary: buildDrupalImportSummary(audit, sourceSummary),
       });
@@ -1260,6 +1262,12 @@ function createEmptyAudit(filesRoot: string): MigrationAudit {
   return {
     started_at: new Date().toISOString(),
     files_root: filesRoot,
+    source_summary: {
+      source_users: 0,
+      source_listings: 0,
+      source_listing_photos: 0,
+      source_user_pictures: 0,
+    },
     users: {
       imported_external_uids: [],
       imported_itatti_with_listing_uids: [],
@@ -1296,7 +1304,7 @@ export async function inspectDrupalSource(options: {
   summary: Pick<DrupalImportSummary, 'source_users' | 'source_listings' | 'source_listing_photos' | 'source_user_pictures'>;
   warnings: string[];
 }> {
-  runtimeContext = {
+  const context: DrupalImportRuntimeContext = {
     drupalDbUrl: options.drupalDbUrl,
     drupalFilesRoot: path.resolve(options.drupalFilesRoot),
     resolvedDrupalFilesRoot: path.resolve(options.drupalFilesRoot),
@@ -1305,55 +1313,51 @@ export async function inspectDrupalSource(options: {
     disconnectPrismaOnFinish: false,
   };
 
+  await ensureDrupalFilesRoot(context);
+  const connection = await connectDrupal(context);
   try {
-    await ensureDrupalFilesRoot();
-    const connection = await connectDrupal();
-    try {
-      const drupalData = await readDrupalSourceData(connection);
-      const warnings: string[] = [];
+    const drupalData = await readDrupalSourceData(connection);
+    const warnings: string[] = [];
 
-      for (const photo of drupalData.photosByListingId.values()) {
-        for (const row of photo) {
-          if (!row.uri) {
-            warnings.push(`Listing photo fid=${row.fid ?? 'unknown'} is missing its Drupal file URI.`);
-            continue;
-          }
-
-          try {
-            await fs.access(resolveDrupalPublicFilePath(row.uri));
-          } catch {
-            warnings.push(`Listing photo ${row.uri} was referenced in Drupal but not found in the uploaded files archive.`);
-          }
+    for (const photo of drupalData.photosByListingId.values()) {
+      for (const row of photo) {
+        if (!row.uri) {
+          warnings.push(`Listing photo fid=${row.fid ?? 'unknown'} is missing its Drupal file URI.`);
+          continue;
         }
-      }
 
-      for (const picture of drupalData.userPictures) {
         try {
-          await fs.access(resolveDrupalPublicFilePath(picture.uri));
+          await fs.access(resolveDrupalPublicFilePath(context, row.uri));
         } catch {
-          warnings.push(`User picture ${picture.uri} was referenced in Drupal but not found in the uploaded files archive.`);
+          warnings.push(`Listing photo ${row.uri} was referenced in Drupal but not found in the uploaded files archive.`);
         }
       }
-
-      return {
-        summary: {
-          source_users: drupalData.users.length,
-          source_listings: drupalData.listings.length,
-          source_listing_photos: Array.from(drupalData.photosByListingId.values()).reduce((count, rows) => count + rows.length, 0),
-          source_user_pictures: drupalData.userPictures.length,
-        },
-        warnings,
-      };
-    } finally {
-      await connection.end();
     }
+
+    for (const picture of drupalData.userPictures) {
+      try {
+        await fs.access(resolveDrupalPublicFilePath(context, picture.uri));
+      } catch {
+        warnings.push(`User picture ${picture.uri} was referenced in Drupal but not found in the uploaded files archive.`);
+      }
+    }
+
+    return {
+      summary: {
+        source_users: drupalData.users.length,
+        source_listings: drupalData.listings.length,
+        source_listing_photos: Array.from(drupalData.photosByListingId.values()).reduce((count, rows) => count + rows.length, 0),
+        source_user_pictures: drupalData.userPictures.length,
+      },
+      warnings,
+    };
   } finally {
-    runtimeContext = null;
+    await connection.end();
   }
 }
 
 export async function runDrupalImport(options: DrupalImportRunOptions): Promise<MigrationAudit> {
-  runtimeContext = {
+  const context: DrupalImportRuntimeContext = {
     drupalDbUrl: options.drupalDbUrl,
     drupalFilesRoot: path.resolve(options.drupalFilesRoot),
     resolvedDrupalFilesRoot: path.resolve(options.drupalFilesRoot),
@@ -1364,82 +1368,78 @@ export async function runDrupalImport(options: DrupalImportRunOptions): Promise<
     onProgress: options.onProgress,
   };
 
-  const context = getRuntimeContext();
+  await fs.mkdir(path.dirname(context.logFile), { recursive: true });
+  await fs.mkdir(path.dirname(context.auditFile), { recursive: true });
+  writeFileSync(context.logFile, `Drupal migration started at ${new Date().toISOString()}\n`);
+  emitProgress(context, {
+    phase: 'source_analysis',
+    progress_percent: 42,
+    current_step: 'Analyzing Drupal source data',
+    detail_message: 'Connecting to the temporary Drupal database and reading source records.',
+  });
+  await ensureDrupalFilesRoot(context);
+
+  const audit = createEmptyAudit(context.drupalFilesRoot);
+  const connection = await connectDrupal(context);
+  log(context, 'Connected to Drupal database');
+
   try {
-    await fs.mkdir(path.dirname(context.logFile), { recursive: true });
-    await fs.mkdir(path.dirname(context.auditFile), { recursive: true });
-    writeFileSync(context.logFile, `Drupal migration started at ${new Date().toISOString()}\n`);
-    emitProgress({
+    const drupalData = await readDrupalSourceData(connection);
+    const sourceSummary: DrupalImportSourceSummary = {
+      source_users: drupalData.users.length,
+      source_listings: drupalData.listings.length,
+      source_listing_photos: Array.from(drupalData.photosByListingId.values()).reduce((count, rows) => count + rows.length, 0),
+      source_user_pictures: drupalData.userPictures.length,
+    };
+    audit.source_summary = sourceSummary;
+    audit.user_pictures = drupalData.userPictures.map((picture) => ({
+      uid: picture.uid,
+      fid: picture.fid,
+    }));
+
+    emitProgress(context, {
       phase: 'source_analysis',
-      progress_percent: 42,
-      current_step: 'Analyzing Drupal source data',
-      detail_message: 'Connecting to the temporary Drupal database and reading source records.',
-    });
-    await ensureDrupalFilesRoot();
-
-    const audit = createEmptyAudit(context.drupalFilesRoot);
-    const connection = await connectDrupal();
-    log('Connected to Drupal database');
-
-    try {
-      const drupalData = await readDrupalSourceData(connection);
-      const sourceSummary = {
-        source_users: drupalData.users.length,
-        source_listings: drupalData.listings.length,
-        source_listing_photos: Array.from(drupalData.photosByListingId.values()).reduce((count, rows) => count + rows.length, 0),
-        source_user_pictures: drupalData.userPictures.length,
-      } satisfies Partial<DrupalImportSummary>;
-      audit.user_pictures = drupalData.userPictures.map((picture) => ({
-        uid: picture.uid,
-        fid: picture.fid,
-      }));
-
-      emitProgress({
-        phase: 'source_analysis',
-        progress_percent: 48,
-        current_step: 'Drupal source analysis complete',
-        detail_message: `Found ${sourceSummary.source_users} users, ${sourceSummary.source_listings} listings, ${sourceSummary.source_listing_photos} listing photos, and ${sourceSummary.source_user_pictures} user pictures.`,
-        summary: buildDrupalImportSummary(audit, sourceSummary),
-      });
-
-      const importedUserIdsByDrupalUid = await migrateUsers(drupalData, audit, sourceSummary);
-      await migrateListings(drupalData, importedUserIdsByDrupalUid, audit, sourceSummary);
-    } finally {
-      await connection.end();
-      if (context.disconnectPrismaOnFinish) {
-        await prisma.$disconnect();
-      }
-    }
-
-    emitProgress({
-      phase: 'audit_write',
-      progress_percent: 94,
-      current_step: 'Writing migration audit',
-      detail_message: 'Persisting the migration audit report and final summary statistics.',
-      summary: buildDrupalImportSummary(audit),
-    });
-    writeFileSync(context.auditFile, `${JSON.stringify(audit, null, 2)}\n`);
-
-    log(`Imported ${audit.users.imported_external_uids.length} external users`);
-    log(`Imported ${audit.users.imported_itatti_with_listing_uids.length} @itatti.harvard.edu users with listings`);
-    log(`Skipped ${audit.users.skipped_itatti_without_listing_uids.length} @itatti.harvard.edu users without listings`);
-    log(`Linked ${audit.users.linked_existing_account_uids.length} existing users by email`);
-    log(`Preserved local state for ${audit.users.preserved_local_state_uids.length} existing users`);
-    log(`Imported ${audit.listings.imported.length} listings`);
-    log(`Linked ${audit.listings.linked_existing_listing_nids.length} existing listings by legacy match`);
-    log(`Resolved ${audit.listings.slug_collisions.length} listing slug collisions`);
-    log(`Recorded ${audit.listings.missing_photos.length} missing listing photos`);
-    log(`Audit written to ${context.auditFile}`);
-    emitProgress({
-      phase: 'completed',
-      progress_percent: 100,
-      current_step: 'Drupal migration completed',
-      detail_message: 'The Drupal import finished and the latest audit report is available for review.',
-      summary: buildDrupalImportSummary(audit),
+      progress_percent: 48,
+      current_step: 'Drupal source analysis complete',
+      detail_message: `Found ${sourceSummary.source_users} users, ${sourceSummary.source_listings} listings, ${sourceSummary.source_listing_photos} listing photos, and ${sourceSummary.source_user_pictures} user pictures.`,
+      summary: buildDrupalImportSummary(audit, sourceSummary),
     });
 
-    return audit;
+    const importedUserIdsByDrupalUid = await migrateUsers(context, drupalData, audit, sourceSummary);
+    await migrateListings(context, drupalData, importedUserIdsByDrupalUid, audit, sourceSummary);
   } finally {
-    runtimeContext = null;
+    await connection.end();
+    if (context.disconnectPrismaOnFinish) {
+      await prisma.$disconnect();
+    }
   }
+
+  emitProgress(context, {
+    phase: 'audit_write',
+    progress_percent: 94,
+    current_step: 'Writing migration audit',
+    detail_message: 'Persisting the migration audit report and final summary statistics.',
+    summary: buildDrupalImportSummary(audit, audit.source_summary),
+  });
+  writeFileSync(context.auditFile, `${JSON.stringify(audit, null, 2)}\n`);
+
+  log(context, `Imported ${audit.users.imported_external_uids.length} external users`);
+  log(context, `Imported ${audit.users.imported_itatti_with_listing_uids.length} @itatti.harvard.edu users with listings`);
+  log(context, `Skipped ${audit.users.skipped_itatti_without_listing_uids.length} @itatti.harvard.edu users without listings`);
+  log(context, `Linked ${audit.users.linked_existing_account_uids.length} existing users by email`);
+  log(context, `Preserved local state for ${audit.users.preserved_local_state_uids.length} existing users`);
+  log(context, `Imported ${audit.listings.imported.length} listings`);
+  log(context, `Linked ${audit.listings.linked_existing_listing_nids.length} existing listings by legacy match`);
+  log(context, `Resolved ${audit.listings.slug_collisions.length} listing slug collisions`);
+  log(context, `Recorded ${audit.listings.missing_photos.length} missing listing photos`);
+  log(context, `Audit written to ${context.auditFile}`);
+  emitProgress(context, {
+    phase: 'completed',
+    progress_percent: 100,
+    current_step: 'Drupal migration completed',
+    detail_message: 'The Drupal import finished and the latest audit report is available for review.',
+    summary: buildDrupalImportSummary(audit, audit.source_summary),
+  });
+
+  return audit;
 }

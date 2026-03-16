@@ -15,6 +15,8 @@ test('accepts Pantheon-style Drupal database dump filenames', () => {
 test('rejects non-gzip database dump filenames', () => {
   assert.equal(isValidDrupalDatabaseDumpFilename('itattihousing_database.sql'), false);
   assert.equal(isValidDrupalDatabaseDumpFilename('itattihousing_database.zip'), false);
+  assert.equal(isValidDrupalDatabaseDumpFilename('../itattihousing_database.sql.gz'), false);
+  assert.equal(isValidDrupalDatabaseDumpFilename('.hidden.sql.gz'), false);
 });
 
 test('accepts Pantheon-style Drupal files archive filenames', () => {
@@ -27,4 +29,6 @@ test('accepts Pantheon-style Drupal files archive filenames', () => {
 test('rejects non tar.gz files archives', () => {
   assert.equal(isValidDrupalFilesArchiveFilename('files_live.zip'), false);
   assert.equal(isValidDrupalFilesArchiveFilename('files_live.tar'), false);
+  assert.equal(isValidDrupalFilesArchiveFilename('nested/files_live.tar.gz'), false);
+  assert.equal(isValidDrupalFilesArchiveFilename(' files_live.tar.gz'), false);
 });

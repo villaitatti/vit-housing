@@ -388,6 +388,9 @@
     "drupalImportAutomationDetail": "L'app ripristina il dump SQL caricato in un database Drupal temporaneo, legge l'archivio dei file caricato, esegue la migrazione e pulisce le risorse temporanee dopo il successo.",
     "drupalImportUploadTitle": "Carica gli Export Pantheon",
     "drupalImportUploadDescription": "Usa direttamente i file di export originali di Pantheon. Lo strumento admin li prepara sul server per preflight e migrazione.",
+    "drupalImportUploadAction": "Carica",
+    "drupalImportNoFileSelected": "Nessun file selezionato.",
+    "drupalImportUploadedMeta": "{{size}} • caricato {{uploadedAt}}",
     "drupalImportDatabaseLabel": "Dump database Drupal",
     "drupalImportDatabaseDescription": "Carica l'export database di Pantheon, ad esempio itattihousing_live_..._database.sql.gz.",
     "drupalImportFilesLabel": "Archivio file Drupal",
@@ -458,6 +461,11 @@
       "completed": "Completata"
     },
     "drupalImportPhaseIdle": "In attesa di avvio",
+    "drupalImportCheckStatuses": {
+      "pass": "OK",
+      "warn": "Avviso",
+      "fail": "Errore"
+    },
     "serviceConfigTitle": "Configurazione Servizi",
     "serviceConfigDescription": "Visualizza e gestisci la configurazione di questo servizio.",
     "roleMappingTitle": "Mappatura Ruoli Auth0",

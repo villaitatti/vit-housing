@@ -142,6 +142,8 @@ function ArtifactRow({
   onChange: (file: File | null) => void;
   onUpload: () => void;
 }) {
+  const { t, i18n } = useTranslation();
+
   return (
     <div className="rounded-2xl border bg-background p-4">
       <div className="flex items-start gap-3">
@@ -158,17 +160,20 @@ function ArtifactRow({
             />
             <Button type="button" onClick={onUpload} disabled={disabled || uploading || !file}>
               {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-              Upload
+              {t('admin.drupalImportUploadAction')}
             </Button>
           </div>
           <div className="mt-3 text-sm text-muted-foreground">
-            {file ? `${file.name} • ${formatBytes(file.size)}` : 'No file selected yet.'}
+            {file ? `${file.name} • ${formatBytes(file.size)}` : t('admin.drupalImportNoFileSelected')}
           </div>
           {uploadedArtifact ? (
             <div className="mt-3 rounded-xl border border-dashed bg-muted/40 px-3 py-2 text-sm">
               <div className="font-medium">{uploadedArtifact.filename}</div>
               <div className="text-muted-foreground">
-                {formatBytes(uploadedArtifact.size_bytes)} • uploaded {new Date(uploadedArtifact.uploaded_at).toLocaleString()}
+                {t('admin.drupalImportUploadedMeta', {
+                  size: formatBytes(uploadedArtifact.size_bytes),
+                  uploadedAt: new Date(uploadedArtifact.uploaded_at).toLocaleString(i18n.language),
+                })}
               </div>
             </div>
           ) : null}
@@ -292,8 +297,13 @@ export function DrupalImportPage() {
 
   const status = statusQuery.data;
   const isBusy = status ? ACTIVE_STATUSES.has(status.status) : false;
-  const canRunPreflight = Boolean(status?.database_dump && status?.files_archive) && !isBusy;
-  const canStartMigration = status?.status === 'preflight_ready' && !isBusy;
+  const hasPendingClientMutation = uploadDatabaseMutation.isPending
+    || uploadFilesMutation.isPending
+    || preflightMutation.isPending
+    || startMutation.isPending;
+  const disableWorkflowActions = isBusy || hasPendingClientMutation || statusQuery.isFetching;
+  const canRunPreflight = Boolean(status?.database_dump && status?.files_archive) && !disableWorkflowActions;
+  const canStartMigration = status?.status === 'preflight_ready' && !disableWorkflowActions;
   const progressPercent = status?.progress_percent ?? 0;
 
   const apiBaseUrl = useMemo(() => {
@@ -372,7 +382,7 @@ export function DrupalImportPage() {
             accepted=".sql.gz"
             file={databaseDumpFile}
             uploadedArtifact={status?.database_dump ?? null}
-            disabled={isBusy}
+            disabled={disableWorkflowActions}
             uploading={uploadDatabaseMutation.isPending}
             onChange={setDatabaseDumpFile}
             onUpload={() => {
@@ -390,7 +400,7 @@ export function DrupalImportPage() {
             accepted=".tar.gz"
             file={filesArchiveFile}
             uploadedArtifact={status?.files_archive ?? null}
-            disabled={isBusy}
+            disabled={disableWorkflowActions}
             uploading={uploadFilesMutation.isPending}
             onChange={setFilesArchiveFile}
             onUpload={() => {
@@ -402,7 +412,7 @@ export function DrupalImportPage() {
             }}
           />
           <div className="flex flex-wrap gap-3">
-            <Button type="button" variant="outline" onClick={() => invalidateStatus()}>
+            <Button type="button" variant="outline" onClick={() => invalidateStatus()} disabled={hasPendingClientMutation}>
               <RefreshCw className="mr-2 h-4 w-4" />
               {t('admin.drupalImportRefresh')}
             </Button>
@@ -450,7 +460,7 @@ export function DrupalImportPage() {
                     <div className="text-sm text-muted-foreground">{check.detail}</div>
                   </div>
                   <Badge variant={check.status === 'fail' ? 'destructive' : check.status === 'warn' ? 'secondary' : 'outline'}>
-                    {check.status.toUpperCase()}
+                    {t(`admin.drupalImportCheckStatuses.${check.status}`)}
                   </Badge>
                 </div>
               ))}
