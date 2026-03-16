@@ -24,6 +24,7 @@ interface FavoriteListingItem {
   monthly_rent: number | string;
   bedrooms: number;
   bathrooms: number;
+  floor_space?: number | null;
   created_at: string;
   is_favorite: boolean;
   note: string | null;

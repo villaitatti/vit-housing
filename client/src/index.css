@@ -52,6 +52,7 @@
     --brand-grey-light: #e5eaec;
     --brand-grey-medium: #b3bec5;
     --brand-muted-foreground: #5f6b73;
+    --swiper-theme-color: var(--brand-crimson);
 
     --background: #ffffff;
     --foreground: var(--brand-anthracite);
@@ -118,6 +119,7 @@
     --sidebar-accent-foreground: #e5eaec;
     --sidebar-border: #3d4a55;
     --sidebar-ring: #ab192d;
+    --swiper-theme-color: var(--brand-crimson);
 }
 
 @layer base {

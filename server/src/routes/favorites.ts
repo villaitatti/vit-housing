@@ -24,10 +24,11 @@ interface FavoriteRow {
   monthly_rent: number | string;
   bedrooms: number;
   bathrooms: number;
+  floor_space: number | null;
   created_at: Date;
   note: string | null;
   favorited_at: Date;
-  photo_url: string | null;
+  photos: Array<{ url: string }> | string | null;
 }
 
 function normalizeFavoriteNote(note: string | null | undefined): string | null {
@@ -131,19 +132,17 @@ router.get(
             l."monthly_rent",
             l."bedrooms",
             l."bathrooms",
+            l."floor_space",
             l."created_at",
             f."note",
             f."created_at" AS favorited_at,
-            photo."url" AS photo_url
+            (
+              SELECT json_agg(json_build_object('url', sub."url") ORDER BY sub."sort_order")
+              FROM "ListingPhoto" sub
+              WHERE sub."listing_id" = l."id"
+            ) AS photos
           FROM "FavoriteListing" f
           INNER JOIN "Listing" l ON l."id" = f."listing_id"
-          LEFT JOIN LATERAL (
-            SELECT "url"
-            FROM "ListingPhoto"
-            WHERE "listing_id" = l."id"
-            ORDER BY "sort_order" ASC
-            LIMIT 1
-          ) photo ON true
           WHERE ${whereSql}
           ${orderBySql}
           LIMIT ${limit}
@@ -159,22 +158,29 @@ router.get(
       const total = totalRows[0]?.count ?? 0;
 
       sendSuccess(res, {
-        items: favorites.map((favorite) => ({
-          id: favorite.id,
-          slug: favorite.slug,
-          title: favorite.title,
-          address_1: favorite.address_1,
-          city: favorite.city,
-          province: favorite.province,
-          monthly_rent: favorite.monthly_rent,
-          bedrooms: favorite.bedrooms,
-          bathrooms: favorite.bathrooms,
-          created_at: favorite.created_at,
-          photos: favorite.photo_url ? [{ url: favorite.photo_url }] : [],
-          is_favorite: true,
-          note: favorite.note,
-          favorited_at: favorite.favorited_at,
-        })),
+        items: favorites.map((favorite) => {
+          const photos = typeof favorite.photos === 'string'
+            ? JSON.parse(favorite.photos) as Array<{ url: string }>
+            : favorite.photos;
+
+          return {
+            id: favorite.id,
+            slug: favorite.slug,
+            title: favorite.title,
+            address_1: favorite.address_1,
+            city: favorite.city,
+            province: favorite.province,
+            monthly_rent: favorite.monthly_rent,
+            bedrooms: favorite.bedrooms,
+            bathrooms: favorite.bathrooms,
+            floor_space: favorite.floor_space,
+            created_at: favorite.created_at,
+            photos: photos || [],
+            is_favorite: true,
+            note: favorite.note,
+            favorited_at: favorite.favorited_at,
+          };
+        }),
         total,
         page,
         limit,

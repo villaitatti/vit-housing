@@ -186,7 +186,7 @@ router.get('/', authenticate, validate(listingFiltersSchema, 'query'), async (re
         take: limit,
         orderBy: { [sortBy]: sortOrder },
         include: {
-          photos: { orderBy: { sort_order: 'asc' }, take: 1 },
+          photos: { orderBy: { sort_order: 'asc' } },
           owner: { select: { first_name: true, last_name: true } },
         },
       }),
