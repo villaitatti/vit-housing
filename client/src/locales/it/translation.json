@@ -406,7 +406,7 @@
     "drupalImportUploadTitle": "Carica gli Export Pantheon",
     "drupalImportUploadDescription": "Usa direttamente i file di export originali di Pantheon. Lo strumento admin li prepara sul server per preflight e migrazione.",
     "drupalImportSetupTitle": "Runtime MySQL temporaneo richiesto",
-    "drupalImportSetupDescription": "Prima che il preflight possa partire, il server deve potersi collegare a un database MySQL o MariaDB temporaneo in cui verra ripristinato il dump SQL Drupal caricato.",
+    "drupalImportSetupDescription": "Prima che il preflight possa partire, il server deve potersi collegare a un database MySQL o MariaDB temporaneo in cui verrà ripristinato il dump SQL Drupal caricato.",
     "drupalImportSetupRestart": "In sviluppo locale, aggiungi queste variabili a .env, assicurati che MySQL o MariaDB sia in esecuzione e riavvia il server.",
     "drupalImportUploadAction": "Carica",
     "drupalImportNoFileSelected": "Nessun file selezionato.",
