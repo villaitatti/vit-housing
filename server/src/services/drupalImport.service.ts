@@ -57,6 +57,7 @@ const MYSQL_CONNECT_TIMEOUT_MS = 10_000;
 const MYSQL_QUERY_TIMEOUT_MS = 60_000;
 
 let activeRun: Promise<void> | null = null;
+let activePreflight: Promise<void> | null = null;
 let statusLock: Promise<void> = Promise.resolve();
 
 async function withStatusLock<T>(callback: () => Promise<T>): Promise<T> {
@@ -170,6 +171,19 @@ function buildArtifact(filePath: string, filename: string, sizeBytes: number): D
     uploaded_at: new Date().toISOString(),
     size_bytes: sizeBytes,
   };
+}
+
+function sanitizeStoredDrupalImportStatus(status: StoredDrupalImportStatus): DrupalImportStatus {
+  const {
+    database_dump_path: _databaseDumpPath,
+    files_archive_path: _filesArchivePath,
+    extracted_files_root: _extractedFilesRoot,
+    log_path: _logPath,
+    audit_path: _auditPath,
+    ...publicStatus
+  } = status;
+
+  return publicStatus;
 }
 
 function toWarning(message: string, code = 'WARNING'): DrupalImportWarning {
@@ -516,13 +530,13 @@ async function cleanupSuccessfulRunArtifacts(status: StoredDrupalImportStatus, m
 }
 
 function ensureNotRunning(status: StoredDrupalImportStatus): void {
-  if (status.status === 'running' || status.status === 'cleaning_up' || activeRun) {
+  if (status.status === 'running' || status.status === 'cleaning_up' || activeRun || activePreflight) {
     throw new Error('A Drupal import is already running.');
   }
 }
 
 export async function getDrupalImportStatus(): Promise<DrupalImportStatus> {
-  return readStoredStatus();
+  return sanitizeStoredDrupalImportStatus(await readStoredStatus());
 }
 
 export async function initializeDrupalImportUploadSession(): Promise<DrupalImportStatus> {
@@ -537,7 +551,7 @@ export async function initializeDrupalImportUploadSession(): Promise<DrupalImpor
     preflight_ready_at: current.status === 'running' ? current.preflight_ready_at : null,
   }));
 
-  return status;
+  return sanitizeStoredDrupalImportStatus(status);
 }
 
 export async function saveDrupalImportUpload(
@@ -549,6 +563,12 @@ export async function saveDrupalImportUpload(
     : isValidDrupalFilesArchiveFilename(uploadedFile.originalname);
 
   if (!isValid) {
+    try {
+      await fs.rm(uploadedFile.path, { force: true });
+    } catch {
+      // Preserve the original validation error if temp-file cleanup fails.
+    }
+
     throw new Error(
       kind === 'database_dump'
         ? 'Upload a Pantheon Drupal database dump ending in .sql.gz.'
@@ -598,42 +618,52 @@ export async function saveDrupalImportUpload(
       extracted_files_root: null,
     };
     await writeStoredStatus(status);
-    return status;
+    return sanitizeStoredDrupalImportStatus(status);
   });
 }
 
 export async function runDrupalImportPreflight(): Promise<DrupalImportStatus> {
-  const current = await readStoredStatus();
-  ensureNotRunning(current);
+  const current = await withStatusLock(async () => {
+    const stored = await readStoredStatus();
+    ensureNotRunning(stored);
+    return stored;
+  });
 
-  try {
-    const preflight = await runPreflightChecks(current);
-    return updateStoredStatus((stored) => ({
-      ...stored,
-      status: 'preflight_ready',
-      phase: 'source_analysis',
-      progress_percent: 0,
-      current_step: 'Preflight complete',
-      detail_message: 'The Pantheon exports passed preflight. Review the counts and warnings, then start the migration when ready.',
-      error_summary: null,
-      summary: preflight.summary,
-      warnings: preflight.warnings,
-      preflight_checks: preflight.checks,
-      preflight_ready_at: new Date().toISOString(),
-      extracted_files_root: preflight.extractedFilesRoot,
-    }));
-  } catch (error) {
-    return updateStoredStatus((stored) => ({
-      ...stored,
-      status: 'preflight_failed',
-      phase: 'source_analysis',
-      progress_percent: 0,
-      current_step: 'Preflight failed',
-      detail_message: 'The uploaded artifacts need attention before the migration can begin.',
-      error_summary: error instanceof Error ? error.message : String(error),
-      preflight_checks: stored.preflight_checks,
-    }));
-  }
+  activePreflight = (async () => {
+    try {
+      const preflight = await runPreflightChecks(current);
+      await updateStoredStatus((stored) => ({
+        ...stored,
+        status: 'preflight_ready',
+        phase: 'source_analysis',
+        progress_percent: 0,
+        current_step: 'Preflight complete',
+        detail_message: 'The Pantheon exports passed preflight. Review the counts and warnings, then start the migration when ready.',
+        error_summary: null,
+        summary: preflight.summary,
+        warnings: preflight.warnings,
+        preflight_checks: preflight.checks,
+        preflight_ready_at: new Date().toISOString(),
+        extracted_files_root: preflight.extractedFilesRoot,
+      }));
+    } catch (error) {
+      await updateStoredStatus((stored) => ({
+        ...stored,
+        status: 'preflight_failed',
+        phase: 'source_analysis',
+        progress_percent: 0,
+        current_step: 'Preflight failed',
+        detail_message: 'The uploaded artifacts need attention before the migration can begin.',
+        error_summary: error instanceof Error ? error.message : String(error),
+        preflight_checks: stored.preflight_checks,
+      }));
+    } finally {
+      activePreflight = null;
+    }
+  })();
+
+  await activePreflight;
+  return sanitizeStoredDrupalImportStatus(await readStoredStatus());
 }
 
 function applyProgressUpdate(
@@ -781,7 +811,7 @@ export async function startDrupalImportRun(): Promise<DrupalImportStatus> {
     }
   })();
 
-  return status;
+  return sanitizeStoredDrupalImportStatus(status);
 }
 
 export async function getDrupalImportLogContent(): Promise<string> {
