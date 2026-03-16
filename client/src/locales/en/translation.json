@@ -159,7 +159,11 @@
     "noListings": "No listings yet",
     "noListingsDescription": "There are no listings available at the moment. Check back soon!",
     "noFilterResults": "No listings match your filters",
-    "noFilterResultsDescription": "Try adjusting or clearing your search criteria to see more results."
+    "noFilterResultsDescription": "Try adjusting or clearing your search criteria to see more results.",
+    "previousPhoto": "Previous photo",
+    "nextPhoto": "Next photo",
+    "photoCounter": "Photo {{current}} of {{total}}",
+    "floorSpaceValue": "{{value}} sq mt"
   },
   "favorites": {
     "title": "Favorites",

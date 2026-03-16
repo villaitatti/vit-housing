@@ -1,9 +1,9 @@
-import type { KeyboardEvent, MouseEvent } from 'react';
+import { useEffect, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BedDouble, Bath, Building2, Heart, StickyNote } from 'lucide-react';
+import { BedDouble, Bath, Building2, Heart, StickyNote, Ruler, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getListingDetailPath } from '@/lib/listingPaths';
 
 interface ListingCardListing {
@@ -16,6 +16,7 @@ interface ListingCardListing {
   monthly_rent: number | string;
   bedrooms: number;
   bathrooms: number;
+  floor_space?: number | null;
   is_favorite?: boolean;
   photos?: { url: string }[];
 }
@@ -63,8 +64,15 @@ export function ListingCard<TListing extends ListingCardListing>({
 }: ListingCardProps<TListing>) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const coverPhoto = listing.photos?.[0]?.url;
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const photos = listing.photos ?? [];
+  const totalPhotos = photos.length;
+  const currentPhoto = photos[photoIndex]?.url;
   const detailPath = getListingDetailPath(lang, listing.slug);
+
+  useEffect(() => {
+    setPhotoIndex(0);
+  }, [listing.id]);
 
   const openListing = () => {
     if (openInNewTab) {
@@ -79,6 +87,16 @@ export function ListingCard<TListing extends ListingCardListing>({
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       openListing();
+    }
+
+    if (totalPhotos > 1 && event.key === 'ArrowLeft') {
+      event.preventDefault();
+      setPhotoIndex((i) => (i - 1 + totalPhotos) % totalPhotos);
+    }
+
+    if (totalPhotos > 1 && event.key === 'ArrowRight') {
+      event.preventDefault();
+      setPhotoIndex((i) => (i + 1) % totalPhotos);
     }
   };
 
@@ -121,9 +139,9 @@ export function ListingCard<TListing extends ListingCardListing>({
       onKeyDown={handleCardKeyDown}
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
-        {coverPhoto ? (
+        {currentPhoto ? (
           <img
-            src={coverPhoto}
+            src={currentPhoto}
             alt={listing.title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
@@ -132,6 +150,36 @@ export function ListingCard<TListing extends ListingCardListing>({
             <Building2 className="h-12 w-12 text-muted-foreground/50" />
           </div>
         )}
+
+        {totalPhotos > 1 ? (
+          <>
+            <button
+              type="button"
+              className="absolute top-1/2 left-2 -translate-y-1/2 rounded-full bg-background/80 p-1 opacity-0 backdrop-blur transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPhotoIndex((i) => (i - 1 + totalPhotos) % totalPhotos); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); } }}
+              aria-label={t('listings.previousPhoto')}
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full bg-background/80 p-1 opacity-0 backdrop-blur transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPhotoIndex((i) => (i + 1) % totalPhotos); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); } }}
+              aria-label={t('listings.nextPhoto')}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+            <span
+              className="absolute bottom-2 right-2 rounded-full bg-black/50 px-2 py-0.5 text-xs text-white"
+              role="status"
+              aria-label={t('listings.photoCounter', { current: photoIndex + 1, total: totalPhotos })}
+            >
+              {photoIndex + 1}/{totalPhotos}
+            </span>
+          </>
+        ) : null}
 
         {showFavoriteButton ? (
           <Button
@@ -174,6 +222,12 @@ export function ListingCard<TListing extends ListingCardListing>({
             <Bath className="h-4 w-4" />
             {listing.bathrooms}
           </span>
+          {listing.floor_space != null ? (
+            <span className="flex items-center gap-1">
+              <Ruler className="h-4 w-4" />
+              {t('listings.floorSpaceValue', { value: listing.floor_space })}
+            </span>
+          ) : null}
         </div>
 
         {showFavoriteNoteSection ? (
