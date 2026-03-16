@@ -30,6 +30,7 @@ const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsers').then((m) =>
 const InviteUserPage = lazy(() => import('@/pages/admin/InviteUser').then((m) => ({ default: m.InviteUserPage })));
 const AdminInvitationsPage = lazy(() => import('@/pages/admin/AdminInvitations').then((m) => ({ default: m.AdminInvitationsPage })));
 const ServiceConfigPage = lazy(() => import('@/pages/admin/ServiceConfig').then((m) => ({ default: m.ServiceConfigPage })));
+const DrupalImportPage = lazy(() => import('@/pages/admin/DrupalImport').then((m) => ({ default: m.DrupalImportPage })));
 
 function PageLoader() {
   return (
@@ -136,6 +137,14 @@ function App() {
                     element={
                       <RoleGuard roles={['HOUSE_IT_ADMIN']}>
                         <Suspense fallback={<PageLoader />}><ServiceConfigPage /></Suspense>
+                      </RoleGuard>
+                    }
+                  />
+                  <Route
+                    path="drupal-import"
+                    element={
+                      <RoleGuard roles={['HOUSE_IT_ADMIN']}>
+                        <Suspense fallback={<PageLoader />}><DrupalImportPage /></Suspense>
                       </RoleGuard>
                     }
                   />

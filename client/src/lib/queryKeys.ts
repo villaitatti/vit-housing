@@ -29,4 +29,9 @@ export const queryKeys = {
     auth0Roles: ['config', 'auth0', 'roles'] as const,
     auth0RoleMappings: ['config', 'auth0', 'role-mappings'] as const,
   },
+  drupalImport: {
+    status: ['drupal-import', 'status'] as const,
+    log: ['drupal-import', 'log'] as const,
+    audit: ['drupal-import', 'audit'] as const,
+  },
 };

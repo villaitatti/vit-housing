@@ -13,6 +13,7 @@ import {
   Users,
   type LucideIcon,
   Mail,
+  Database,
 } from 'lucide-react';
 import { matchPath } from 'react-router-dom';
 
@@ -174,6 +175,15 @@ export const navigationItems: NavigationItem[] = [
     visible: (context) => hasAnyRole(context.roles, IT_ADMIN_ROLES),
     matches: ['/:lang/admin/services/google_maps'],
   },
+  {
+    id: 'drupal-import',
+    section: 'itAdmin',
+    labelKey: 'admin.drupalImportNav',
+    icon: Database,
+    href: (lang) => `/${lang}/admin/drupal-import`,
+    visible: (context) => hasAnyRole(context.roles, IT_ADMIN_ROLES),
+    matches: ['/:lang/admin/drupal-import'],
+  },
 ];
 
 const serviceTitleKey = (service: string) => {
@@ -259,6 +269,11 @@ const routeMetadata: RouteMetadataDefinition[] = [
     id: 'admin-service',
     pattern: '/:lang/admin/services/:service',
     titleKey: (params) => serviceTitleKey(params.service ?? ''),
+  },
+  {
+    id: 'admin-drupal-import',
+    pattern: '/:lang/admin/drupal-import',
+    titleKey: 'admin.drupalImportTitle',
   },
 ];
 
