@@ -171,6 +171,7 @@ export function ListingCard<TListing extends ListingCardListing>({
             </button>
             <span
               className="absolute bottom-2 right-2 rounded-full bg-black/50 px-2 py-0.5 text-xs text-white"
+              role="status"
               aria-label={t('listings.photoCounter', { current: photoIndex + 1, total: totalPhotos })}
             >
               {photoIndex + 1}/{totalPhotos}
