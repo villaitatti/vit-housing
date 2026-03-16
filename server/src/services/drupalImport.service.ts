@@ -328,7 +328,9 @@ function getMysqlImportConfig(): MysqlImportConfig {
   const database = process.env.DRUPAL_IMPORT_MYSQL_DATABASE || 'drupal_import_temp';
 
   if (!user) {
-    throw new Error('DRUPAL_IMPORT_MYSQL_USER is required for Drupal import preflight and execution.');
+    throw new Error(
+      'Drupal import requires a temporary MySQL/MariaDB runtime. Set DRUPAL_IMPORT_MYSQL_USER in the server environment before running preflight or migration.',
+    );
   }
 
   if (!Number.isFinite(port)) {

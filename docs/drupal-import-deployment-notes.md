@@ -2,6 +2,29 @@
 
 This project now includes a local-first Drupal 7 import workflow in the IT admin UI.
 
+## Local Development Quick Start
+
+The Drupal import preflight restores the uploaded `*_database.sql.gz` dump into a temporary MySQL/MariaDB database before inspecting the source data. Local testing therefore requires a running MySQL-compatible server plus the `DRUPAL_IMPORT_MYSQL_*` environment variables in the app's `.env`.
+
+Example using Docker:
+
+```bash
+docker run --name vithousing-drupal-import-mysql \
+  -e MARIADB_ROOT_PASSWORD=drupal \
+  -p 3306:3306 \
+  -d mariadb:11
+```
+
+Add these values to `.env` and restart the server:
+
+```dotenv
+DRUPAL_IMPORT_MYSQL_HOST=127.0.0.1
+DRUPAL_IMPORT_MYSQL_PORT=3306
+DRUPAL_IMPORT_MYSQL_USER=root
+DRUPAL_IMPORT_MYSQL_PASSWORD=drupal
+DRUPAL_IMPORT_MYSQL_DATABASE=drupal_import_temp
+```
+
 When we later deploy the housing site on a Linux server with Docker/Compose, remember to add the following for the one-off Drupal migration:
 
 - Provide a temporary MariaDB/MySQL runtime dedicated to Drupal import jobs.
