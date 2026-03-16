@@ -84,6 +84,16 @@ export function ListingCard<TListing extends ListingCardListing>({
       event.preventDefault();
       openListing();
     }
+
+    if (totalPhotos > 1 && event.key === 'ArrowLeft') {
+      event.preventDefault();
+      setPhotoIndex((i) => (i - 1 + totalPhotos) % totalPhotos);
+    }
+
+    if (totalPhotos > 1 && event.key === 'ArrowRight') {
+      event.preventDefault();
+      setPhotoIndex((i) => (i + 1) % totalPhotos);
+    }
   };
 
   const handleFavoriteClick = (event: MouseEvent<HTMLButtonElement>) => {
