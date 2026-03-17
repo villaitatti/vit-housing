@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
@@ -20,6 +20,7 @@ export function ConfirmEmailChangePage() {
   const urlToken = searchParams.get('token')?.trim() || '';
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const submittedRef = useRef(false);
 
   // Persist token to sessionStorage so it survives URL stripping and re-renders
   const [token] = useState(() => {
@@ -56,9 +57,10 @@ export function ConfirmEmailChangePage() {
     },
   });
 
-  // Auto-submit token on mount
+  // Auto-submit token once on mount (guard against StrictMode / remount double-fire)
   useEffect(() => {
-    if (token) {
+    if (token && !submittedRef.current) {
+      submittedRef.current = true;
       mutation.mutate(token);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

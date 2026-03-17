@@ -48,6 +48,7 @@ const emailChangeRateLimit = createRateLimitMiddleware({
   maxRequests: 5,
   code: 'RATE_LIMITED',
   message: 'Too many email change attempts. Please try again later.',
+  keyGenerator: (req) => req.user?.userId ? `user:${req.user.userId}` : (req.ip || 'unknown'),
 });
 
 class InvitationUnavailableError extends Error {
@@ -96,6 +97,7 @@ router.post('/login', loginRateLimit, validate(loginSchema), async (req: Request
       email: updatedUser.email,
       roles: updatedUser.roles,
       preferred_language: updatedUser.preferred_language,
+      token_version: updatedUser.token_version,
     });
 
     res.cookie('token', token, COOKIE_OPTIONS);
@@ -314,6 +316,7 @@ router.post('/vit-id/callback', validate(vitIdCallbackSchema), async (req: Reque
       email: user.email,
       roles: user.roles,
       preferred_language: user.preferred_language,
+      token_version: user.token_version,
     });
 
     res.cookie('token', token, COOKIE_OPTIONS);
@@ -548,6 +551,7 @@ router.post('/confirm-email-change', validate(confirmEmailChangeSchema), async (
             pending_email: null,
             email_change_token_hash: null,
             email_change_expires_at: null,
+            token_version: { increment: 1 },
           },
         }),
         prisma.passwordReset.updateMany({

@@ -4,7 +4,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { updateUserSchema, changeEmailSchema, type UpdateUserInput, type ChangeEmailInput } from '@vithousing/shared';
+import { z } from 'zod';
+import { updateUserSchema, type UpdateUserInput, type ChangeEmailInput } from '@vithousing/shared';
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
@@ -62,8 +63,13 @@ export function ProfilePage() {
     },
   });
 
+  const localizedChangeEmailSchema = z.object({
+    new_email: z.string().trim().toLowerCase().email(t('auth.invalidEmail', 'Invalid email address')),
+    current_password: z.string().min(1, t('auth.passwordRequired', 'Password is required')),
+  });
+
   const emailForm = useForm<ChangeEmailInput>({
-    resolver: zodResolver(changeEmailSchema),
+    resolver: zodResolver(localizedChangeEmailSchema),
     mode: 'onBlur',
     defaultValues: {
       new_email: '',
@@ -343,10 +349,12 @@ export function ProfilePage() {
                 id="new_email"
                 type="email"
                 autoComplete="email"
+                aria-invalid={Boolean(emailForm.formState.errors.new_email)}
+                aria-describedby={emailForm.formState.errors.new_email ? 'new_email_error' : undefined}
                 {...emailForm.register('new_email')}
               />
               {emailForm.formState.errors.new_email && (
-                <p className="text-sm text-destructive">{emailForm.formState.errors.new_email.message}</p>
+                <p id="new_email_error" role="alert" className="text-sm text-destructive">{emailForm.formState.errors.new_email.message}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -355,10 +363,12 @@ export function ProfilePage() {
                 id="current_password"
                 type="password"
                 autoComplete="current-password"
+                aria-invalid={Boolean(emailForm.formState.errors.current_password)}
+                aria-describedby={emailForm.formState.errors.current_password ? 'current_password_error' : undefined}
                 {...emailForm.register('current_password')}
               />
               {emailForm.formState.errors.current_password && (
-                <p className="text-sm text-destructive">{emailForm.formState.errors.current_password.message}</p>
+                <p id="current_password_error" role="alert" className="text-sm text-destructive">{emailForm.formState.errors.current_password.message}</p>
               )}
             </div>
             <DialogFooter>

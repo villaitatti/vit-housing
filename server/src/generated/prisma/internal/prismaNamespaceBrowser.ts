@@ -95,6 +95,7 @@ export const UserScalarFieldEnum = {
   pending_email: 'pending_email',
   email_change_token_hash: 'email_change_token_hash',
   email_change_expires_at: 'email_change_expires_at',
+  token_version: 'token_version',
   created_at: 'created_at',
   updated_at: 'updated_at',
   last_login: 'last_login'

@@ -29,11 +29,13 @@ export type AggregateUser = {
 export type UserAvgAggregateOutputType = {
   id: number | null
   legacy_drupal_uid: number | null
+  token_version: number | null
 }
 
 export type UserSumAggregateOutputType = {
   id: number | null
   legacy_drupal_uid: number | null
+  token_version: number | null
 }
 
 export type UserMinAggregateOutputType = {
@@ -52,6 +54,7 @@ export type UserMinAggregateOutputType = {
   pending_email: string | null
   email_change_token_hash: string | null
   email_change_expires_at: Date | null
+  token_version: number | null
   created_at: Date | null
   updated_at: Date | null
   last_login: Date | null
@@ -73,6 +76,7 @@ export type UserMaxAggregateOutputType = {
   pending_email: string | null
   email_change_token_hash: string | null
   email_change_expires_at: Date | null
+  token_version: number | null
   created_at: Date | null
   updated_at: Date | null
   last_login: Date | null
@@ -95,6 +99,7 @@ export type UserCountAggregateOutputType = {
   pending_email: number
   email_change_token_hash: number
   email_change_expires_at: number
+  token_version: number
   created_at: number
   updated_at: number
   last_login: number
@@ -105,11 +110,13 @@ export type UserCountAggregateOutputType = {
 export type UserAvgAggregateInputType = {
   id?: true
   legacy_drupal_uid?: true
+  token_version?: true
 }
 
 export type UserSumAggregateInputType = {
   id?: true
   legacy_drupal_uid?: true
+  token_version?: true
 }
 
 export type UserMinAggregateInputType = {
@@ -128,6 +135,7 @@ export type UserMinAggregateInputType = {
   pending_email?: true
   email_change_token_hash?: true
   email_change_expires_at?: true
+  token_version?: true
   created_at?: true
   updated_at?: true
   last_login?: true
@@ -149,6 +157,7 @@ export type UserMaxAggregateInputType = {
   pending_email?: true
   email_change_token_hash?: true
   email_change_expires_at?: true
+  token_version?: true
   created_at?: true
   updated_at?: true
   last_login?: true
@@ -171,6 +180,7 @@ export type UserCountAggregateInputType = {
   pending_email?: true
   email_change_token_hash?: true
   email_change_expires_at?: true
+  token_version?: true
   created_at?: true
   updated_at?: true
   last_login?: true
@@ -280,6 +290,7 @@ export type UserGroupByOutputType = {
   pending_email: string | null
   email_change_token_hash: string | null
   email_change_expires_at: Date | null
+  token_version: number
   created_at: Date
   updated_at: Date
   last_login: Date | null
@@ -325,6 +336,7 @@ export type UserWhereInput = {
   pending_email?: Prisma.StringNullableFilter<"User"> | string | null
   email_change_token_hash?: Prisma.StringNullableFilter<"User"> | string | null
   email_change_expires_at?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  token_version?: Prisma.IntFilter<"User"> | number
   created_at?: Prisma.DateTimeFilter<"User"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"User"> | Date | string
   last_login?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -352,6 +364,7 @@ export type UserOrderByWithRelationInput = {
   pending_email?: Prisma.SortOrderInput | Prisma.SortOrder
   email_change_token_hash?: Prisma.SortOrderInput | Prisma.SortOrder
   email_change_expires_at?: Prisma.SortOrderInput | Prisma.SortOrder
+  token_version?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   last_login?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -382,6 +395,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   pending_email?: Prisma.StringNullableFilter<"User"> | string | null
   email_change_token_hash?: Prisma.StringNullableFilter<"User"> | string | null
   email_change_expires_at?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  token_version?: Prisma.IntFilter<"User"> | number
   created_at?: Prisma.DateTimeFilter<"User"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"User"> | Date | string
   last_login?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -409,6 +423,7 @@ export type UserOrderByWithAggregationInput = {
   pending_email?: Prisma.SortOrderInput | Prisma.SortOrder
   email_change_token_hash?: Prisma.SortOrderInput | Prisma.SortOrder
   email_change_expires_at?: Prisma.SortOrderInput | Prisma.SortOrder
+  token_version?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   last_login?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -439,6 +454,7 @@ export type UserScalarWhereWithAggregatesInput = {
   pending_email?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   email_change_token_hash?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   email_change_expires_at?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  token_version?: Prisma.IntWithAggregatesFilter<"User"> | number
   created_at?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updated_at?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   last_login?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
@@ -460,6 +476,7 @@ export type UserCreateInput = {
   pending_email?: string | null
   email_change_token_hash?: string | null
   email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
@@ -487,6 +504,7 @@ export type UserUncheckedCreateInput = {
   pending_email?: string | null
   email_change_token_hash?: string | null
   email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
@@ -513,6 +531,7 @@ export type UserUpdateInput = {
   pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -540,6 +559,7 @@ export type UserUncheckedUpdateInput = {
   pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -567,6 +587,7 @@ export type UserCreateManyInput = {
   pending_email?: string | null
   email_change_token_hash?: string | null
   email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
@@ -588,6 +609,7 @@ export type UserUpdateManyMutationInput = {
   pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -610,6 +632,7 @@ export type UserUncheckedUpdateManyInput = {
   pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -640,6 +663,7 @@ export type UserCountOrderByAggregateInput = {
   pending_email?: Prisma.SortOrder
   email_change_token_hash?: Prisma.SortOrder
   email_change_expires_at?: Prisma.SortOrder
+  token_version?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   last_login?: Prisma.SortOrder
@@ -648,6 +672,7 @@ export type UserCountOrderByAggregateInput = {
 export type UserAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   legacy_drupal_uid?: Prisma.SortOrder
+  token_version?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -666,6 +691,7 @@ export type UserMaxOrderByAggregateInput = {
   pending_email?: Prisma.SortOrder
   email_change_token_hash?: Prisma.SortOrder
   email_change_expires_at?: Prisma.SortOrder
+  token_version?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   last_login?: Prisma.SortOrder
@@ -687,6 +713,7 @@ export type UserMinOrderByAggregateInput = {
   pending_email?: Prisma.SortOrder
   email_change_token_hash?: Prisma.SortOrder
   email_change_expires_at?: Prisma.SortOrder
+  token_version?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   last_login?: Prisma.SortOrder
@@ -695,6 +722,7 @@ export type UserMinOrderByAggregateInput = {
 export type UserSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   legacy_drupal_uid?: Prisma.SortOrder
+  token_version?: Prisma.SortOrder
 }
 
 export type UserNullableScalarRelationFilter = {
@@ -740,16 +768,16 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }
 
-export type DateTimeFieldUpdateOperationsInput = {
-  set?: Date | string
-}
-
 export type IntFieldUpdateOperationsInput = {
   set?: number
   increment?: number
   decrement?: number
   multiply?: number
   divide?: number
+}
+
+export type DateTimeFieldUpdateOperationsInput = {
+  set?: Date | string
 }
 
 export type UserCreateNestedOneWithoutInvitations_sentInput = {
@@ -842,6 +870,7 @@ export type UserCreateWithoutInvitations_sentInput = {
   pending_email?: string | null
   email_change_token_hash?: string | null
   email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
@@ -868,6 +897,7 @@ export type UserUncheckedCreateWithoutInvitations_sentInput = {
   pending_email?: string | null
   email_change_token_hash?: string | null
   email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
@@ -909,6 +939,7 @@ export type UserUpdateWithoutInvitations_sentInput = {
   pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -935,6 +966,7 @@ export type UserUncheckedUpdateWithoutInvitations_sentInput = {
   pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -960,6 +992,7 @@ export type UserCreateWithoutListingsInput = {
   pending_email?: string | null
   email_change_token_hash?: string | null
   email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
@@ -986,6 +1019,7 @@ export type UserUncheckedCreateWithoutListingsInput = {
   pending_email?: string | null
   email_change_token_hash?: string | null
   email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
@@ -1027,6 +1061,7 @@ export type UserUpdateWithoutListingsInput = {
   pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1053,6 +1088,7 @@ export type UserUncheckedUpdateWithoutListingsInput = {
   pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1078,6 +1114,7 @@ export type UserCreateWithoutFavorite_listingsInput = {
   pending_email?: string | null
   email_change_token_hash?: string | null
   email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
@@ -1104,6 +1141,7 @@ export type UserUncheckedCreateWithoutFavorite_listingsInput = {
   pending_email?: string | null
   email_change_token_hash?: string | null
   email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
@@ -1145,6 +1183,7 @@ export type UserUpdateWithoutFavorite_listingsInput = {
   pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1171,6 +1210,7 @@ export type UserUncheckedUpdateWithoutFavorite_listingsInput = {
   pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1196,6 +1236,7 @@ export type UserCreateWithoutConfigs_updatedInput = {
   pending_email?: string | null
   email_change_token_hash?: string | null
   email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
@@ -1222,6 +1263,7 @@ export type UserUncheckedCreateWithoutConfigs_updatedInput = {
   pending_email?: string | null
   email_change_token_hash?: string | null
   email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
@@ -1263,6 +1305,7 @@ export type UserUpdateWithoutConfigs_updatedInput = {
   pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1289,6 +1332,7 @@ export type UserUncheckedUpdateWithoutConfigs_updatedInput = {
   pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1314,6 +1358,7 @@ export type UserCreateWithoutPassword_resetsInput = {
   pending_email?: string | null
   email_change_token_hash?: string | null
   email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
@@ -1340,6 +1385,7 @@ export type UserUncheckedCreateWithoutPassword_resetsInput = {
   pending_email?: string | null
   email_change_token_hash?: string | null
   email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
@@ -1381,6 +1427,7 @@ export type UserUpdateWithoutPassword_resetsInput = {
   pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1407,6 +1454,7 @@ export type UserUncheckedUpdateWithoutPassword_resetsInput = {
   pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1500,6 +1548,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   pending_email?: boolean
   email_change_token_hash?: boolean
   email_change_expires_at?: boolean
+  token_version?: boolean
   created_at?: boolean
   updated_at?: boolean
   last_login?: boolean
@@ -1528,6 +1577,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   pending_email?: boolean
   email_change_token_hash?: boolean
   email_change_expires_at?: boolean
+  token_version?: boolean
   created_at?: boolean
   updated_at?: boolean
   last_login?: boolean
@@ -1550,6 +1600,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   pending_email?: boolean
   email_change_token_hash?: boolean
   email_change_expires_at?: boolean
+  token_version?: boolean
   created_at?: boolean
   updated_at?: boolean
   last_login?: boolean
@@ -1572,12 +1623,13 @@ export type UserSelectScalar = {
   pending_email?: boolean
   email_change_token_hash?: boolean
   email_change_expires_at?: boolean
+  token_version?: boolean
   created_at?: boolean
   updated_at?: boolean
   last_login?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "legacy_drupal_uid" | "password" | "auth0_user_id" | "profile_photo_path" | "profile_photo_url" | "first_name" | "last_name" | "roles" | "preferred_language" | "phone_number" | "mobile_number" | "pending_email" | "email_change_token_hash" | "email_change_expires_at" | "created_at" | "updated_at" | "last_login", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "legacy_drupal_uid" | "password" | "auth0_user_id" | "profile_photo_path" | "profile_photo_url" | "first_name" | "last_name" | "roles" | "preferred_language" | "phone_number" | "mobile_number" | "pending_email" | "email_change_token_hash" | "email_change_expires_at" | "token_version" | "created_at" | "updated_at" | "last_login", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   listings?: boolean | Prisma.User$listingsArgs<ExtArgs>
   favorite_listings?: boolean | Prisma.User$favorite_listingsArgs<ExtArgs>
@@ -1615,6 +1667,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     pending_email: string | null
     email_change_token_hash: string | null
     email_change_expires_at: Date | null
+    token_version: number
     created_at: Date
     updated_at: Date
     last_login: Date | null
@@ -2062,6 +2115,7 @@ export interface UserFieldRefs {
   readonly pending_email: Prisma.FieldRef<"User", 'String'>
   readonly email_change_token_hash: Prisma.FieldRef<"User", 'String'>
   readonly email_change_expires_at: Prisma.FieldRef<"User", 'DateTime'>
+  readonly token_version: Prisma.FieldRef<"User", 'Int'>
   readonly created_at: Prisma.FieldRef<"User", 'DateTime'>
   readonly updated_at: Prisma.FieldRef<"User", 'DateTime'>
   readonly last_login: Prisma.FieldRef<"User", 'DateTime'>

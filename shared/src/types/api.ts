@@ -26,4 +26,5 @@ export interface JwtPayload {
   email: string;
   roles: Role[];
   preferred_language: 'EN' | 'IT';
+  token_version?: number;
 }

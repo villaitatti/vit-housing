@@ -118,6 +118,8 @@
     "resetTokenInvalid": "This password reset link is invalid or has expired. Please request a new one.",
     "resetTokenExpired": "This password reset link has expired. Please request a new one.",
     "backToLogin": "Back to login",
+    "invalidEmail": "Invalid email address",
+    "passwordRequired": "Password is required",
     "passwordStrength": "Password strength",
     "passwordStrengthWeak": "Weak",
     "passwordStrengthFair": "Fair",

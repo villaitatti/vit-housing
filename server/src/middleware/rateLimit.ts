@@ -7,6 +7,7 @@ interface RateLimitOptions {
   code: string;
   message: string;
   cleanupIntervalMs?: number;
+  keyGenerator?: (req: Request) => string;
 }
 
 interface RateLimitEntry {
@@ -37,7 +38,7 @@ export function createRateLimitMiddleware(options: RateLimitOptions) {
 
   return function rateLimitMiddleware(req: Request, res: Response, next: NextFunction): void {
     const now = Date.now();
-    const key = req.ip || 'unknown';
+    const key = options.keyGenerator ? options.keyGenerator(req) : (req.ip || 'unknown');
     if (!req.ip) {
       console.warn('Rate limit middleware received request without req.ip', {
         method: req.method,

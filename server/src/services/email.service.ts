@@ -73,7 +73,7 @@ export async function sendInvitationEmail({
   const client = await getClient();
   const language = lang.toLowerCase();
   const registrationUrl = `${config.invitationBaseUrl}/${language}/register?token=${token}`;
-  const recipientName = [firstName, lastName].filter(Boolean).join(' ').trim();
+  const safeRecipientName = escapeHtml([firstName, lastName].filter(Boolean).join(' ').trim());
   const formattedExpiry = formatInvitationExpiry(expiresAt, language);
 
   const isEnglish = language === 'en';
@@ -98,10 +98,10 @@ export async function sendInvitationEmail({
       ? 'Sei stato invitato a unirti a Villa I Tatti Housing come proprietario.'
       : 'Sei stato invitato a unirti a Villa I Tatti Housing come utente.';
 
-  const greeting = recipientName
+  const greeting = safeRecipientName
     ? isEnglish
-      ? `Hello ${recipientName},`
-      : `Ciao ${recipientName},`
+      ? `Hello ${safeRecipientName},`
+      : `Ciao ${safeRecipientName},`
     : isEnglish
       ? 'Hello,'
       : 'Ciao,';
@@ -199,7 +199,7 @@ export async function sendEmailChangeVerification({
   const config = await getSESConfig();
   const client = await getClient();
   const language = lang.toLowerCase();
-  const confirmUrl = `${config.invitationBaseUrl}/${language}/confirm-email-change?token=${token}`;
+  const confirmUrl = `${config.invitationBaseUrl}/${language}/confirm-email-change?token=${encodeURIComponent(token)}`;
 
   const isEnglish = language === 'en';
   const safeFirstName = firstName ? escapeHtml(firstName) : undefined;
@@ -395,15 +395,16 @@ export async function sendPasswordResetEmail({
   const resetUrl = `${config.invitationBaseUrl}/${language}/reset-password?token=${token}`;
 
   const isEnglish = language === 'en';
+  const safeFirstName = firstName ? escapeHtml(firstName) : undefined;
 
   const subject = isEnglish
     ? 'Reset your Villa I Tatti Housing password'
     : 'Reimposta la tua password di Villa I Tatti Housing';
 
-  const greeting = firstName
+  const greeting = safeFirstName
     ? isEnglish
-      ? `Hello ${firstName},`
-      : `Ciao ${firstName},`
+      ? `Hello ${safeFirstName},`
+      : `Ciao ${safeFirstName},`
     : isEnglish
       ? 'Hello,'
       : 'Ciao,';
