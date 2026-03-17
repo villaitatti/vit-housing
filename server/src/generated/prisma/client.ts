@@ -81,3 +81,8 @@ export type ServiceConfig = Prisma.ServiceConfigModel
  * 
  */
 export type Auth0RoleMapping = Prisma.Auth0RoleMappingModel
+/**
+ * Model PasswordReset
+ * 
+ */
+export type PasswordReset = Prisma.PasswordResetModel

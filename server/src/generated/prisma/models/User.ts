@@ -29,11 +29,13 @@ export type AggregateUser = {
 export type UserAvgAggregateOutputType = {
   id: number | null
   legacy_drupal_uid: number | null
+  token_version: number | null
 }
 
 export type UserSumAggregateOutputType = {
   id: number | null
   legacy_drupal_uid: number | null
+  token_version: number | null
 }
 
 export type UserMinAggregateOutputType = {
@@ -49,6 +51,10 @@ export type UserMinAggregateOutputType = {
   preferred_language: $Enums.Language | null
   phone_number: string | null
   mobile_number: string | null
+  pending_email: string | null
+  email_change_token_hash: string | null
+  email_change_expires_at: Date | null
+  token_version: number | null
   created_at: Date | null
   updated_at: Date | null
   last_login: Date | null
@@ -67,6 +73,10 @@ export type UserMaxAggregateOutputType = {
   preferred_language: $Enums.Language | null
   phone_number: string | null
   mobile_number: string | null
+  pending_email: string | null
+  email_change_token_hash: string | null
+  email_change_expires_at: Date | null
+  token_version: number | null
   created_at: Date | null
   updated_at: Date | null
   last_login: Date | null
@@ -86,6 +96,10 @@ export type UserCountAggregateOutputType = {
   preferred_language: number
   phone_number: number
   mobile_number: number
+  pending_email: number
+  email_change_token_hash: number
+  email_change_expires_at: number
+  token_version: number
   created_at: number
   updated_at: number
   last_login: number
@@ -96,11 +110,13 @@ export type UserCountAggregateOutputType = {
 export type UserAvgAggregateInputType = {
   id?: true
   legacy_drupal_uid?: true
+  token_version?: true
 }
 
 export type UserSumAggregateInputType = {
   id?: true
   legacy_drupal_uid?: true
+  token_version?: true
 }
 
 export type UserMinAggregateInputType = {
@@ -116,6 +132,10 @@ export type UserMinAggregateInputType = {
   preferred_language?: true
   phone_number?: true
   mobile_number?: true
+  pending_email?: true
+  email_change_token_hash?: true
+  email_change_expires_at?: true
+  token_version?: true
   created_at?: true
   updated_at?: true
   last_login?: true
@@ -134,6 +154,10 @@ export type UserMaxAggregateInputType = {
   preferred_language?: true
   phone_number?: true
   mobile_number?: true
+  pending_email?: true
+  email_change_token_hash?: true
+  email_change_expires_at?: true
+  token_version?: true
   created_at?: true
   updated_at?: true
   last_login?: true
@@ -153,6 +177,10 @@ export type UserCountAggregateInputType = {
   preferred_language?: true
   phone_number?: true
   mobile_number?: true
+  pending_email?: true
+  email_change_token_hash?: true
+  email_change_expires_at?: true
+  token_version?: true
   created_at?: true
   updated_at?: true
   last_login?: true
@@ -259,6 +287,10 @@ export type UserGroupByOutputType = {
   preferred_language: $Enums.Language
   phone_number: string | null
   mobile_number: string | null
+  pending_email: string | null
+  email_change_token_hash: string | null
+  email_change_expires_at: Date | null
+  token_version: number
   created_at: Date
   updated_at: Date
   last_login: Date | null
@@ -301,6 +333,10 @@ export type UserWhereInput = {
   preferred_language?: Prisma.EnumLanguageFilter<"User"> | $Enums.Language
   phone_number?: Prisma.StringNullableFilter<"User"> | string | null
   mobile_number?: Prisma.StringNullableFilter<"User"> | string | null
+  pending_email?: Prisma.StringNullableFilter<"User"> | string | null
+  email_change_token_hash?: Prisma.StringNullableFilter<"User"> | string | null
+  email_change_expires_at?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  token_version?: Prisma.IntFilter<"User"> | number
   created_at?: Prisma.DateTimeFilter<"User"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"User"> | Date | string
   last_login?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -308,6 +344,7 @@ export type UserWhereInput = {
   favorite_listings?: Prisma.FavoriteListingListRelationFilter
   invitations_sent?: Prisma.InvitationListRelationFilter
   configs_updated?: Prisma.ServiceConfigListRelationFilter
+  password_resets?: Prisma.PasswordResetListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -324,6 +361,10 @@ export type UserOrderByWithRelationInput = {
   preferred_language?: Prisma.SortOrder
   phone_number?: Prisma.SortOrderInput | Prisma.SortOrder
   mobile_number?: Prisma.SortOrderInput | Prisma.SortOrder
+  pending_email?: Prisma.SortOrderInput | Prisma.SortOrder
+  email_change_token_hash?: Prisma.SortOrderInput | Prisma.SortOrder
+  email_change_expires_at?: Prisma.SortOrderInput | Prisma.SortOrder
+  token_version?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   last_login?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -331,6 +372,7 @@ export type UserOrderByWithRelationInput = {
   favorite_listings?: Prisma.FavoriteListingOrderByRelationAggregateInput
   invitations_sent?: Prisma.InvitationOrderByRelationAggregateInput
   configs_updated?: Prisma.ServiceConfigOrderByRelationAggregateInput
+  password_resets?: Prisma.PasswordResetOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -350,6 +392,10 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   preferred_language?: Prisma.EnumLanguageFilter<"User"> | $Enums.Language
   phone_number?: Prisma.StringNullableFilter<"User"> | string | null
   mobile_number?: Prisma.StringNullableFilter<"User"> | string | null
+  pending_email?: Prisma.StringNullableFilter<"User"> | string | null
+  email_change_token_hash?: Prisma.StringNullableFilter<"User"> | string | null
+  email_change_expires_at?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  token_version?: Prisma.IntFilter<"User"> | number
   created_at?: Prisma.DateTimeFilter<"User"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"User"> | Date | string
   last_login?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -357,6 +403,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   favorite_listings?: Prisma.FavoriteListingListRelationFilter
   invitations_sent?: Prisma.InvitationListRelationFilter
   configs_updated?: Prisma.ServiceConfigListRelationFilter
+  password_resets?: Prisma.PasswordResetListRelationFilter
 }, "id" | "email" | "legacy_drupal_uid" | "auth0_user_id">
 
 export type UserOrderByWithAggregationInput = {
@@ -373,6 +420,10 @@ export type UserOrderByWithAggregationInput = {
   preferred_language?: Prisma.SortOrder
   phone_number?: Prisma.SortOrderInput | Prisma.SortOrder
   mobile_number?: Prisma.SortOrderInput | Prisma.SortOrder
+  pending_email?: Prisma.SortOrderInput | Prisma.SortOrder
+  email_change_token_hash?: Prisma.SortOrderInput | Prisma.SortOrder
+  email_change_expires_at?: Prisma.SortOrderInput | Prisma.SortOrder
+  token_version?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   last_login?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -400,6 +451,10 @@ export type UserScalarWhereWithAggregatesInput = {
   preferred_language?: Prisma.EnumLanguageWithAggregatesFilter<"User"> | $Enums.Language
   phone_number?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   mobile_number?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  pending_email?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  email_change_token_hash?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  email_change_expires_at?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  token_version?: Prisma.IntWithAggregatesFilter<"User"> | number
   created_at?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updated_at?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   last_login?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
@@ -418,6 +473,10 @@ export type UserCreateInput = {
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
+  pending_email?: string | null
+  email_change_token_hash?: string | null
+  email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
@@ -425,6 +484,7 @@ export type UserCreateInput = {
   favorite_listings?: Prisma.FavoriteListingCreateNestedManyWithoutUserInput
   invitations_sent?: Prisma.InvitationCreateNestedManyWithoutInviterInput
   configs_updated?: Prisma.ServiceConfigCreateNestedManyWithoutUpdaterInput
+  password_resets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -441,6 +501,10 @@ export type UserUncheckedCreateInput = {
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
+  pending_email?: string | null
+  email_change_token_hash?: string | null
+  email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
@@ -448,6 +512,7 @@ export type UserUncheckedCreateInput = {
   favorite_listings?: Prisma.FavoriteListingUncheckedCreateNestedManyWithoutUserInput
   invitations_sent?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput
   configs_updated?: Prisma.ServiceConfigUncheckedCreateNestedManyWithoutUpdaterInput
+  password_resets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -463,6 +528,10 @@ export type UserUpdateInput = {
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -470,6 +539,7 @@ export type UserUpdateInput = {
   favorite_listings?: Prisma.FavoriteListingUpdateManyWithoutUserNestedInput
   invitations_sent?: Prisma.InvitationUpdateManyWithoutInviterNestedInput
   configs_updated?: Prisma.ServiceConfigUpdateManyWithoutUpdaterNestedInput
+  password_resets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -486,6 +556,10 @@ export type UserUncheckedUpdateInput = {
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -493,6 +567,7 @@ export type UserUncheckedUpdateInput = {
   favorite_listings?: Prisma.FavoriteListingUncheckedUpdateManyWithoutUserNestedInput
   invitations_sent?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput
   configs_updated?: Prisma.ServiceConfigUncheckedUpdateManyWithoutUpdaterNestedInput
+  password_resets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -509,6 +584,10 @@ export type UserCreateManyInput = {
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
+  pending_email?: string | null
+  email_change_token_hash?: string | null
+  email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
@@ -527,6 +606,10 @@ export type UserUpdateManyMutationInput = {
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -546,6 +629,10 @@ export type UserUncheckedUpdateManyInput = {
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -573,6 +660,10 @@ export type UserCountOrderByAggregateInput = {
   preferred_language?: Prisma.SortOrder
   phone_number?: Prisma.SortOrder
   mobile_number?: Prisma.SortOrder
+  pending_email?: Prisma.SortOrder
+  email_change_token_hash?: Prisma.SortOrder
+  email_change_expires_at?: Prisma.SortOrder
+  token_version?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   last_login?: Prisma.SortOrder
@@ -581,6 +672,7 @@ export type UserCountOrderByAggregateInput = {
 export type UserAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   legacy_drupal_uid?: Prisma.SortOrder
+  token_version?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -596,6 +688,10 @@ export type UserMaxOrderByAggregateInput = {
   preferred_language?: Prisma.SortOrder
   phone_number?: Prisma.SortOrder
   mobile_number?: Prisma.SortOrder
+  pending_email?: Prisma.SortOrder
+  email_change_token_hash?: Prisma.SortOrder
+  email_change_expires_at?: Prisma.SortOrder
+  token_version?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   last_login?: Prisma.SortOrder
@@ -614,6 +710,10 @@ export type UserMinOrderByAggregateInput = {
   preferred_language?: Prisma.SortOrder
   phone_number?: Prisma.SortOrder
   mobile_number?: Prisma.SortOrder
+  pending_email?: Prisma.SortOrder
+  email_change_token_hash?: Prisma.SortOrder
+  email_change_expires_at?: Prisma.SortOrder
+  token_version?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   last_login?: Prisma.SortOrder
@@ -622,6 +722,7 @@ export type UserMinOrderByAggregateInput = {
 export type UserSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   legacy_drupal_uid?: Prisma.SortOrder
+  token_version?: Prisma.SortOrder
 }
 
 export type UserNullableScalarRelationFilter = {
@@ -663,10 +764,6 @@ export type EnumLanguageFieldUpdateOperationsInput = {
   set?: $Enums.Language
 }
 
-export type DateTimeFieldUpdateOperationsInput = {
-  set?: Date | string
-}
-
 export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }
@@ -677,6 +774,10 @@ export type IntFieldUpdateOperationsInput = {
   decrement?: number
   multiply?: number
   divide?: number
+}
+
+export type DateTimeFieldUpdateOperationsInput = {
+  set?: Date | string
 }
 
 export type UserCreateNestedOneWithoutInvitations_sentInput = {
@@ -739,6 +840,20 @@ export type UserUpdateOneWithoutConfigs_updatedNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutConfigs_updatedInput, Prisma.UserUpdateWithoutConfigs_updatedInput>, Prisma.UserUncheckedUpdateWithoutConfigs_updatedInput>
 }
 
+export type UserCreateNestedOneWithoutPassword_resetsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPassword_resetsInput, Prisma.UserUncheckedCreateWithoutPassword_resetsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPassword_resetsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutPassword_resetsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPassword_resetsInput, Prisma.UserUncheckedCreateWithoutPassword_resetsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPassword_resetsInput
+  upsert?: Prisma.UserUpsertWithoutPassword_resetsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPassword_resetsInput, Prisma.UserUpdateWithoutPassword_resetsInput>, Prisma.UserUncheckedUpdateWithoutPassword_resetsInput>
+}
+
 export type UserCreateWithoutInvitations_sentInput = {
   email: string
   legacy_drupal_uid?: number | null
@@ -752,12 +867,17 @@ export type UserCreateWithoutInvitations_sentInput = {
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
+  pending_email?: string | null
+  email_change_token_hash?: string | null
+  email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
   listings?: Prisma.ListingCreateNestedManyWithoutOwnerInput
   favorite_listings?: Prisma.FavoriteListingCreateNestedManyWithoutUserInput
   configs_updated?: Prisma.ServiceConfigCreateNestedManyWithoutUpdaterInput
+  password_resets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutInvitations_sentInput = {
@@ -774,12 +894,17 @@ export type UserUncheckedCreateWithoutInvitations_sentInput = {
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
+  pending_email?: string | null
+  email_change_token_hash?: string | null
+  email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
   listings?: Prisma.ListingUncheckedCreateNestedManyWithoutOwnerInput
   favorite_listings?: Prisma.FavoriteListingUncheckedCreateNestedManyWithoutUserInput
   configs_updated?: Prisma.ServiceConfigUncheckedCreateNestedManyWithoutUpdaterInput
+  password_resets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutInvitations_sentInput = {
@@ -811,12 +936,17 @@ export type UserUpdateWithoutInvitations_sentInput = {
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listings?: Prisma.ListingUpdateManyWithoutOwnerNestedInput
   favorite_listings?: Prisma.FavoriteListingUpdateManyWithoutUserNestedInput
   configs_updated?: Prisma.ServiceConfigUpdateManyWithoutUpdaterNestedInput
+  password_resets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutInvitations_sentInput = {
@@ -833,12 +963,17 @@ export type UserUncheckedUpdateWithoutInvitations_sentInput = {
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listings?: Prisma.ListingUncheckedUpdateManyWithoutOwnerNestedInput
   favorite_listings?: Prisma.FavoriteListingUncheckedUpdateManyWithoutUserNestedInput
   configs_updated?: Prisma.ServiceConfigUncheckedUpdateManyWithoutUpdaterNestedInput
+  password_resets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutListingsInput = {
@@ -854,12 +989,17 @@ export type UserCreateWithoutListingsInput = {
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
+  pending_email?: string | null
+  email_change_token_hash?: string | null
+  email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
   favorite_listings?: Prisma.FavoriteListingCreateNestedManyWithoutUserInput
   invitations_sent?: Prisma.InvitationCreateNestedManyWithoutInviterInput
   configs_updated?: Prisma.ServiceConfigCreateNestedManyWithoutUpdaterInput
+  password_resets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutListingsInput = {
@@ -876,12 +1016,17 @@ export type UserUncheckedCreateWithoutListingsInput = {
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
+  pending_email?: string | null
+  email_change_token_hash?: string | null
+  email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
   favorite_listings?: Prisma.FavoriteListingUncheckedCreateNestedManyWithoutUserInput
   invitations_sent?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput
   configs_updated?: Prisma.ServiceConfigUncheckedCreateNestedManyWithoutUpdaterInput
+  password_resets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutListingsInput = {
@@ -913,12 +1058,17 @@ export type UserUpdateWithoutListingsInput = {
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   favorite_listings?: Prisma.FavoriteListingUpdateManyWithoutUserNestedInput
   invitations_sent?: Prisma.InvitationUpdateManyWithoutInviterNestedInput
   configs_updated?: Prisma.ServiceConfigUpdateManyWithoutUpdaterNestedInput
+  password_resets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutListingsInput = {
@@ -935,12 +1085,17 @@ export type UserUncheckedUpdateWithoutListingsInput = {
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   favorite_listings?: Prisma.FavoriteListingUncheckedUpdateManyWithoutUserNestedInput
   invitations_sent?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput
   configs_updated?: Prisma.ServiceConfigUncheckedUpdateManyWithoutUpdaterNestedInput
+  password_resets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutFavorite_listingsInput = {
@@ -956,12 +1111,17 @@ export type UserCreateWithoutFavorite_listingsInput = {
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
+  pending_email?: string | null
+  email_change_token_hash?: string | null
+  email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
   listings?: Prisma.ListingCreateNestedManyWithoutOwnerInput
   invitations_sent?: Prisma.InvitationCreateNestedManyWithoutInviterInput
   configs_updated?: Prisma.ServiceConfigCreateNestedManyWithoutUpdaterInput
+  password_resets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutFavorite_listingsInput = {
@@ -978,12 +1138,17 @@ export type UserUncheckedCreateWithoutFavorite_listingsInput = {
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
+  pending_email?: string | null
+  email_change_token_hash?: string | null
+  email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
   listings?: Prisma.ListingUncheckedCreateNestedManyWithoutOwnerInput
   invitations_sent?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput
   configs_updated?: Prisma.ServiceConfigUncheckedCreateNestedManyWithoutUpdaterInput
+  password_resets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutFavorite_listingsInput = {
@@ -1015,12 +1180,17 @@ export type UserUpdateWithoutFavorite_listingsInput = {
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listings?: Prisma.ListingUpdateManyWithoutOwnerNestedInput
   invitations_sent?: Prisma.InvitationUpdateManyWithoutInviterNestedInput
   configs_updated?: Prisma.ServiceConfigUpdateManyWithoutUpdaterNestedInput
+  password_resets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFavorite_listingsInput = {
@@ -1037,12 +1207,17 @@ export type UserUncheckedUpdateWithoutFavorite_listingsInput = {
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listings?: Prisma.ListingUncheckedUpdateManyWithoutOwnerNestedInput
   invitations_sent?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput
   configs_updated?: Prisma.ServiceConfigUncheckedUpdateManyWithoutUpdaterNestedInput
+  password_resets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutConfigs_updatedInput = {
@@ -1058,12 +1233,17 @@ export type UserCreateWithoutConfigs_updatedInput = {
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
+  pending_email?: string | null
+  email_change_token_hash?: string | null
+  email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
   listings?: Prisma.ListingCreateNestedManyWithoutOwnerInput
   favorite_listings?: Prisma.FavoriteListingCreateNestedManyWithoutUserInput
   invitations_sent?: Prisma.InvitationCreateNestedManyWithoutInviterInput
+  password_resets?: Prisma.PasswordResetCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutConfigs_updatedInput = {
@@ -1080,12 +1260,17 @@ export type UserUncheckedCreateWithoutConfigs_updatedInput = {
   preferred_language?: $Enums.Language
   phone_number?: string | null
   mobile_number?: string | null
+  pending_email?: string | null
+  email_change_token_hash?: string | null
+  email_change_expires_at?: Date | string | null
+  token_version?: number
   created_at?: Date | string
   updated_at?: Date | string
   last_login?: Date | string | null
   listings?: Prisma.ListingUncheckedCreateNestedManyWithoutOwnerInput
   favorite_listings?: Prisma.FavoriteListingUncheckedCreateNestedManyWithoutUserInput
   invitations_sent?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput
+  password_resets?: Prisma.PasswordResetUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutConfigs_updatedInput = {
@@ -1117,12 +1302,17 @@ export type UserUpdateWithoutConfigs_updatedInput = {
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listings?: Prisma.ListingUpdateManyWithoutOwnerNestedInput
   favorite_listings?: Prisma.FavoriteListingUpdateManyWithoutUserNestedInput
   invitations_sent?: Prisma.InvitationUpdateManyWithoutInviterNestedInput
+  password_resets?: Prisma.PasswordResetUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutConfigs_updatedInput = {
@@ -1139,12 +1329,139 @@ export type UserUncheckedUpdateWithoutConfigs_updatedInput = {
   preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
   phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   listings?: Prisma.ListingUncheckedUpdateManyWithoutOwnerNestedInput
   favorite_listings?: Prisma.FavoriteListingUncheckedUpdateManyWithoutUserNestedInput
   invitations_sent?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput
+  password_resets?: Prisma.PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutPassword_resetsInput = {
+  email: string
+  legacy_drupal_uid?: number | null
+  password?: string | null
+  auth0_user_id?: string | null
+  profile_photo_path?: string | null
+  profile_photo_url?: string | null
+  first_name: string
+  last_name: string
+  roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
+  preferred_language?: $Enums.Language
+  phone_number?: string | null
+  mobile_number?: string | null
+  pending_email?: string | null
+  email_change_token_hash?: string | null
+  email_change_expires_at?: Date | string | null
+  token_version?: number
+  created_at?: Date | string
+  updated_at?: Date | string
+  last_login?: Date | string | null
+  listings?: Prisma.ListingCreateNestedManyWithoutOwnerInput
+  favorite_listings?: Prisma.FavoriteListingCreateNestedManyWithoutUserInput
+  invitations_sent?: Prisma.InvitationCreateNestedManyWithoutInviterInput
+  configs_updated?: Prisma.ServiceConfigCreateNestedManyWithoutUpdaterInput
+}
+
+export type UserUncheckedCreateWithoutPassword_resetsInput = {
+  id?: number
+  email: string
+  legacy_drupal_uid?: number | null
+  password?: string | null
+  auth0_user_id?: string | null
+  profile_photo_path?: string | null
+  profile_photo_url?: string | null
+  first_name: string
+  last_name: string
+  roles?: Prisma.UserCreaterolesInput | $Enums.Role[]
+  preferred_language?: $Enums.Language
+  phone_number?: string | null
+  mobile_number?: string | null
+  pending_email?: string | null
+  email_change_token_hash?: string | null
+  email_change_expires_at?: Date | string | null
+  token_version?: number
+  created_at?: Date | string
+  updated_at?: Date | string
+  last_login?: Date | string | null
+  listings?: Prisma.ListingUncheckedCreateNestedManyWithoutOwnerInput
+  favorite_listings?: Prisma.FavoriteListingUncheckedCreateNestedManyWithoutUserInput
+  invitations_sent?: Prisma.InvitationUncheckedCreateNestedManyWithoutInviterInput
+  configs_updated?: Prisma.ServiceConfigUncheckedCreateNestedManyWithoutUpdaterInput
+}
+
+export type UserCreateOrConnectWithoutPassword_resetsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutPassword_resetsInput, Prisma.UserUncheckedCreateWithoutPassword_resetsInput>
+}
+
+export type UserUpsertWithoutPassword_resetsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutPassword_resetsInput, Prisma.UserUncheckedUpdateWithoutPassword_resetsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutPassword_resetsInput, Prisma.UserUncheckedCreateWithoutPassword_resetsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutPassword_resetsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutPassword_resetsInput, Prisma.UserUncheckedUpdateWithoutPassword_resetsInput>
+}
+
+export type UserUpdateWithoutPassword_resetsInput = {
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  legacy_drupal_uid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  first_name?: Prisma.StringFieldUpdateOperationsInput | string
+  last_name?: Prisma.StringFieldUpdateOperationsInput | string
+  roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
+  preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
+  phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  listings?: Prisma.ListingUpdateManyWithoutOwnerNestedInput
+  favorite_listings?: Prisma.FavoriteListingUpdateManyWithoutUserNestedInput
+  invitations_sent?: Prisma.InvitationUpdateManyWithoutInviterNestedInput
+  configs_updated?: Prisma.ServiceConfigUpdateManyWithoutUpdaterNestedInput
+}
+
+export type UserUncheckedUpdateWithoutPassword_resetsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  legacy_drupal_uid?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auth0_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profile_photo_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  first_name?: Prisma.StringFieldUpdateOperationsInput | string
+  last_name?: Prisma.StringFieldUpdateOperationsInput | string
+  roles?: Prisma.UserUpdaterolesInput | $Enums.Role[]
+  preferred_language?: Prisma.EnumLanguageFieldUpdateOperationsInput | $Enums.Language
+  phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mobile_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  listings?: Prisma.ListingUncheckedUpdateManyWithoutOwnerNestedInput
+  favorite_listings?: Prisma.FavoriteListingUncheckedUpdateManyWithoutUserNestedInput
+  invitations_sent?: Prisma.InvitationUncheckedUpdateManyWithoutInviterNestedInput
+  configs_updated?: Prisma.ServiceConfigUncheckedUpdateManyWithoutUpdaterNestedInput
 }
 
 
@@ -1157,6 +1474,7 @@ export type UserCountOutputType = {
   favorite_listings: number
   invitations_sent: number
   configs_updated: number
+  password_resets: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1164,6 +1482,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   favorite_listings?: boolean | UserCountOutputTypeCountFavorite_listingsArgs
   invitations_sent?: boolean | UserCountOutputTypeCountInvitations_sentArgs
   configs_updated?: boolean | UserCountOutputTypeCountConfigs_updatedArgs
+  password_resets?: boolean | UserCountOutputTypeCountPassword_resetsArgs
 }
 
 /**
@@ -1204,6 +1523,13 @@ export type UserCountOutputTypeCountConfigs_updatedArgs<ExtArgs extends runtime.
   where?: Prisma.ServiceConfigWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountPassword_resetsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PasswordResetWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1219,6 +1545,10 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   preferred_language?: boolean
   phone_number?: boolean
   mobile_number?: boolean
+  pending_email?: boolean
+  email_change_token_hash?: boolean
+  email_change_expires_at?: boolean
+  token_version?: boolean
   created_at?: boolean
   updated_at?: boolean
   last_login?: boolean
@@ -1226,6 +1556,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   favorite_listings?: boolean | Prisma.User$favorite_listingsArgs<ExtArgs>
   invitations_sent?: boolean | Prisma.User$invitations_sentArgs<ExtArgs>
   configs_updated?: boolean | Prisma.User$configs_updatedArgs<ExtArgs>
+  password_resets?: boolean | Prisma.User$password_resetsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1243,6 +1574,10 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   preferred_language?: boolean
   phone_number?: boolean
   mobile_number?: boolean
+  pending_email?: boolean
+  email_change_token_hash?: boolean
+  email_change_expires_at?: boolean
+  token_version?: boolean
   created_at?: boolean
   updated_at?: boolean
   last_login?: boolean
@@ -1262,6 +1597,10 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   preferred_language?: boolean
   phone_number?: boolean
   mobile_number?: boolean
+  pending_email?: boolean
+  email_change_token_hash?: boolean
+  email_change_expires_at?: boolean
+  token_version?: boolean
   created_at?: boolean
   updated_at?: boolean
   last_login?: boolean
@@ -1281,17 +1620,22 @@ export type UserSelectScalar = {
   preferred_language?: boolean
   phone_number?: boolean
   mobile_number?: boolean
+  pending_email?: boolean
+  email_change_token_hash?: boolean
+  email_change_expires_at?: boolean
+  token_version?: boolean
   created_at?: boolean
   updated_at?: boolean
   last_login?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "legacy_drupal_uid" | "password" | "auth0_user_id" | "profile_photo_path" | "profile_photo_url" | "first_name" | "last_name" | "roles" | "preferred_language" | "phone_number" | "mobile_number" | "created_at" | "updated_at" | "last_login", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "legacy_drupal_uid" | "password" | "auth0_user_id" | "profile_photo_path" | "profile_photo_url" | "first_name" | "last_name" | "roles" | "preferred_language" | "phone_number" | "mobile_number" | "pending_email" | "email_change_token_hash" | "email_change_expires_at" | "token_version" | "created_at" | "updated_at" | "last_login", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   listings?: boolean | Prisma.User$listingsArgs<ExtArgs>
   favorite_listings?: boolean | Prisma.User$favorite_listingsArgs<ExtArgs>
   invitations_sent?: boolean | Prisma.User$invitations_sentArgs<ExtArgs>
   configs_updated?: boolean | Prisma.User$configs_updatedArgs<ExtArgs>
+  password_resets?: boolean | Prisma.User$password_resetsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1304,6 +1648,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     favorite_listings: Prisma.$FavoriteListingPayload<ExtArgs>[]
     invitations_sent: Prisma.$InvitationPayload<ExtArgs>[]
     configs_updated: Prisma.$ServiceConfigPayload<ExtArgs>[]
+    password_resets: Prisma.$PasswordResetPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1319,6 +1664,10 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     preferred_language: $Enums.Language
     phone_number: string | null
     mobile_number: string | null
+    pending_email: string | null
+    email_change_token_hash: string | null
+    email_change_expires_at: Date | null
+    token_version: number
     created_at: Date
     updated_at: Date
     last_login: Date | null
@@ -1720,6 +2069,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   favorite_listings<T extends Prisma.User$favorite_listingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$favorite_listingsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FavoriteListingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   invitations_sent<T extends Prisma.User$invitations_sentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$invitations_sentArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InvitationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   configs_updated<T extends Prisma.User$configs_updatedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$configs_updatedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ServiceConfigPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  password_resets<T extends Prisma.User$password_resetsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$password_resetsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PasswordResetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1762,6 +2112,10 @@ export interface UserFieldRefs {
   readonly preferred_language: Prisma.FieldRef<"User", 'Language'>
   readonly phone_number: Prisma.FieldRef<"User", 'String'>
   readonly mobile_number: Prisma.FieldRef<"User", 'String'>
+  readonly pending_email: Prisma.FieldRef<"User", 'String'>
+  readonly email_change_token_hash: Prisma.FieldRef<"User", 'String'>
+  readonly email_change_expires_at: Prisma.FieldRef<"User", 'DateTime'>
+  readonly token_version: Prisma.FieldRef<"User", 'Int'>
   readonly created_at: Prisma.FieldRef<"User", 'DateTime'>
   readonly updated_at: Prisma.FieldRef<"User", 'DateTime'>
   readonly last_login: Prisma.FieldRef<"User", 'DateTime'>
@@ -2246,6 +2600,30 @@ export type User$configs_updatedArgs<ExtArgs extends runtime.Types.Extensions.In
   take?: number
   skip?: number
   distinct?: Prisma.ServiceConfigScalarFieldEnum | Prisma.ServiceConfigScalarFieldEnum[]
+}
+
+/**
+ * User.password_resets
+ */
+export type User$password_resetsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PasswordReset
+   */
+  select?: Prisma.PasswordResetSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PasswordReset
+   */
+  omit?: Prisma.PasswordResetOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PasswordResetInclude<ExtArgs> | null
+  where?: Prisma.PasswordResetWhereInput
+  orderBy?: Prisma.PasswordResetOrderByWithRelationInput | Prisma.PasswordResetOrderByWithRelationInput[]
+  cursor?: Prisma.PasswordResetWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PasswordResetScalarFieldEnum | Prisma.PasswordResetScalarFieldEnum[]
 }
 
 /**

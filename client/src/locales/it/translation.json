@@ -118,6 +118,8 @@
     "resetTokenInvalid": "Questo link di reimpostazione password non è valido o è scaduto. Richiedine uno nuovo.",
     "resetTokenExpired": "Questo link di reimpostazione password è scaduto. Richiedine uno nuovo.",
     "backToLogin": "Torna al login",
+    "invalidEmail": "Indirizzo email non valido",
+    "passwordRequired": "La password è obbligatoria",
     "passwordStrength": "Robustezza della password",
     "passwordStrengthWeak": "Debole",
     "passwordStrengthFair": "Discreta",
@@ -537,6 +539,14 @@
     "title": "Profilo",
     "personalInfo": "Informazioni Personali",
     "updateSuccess": "Profilo aggiornato con successo!",
+    "changeEmail": "Cambia email",
+    "changeEmailTitle": "Cambia Indirizzo Email",
+    "changeEmailDescription": "Inserisci il nuovo indirizzo email e la password attuale. Invieremo un link di verifica al nuovo indirizzo.",
+    "newEmail": "Nuovo Indirizzo Email",
+    "currentPassword": "Password Attuale",
+    "changeEmailSubmit": "Invia Email di Verifica",
+    "changeEmailSuccess": "Email di verifica inviata a {{email}}. Controlla la tua casella di posta per confermare la modifica.",
+    "changeEmailAuth0": "Il tuo indirizzo email è gestito dal provider VIT ID e non può essere modificato qui.",
     "photo": {
       "title": "Foto profilo",
       "help": "Carica un ritratto quadrato da usare in tutto il sito.",
@@ -552,6 +562,13 @@
       "updateSuccess": "Foto profilo aggiornata con successo!",
       "removeSuccess": "Foto profilo rimossa con successo!"
     }
+  },
+  "confirmEmailChange": {
+    "title": "Conferma Cambio Email",
+    "successTitle": "Email Modificata",
+    "successMessage": "Il tuo indirizzo email è stato aggiornato con successo. Accedi con la tua nuova email.",
+    "invalidToken": "Questo link di cambio email non è valido o è scaduto. Richiedine uno nuovo dal tuo profilo.",
+    "emailExists": "Un account con questo indirizzo email esiste già. La modifica non è stata completata."
   },
   "errors": {
     "unauthorized": "Devi accedere per visualizzare questa pagina.",

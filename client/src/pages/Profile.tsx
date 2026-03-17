@@ -4,7 +4,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { updateUserSchema, type UpdateUserInput } from '@vithousing/shared';
+import { z } from 'zod';
+import { updateUserSchema, type UpdateUserInput, type ChangeEmailInput } from '@vithousing/shared';
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
@@ -27,6 +28,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { ProfilePhotoDialog } from '@/components/profile/ProfilePhotoDialog';
 import { getInitials } from '@/lib/avatar';
 import { toast } from 'sonner';
@@ -37,7 +47,9 @@ export function ProfilePage() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [changeEmailOpen, setChangeEmailOpen] = useState(false);
 
+  const isAuth0User = Boolean(user?.auth0_user_id);
   const showPhoneFields = user?.roles?.some(r => ['HOUSE_LANDLORD', 'HOUSE_ADMIN'].includes(r));
 
   const form = useForm<UpdateUserInput>({
@@ -48,6 +60,20 @@ export function ProfilePage() {
       preferred_language: user?.preferred_language || 'EN',
       phone_number: user?.phone_number || '',
       mobile_number: user?.mobile_number || '',
+    },
+  });
+
+  const localizedChangeEmailSchema = z.object({
+    new_email: z.string().trim().toLowerCase().email(t('auth.invalidEmail', 'Invalid email address')),
+    current_password: z.string().min(1, t('auth.passwordRequired', 'Password is required')),
+  });
+
+  const emailForm = useForm<ChangeEmailInput>({
+    resolver: zodResolver(localizedChangeEmailSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      new_email: '',
+      current_password: '',
     },
   });
 
@@ -75,6 +101,21 @@ export function ProfilePage() {
         i18n.changeLanguage(variables.preferred_language.toLowerCase());
       }
       toast.success(t('profile.updateSuccess'));
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
+    },
+  });
+
+  const changeEmailMutation = useMutation({
+    mutationFn: async (data: ChangeEmailInput) => {
+      await api.post('/api/v1/auth/change-email', data);
+      return data.new_email;
+    },
+    onSuccess: (newEmail) => {
+      toast.success(t('profile.changeEmailSuccess', { email: newEmail }));
+      setChangeEmailOpen(false);
+      emailForm.reset();
     },
     onError: (err: Error) => {
       toast.error(err.message);
@@ -182,7 +223,22 @@ export function ProfilePage() {
             <form onSubmit={form.handleSubmit((data) => updateMutation.mutate(data))} className="space-y-4">
               <div>
                 <label className="text-sm font-medium">{t('auth.email')}</label>
-                <Input value={user.email} disabled className="mt-1.5 bg-muted" />
+                <div className="mt-1.5 flex gap-2">
+                  <Input value={user.email} disabled className="bg-muted" />
+                  {!isAuth0User && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="shrink-0"
+                      onClick={() => setChangeEmailOpen(true)}
+                    >
+                      {t('profile.changeEmail')}
+                    </Button>
+                  )}
+                </div>
+                {isAuth0User && (
+                  <p className="mt-1 text-xs text-muted-foreground">{t('profile.changeEmailAuth0')}</p>
+                )}
               </div>
 
               <FormField
@@ -266,8 +322,6 @@ export function ProfilePage() {
                 </>
               )}
 
-              {/* TODO: Password reset can be added later via AWS SES reset token */}
-
               <Button type="submit" className="w-full" disabled={updateMutation.isPending}>
                 {updateMutation.isPending ? t('common.loading') : t('common.save')}
               </Button>
@@ -275,6 +329,62 @@ export function ProfilePage() {
           </Form>
         </CardContent>
       </Card>
+
+      <Dialog open={changeEmailOpen} onOpenChange={(open) => {
+        setChangeEmailOpen(open);
+        if (!open) emailForm.reset();
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('profile.changeEmailTitle')}</DialogTitle>
+            <DialogDescription>{t('profile.changeEmailDescription')}</DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={emailForm.handleSubmit((data) => {
+              if (changeEmailMutation.isPending) return;
+              changeEmailMutation.mutate(data);
+            })}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="new_email">{t('profile.newEmail')}</Label>
+              <Input
+                id="new_email"
+                type="email"
+                autoComplete="email"
+                aria-invalid={Boolean(emailForm.formState.errors.new_email)}
+                aria-describedby={emailForm.formState.errors.new_email ? 'new_email_error' : undefined}
+                {...emailForm.register('new_email')}
+              />
+              {emailForm.formState.errors.new_email && (
+                <p id="new_email_error" role="alert" className="text-sm text-destructive">{emailForm.formState.errors.new_email.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="current_password">{t('profile.currentPassword')}</Label>
+              <Input
+                id="current_password"
+                type="password"
+                autoComplete="current-password"
+                aria-invalid={Boolean(emailForm.formState.errors.current_password)}
+                aria-describedby={emailForm.formState.errors.current_password ? 'current_password_error' : undefined}
+                {...emailForm.register('current_password')}
+              />
+              {emailForm.formState.errors.current_password && (
+                <p id="current_password_error" role="alert" className="text-sm text-destructive">{emailForm.formState.errors.current_password.message}</p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setChangeEmailOpen(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button type="submit" disabled={changeEmailMutation.isPending}>
+                {changeEmailMutation.isPending ? t('common.loading') : t('profile.changeEmailSubmit')}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <ProfilePhotoDialog
         open={Boolean(pendingFile)}

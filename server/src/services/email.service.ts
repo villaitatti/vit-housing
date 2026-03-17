@@ -1,8 +1,17 @@
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
-import { INVITATION_EXPIRY_DAYS, PASSWORD_RESET_EXPIRY_HOURS } from '@vithousing/shared';
+import { INVITATION_EXPIRY_DAYS, PASSWORD_RESET_EXPIRY_HOURS, EMAIL_CHANGE_EXPIRY_HOURS } from '@vithousing/shared';
 import { getEffectiveConfigValue } from './config.service.js';
 
 let sesClient: SESClient | null = null;
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 async function getSESConfig() {
   const region = await getEffectiveConfigValue('ses', 'region') || process.env.AWS_REGION || 'eu-west-1';
@@ -65,6 +74,7 @@ export async function sendInvitationEmail({
   const language = lang.toLowerCase();
   const registrationUrl = `${config.invitationBaseUrl}/${language}/register?token=${token}`;
   const recipientName = [firstName, lastName].filter(Boolean).join(' ').trim();
+  const safeRecipientName = escapeHtml(recipientName);
   const formattedExpiry = formatInvitationExpiry(expiresAt, language);
 
   const isEnglish = language === 'en';
@@ -89,7 +99,15 @@ export async function sendInvitationEmail({
       ? 'Sei stato invitato a unirti a Villa I Tatti Housing come proprietario.'
       : 'Sei stato invitato a unirti a Villa I Tatti Housing come utente.';
 
-  const greeting = recipientName
+  const htmlGreeting = safeRecipientName
+    ? isEnglish
+      ? `Hello ${safeRecipientName},`
+      : `Ciao ${safeRecipientName},`
+    : isEnglish
+      ? 'Hello,'
+      : 'Ciao,';
+
+  const textGreeting = recipientName
     ? isEnglish
       ? `Hello ${recipientName},`
       : `Ciao ${recipientName},`
@@ -109,7 +127,7 @@ export async function sendInvitationEmail({
     ? `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Welcome to Villa I Tatti Housing</h2>
-        <p>${greeting}</p>
+        <p>${htmlGreeting}</p>
         <p>${introCopy}</p>
         <p>Click the button below to complete your registration as <strong>${roleName}</strong>.</p>
         <p style="text-align: center; margin: 30px 0;">
@@ -125,7 +143,7 @@ export async function sendInvitationEmail({
     : `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Benvenuto su Villa I Tatti Housing</h2>
-        <p>${greeting}</p>
+        <p>${htmlGreeting}</p>
         <p>${introCopy}</p>
         <p>Clicca il pulsante qui sotto per completare la registrazione come <strong>${roleName}</strong>.</p>
         <p style="text-align: center; margin: 30px 0;">
@@ -140,7 +158,7 @@ export async function sendInvitationEmail({
     `;
 
   const textBody = isEnglish
-    ? `${greeting}
+    ? `${textGreeting}
 
 ${introCopy}
 
@@ -149,7 +167,7 @@ Complete your registration as ${roleName}: ${registrationUrl}
 ${expiryCopy}
 
 ${ignoreCopy}`
-    : `${greeting}
+    : `${textGreeting}
 
 ${introCopy}
 
@@ -158,6 +176,215 @@ Completa la registrazione come ${roleName}: ${registrationUrl}
 ${expiryCopy}
 
 ${ignoreCopy}`;
+
+  const command = new SendEmailCommand({
+    Source: config.fromAddress,
+    Destination: { ToAddresses: [to] },
+    Message: {
+      Subject: { Data: subject, Charset: 'UTF-8' },
+      Body: {
+        Html: { Data: htmlBody, Charset: 'UTF-8' },
+        Text: { Data: textBody, Charset: 'UTF-8' },
+      },
+    },
+  });
+
+  await client.send(command);
+}
+
+interface EmailChangeVerificationParams {
+  to: string;
+  token: string;
+  lang: string;
+  firstName?: string;
+}
+
+export async function sendEmailChangeVerification({
+  to,
+  token,
+  lang,
+  firstName,
+}: EmailChangeVerificationParams): Promise<void> {
+  const config = await getSESConfig();
+  const client = await getClient();
+  const language = lang.toLowerCase();
+  const confirmUrl = `${config.invitationBaseUrl}/${language}/confirm-email-change?token=${encodeURIComponent(token)}`;
+
+  const isEnglish = language === 'en';
+  const safeFirstName = firstName ? escapeHtml(firstName) : undefined;
+
+  const subject = isEnglish
+    ? 'Confirm your new email address — Villa I Tatti Housing'
+    : 'Conferma il tuo nuovo indirizzo email — Villa I Tatti Housing';
+
+  const htmlGreeting = safeFirstName
+    ? isEnglish
+      ? `Hello ${safeFirstName},`
+      : `Ciao ${safeFirstName},`
+    : isEnglish
+      ? 'Hello,'
+      : 'Ciao,';
+
+  const textGreeting = firstName
+    ? isEnglish
+      ? `Hello ${firstName},`
+      : `Ciao ${firstName},`
+    : isEnglish
+      ? 'Hello,'
+      : 'Ciao,';
+
+  const introCopy = isEnglish
+    ? 'You requested to change the email address on your Villa I Tatti Housing account to this address.'
+    : 'Hai richiesto di cambiare l\'indirizzo email del tuo account Villa I Tatti Housing con questo indirizzo.';
+
+  const ctaLabel = isEnglish ? 'Confirm Email Change' : 'Conferma Cambio Email';
+
+  const expiryCopy = isEnglish
+    ? `This link is single use and expires in ${EMAIL_CHANGE_EXPIRY_HOURS} hour(s).`
+    : `Questo link è monouso e scade tra ${EMAIL_CHANGE_EXPIRY_HOURS} ora/e.`;
+
+  const ignoreCopy = isEnglish
+    ? 'If you did not request this change, you can ignore this email.'
+    : 'Se non hai richiesto questo cambio, puoi ignorare questa email.';
+
+  const htmlBody = isEnglish
+    ? `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Confirm Your New Email</h2>
+        <p>${htmlGreeting}</p>
+        <p>${introCopy}</p>
+        <p>Click the button below to confirm the change.</p>
+        <p style="text-align: center; margin: 30px 0;">
+          <a href="${confirmUrl}" style="background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+            ${ctaLabel}
+          </a>
+        </p>
+        <p style="color: #666; font-size: 14px;">${expiryCopy}</p>
+        <p style="color: #666; font-size: 14px;">If the button doesn't work, copy this link: <a href="${confirmUrl}">${confirmUrl}</a></p>
+        <p style="color: #666; font-size: 14px;">${ignoreCopy}</p>
+      </div>
+    `
+    : `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Conferma il Tuo Nuovo Indirizzo Email</h2>
+        <p>${htmlGreeting}</p>
+        <p>${introCopy}</p>
+        <p>Clicca il pulsante qui sotto per confermare il cambio.</p>
+        <p style="text-align: center; margin: 30px 0;">
+          <a href="${confirmUrl}" style="background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+            ${ctaLabel}
+          </a>
+        </p>
+        <p style="color: #666; font-size: 14px;">${expiryCopy}</p>
+        <p style="color: #666; font-size: 14px;">Se il pulsante non funziona, copia questo link: <a href="${confirmUrl}">${confirmUrl}</a></p>
+        <p style="color: #666; font-size: 14px;">${ignoreCopy}</p>
+      </div>
+    `;
+
+  const textBody = isEnglish
+    ? `${textGreeting}
+
+${introCopy}
+
+Confirm your email change: ${confirmUrl}
+
+${expiryCopy}
+
+${ignoreCopy}`
+    : `${textGreeting}
+
+${introCopy}
+
+Conferma il cambio email: ${confirmUrl}
+
+${expiryCopy}
+
+${ignoreCopy}`;
+
+  const command = new SendEmailCommand({
+    Source: config.fromAddress,
+    Destination: { ToAddresses: [to] },
+    Message: {
+      Subject: { Data: subject, Charset: 'UTF-8' },
+      Body: {
+        Html: { Data: htmlBody, Charset: 'UTF-8' },
+        Text: { Data: textBody, Charset: 'UTF-8' },
+      },
+    },
+  });
+
+  await client.send(command);
+}
+
+interface EmailChangedNotificationParams {
+  to: string;
+  newEmail: string;
+  lang: string;
+  firstName?: string;
+}
+
+export async function sendEmailChangedNotification({
+  to,
+  newEmail,
+  lang,
+  firstName,
+}: EmailChangedNotificationParams): Promise<void> {
+  const config = await getSESConfig();
+  const client = await getClient();
+  const language = lang.toLowerCase();
+
+  const isEnglish = language === 'en';
+  const safeFirstName = firstName ? escapeHtml(firstName) : undefined;
+  const safeNewEmail = escapeHtml(newEmail);
+
+  const subject = isEnglish
+    ? 'Your email address has been changed — Villa I Tatti Housing'
+    : 'Il tuo indirizzo email è stato modificato — Villa I Tatti Housing';
+
+  const htmlGreeting = safeFirstName
+    ? isEnglish
+      ? `Hello ${safeFirstName},`
+      : `Ciao ${safeFirstName},`
+    : isEnglish
+      ? 'Hello,'
+      : 'Ciao,';
+
+  const textGreeting = firstName
+    ? isEnglish
+      ? `Hello ${firstName},`
+      : `Ciao ${firstName},`
+    : isEnglish
+      ? 'Hello,'
+      : 'Ciao,';
+
+  const bodyCopy = isEnglish
+    ? `The email address on your Villa I Tatti Housing account has been changed to <strong>${safeNewEmail}</strong>.`
+    : `L'indirizzo email del tuo account Villa I Tatti Housing è stato modificato in <strong>${safeNewEmail}</strong>.`;
+
+  const warningCopy = isEnglish
+    ? 'If you did not make this change, please contact support immediately.'
+    : 'Se non hai effettuato questa modifica, contatta immediatamente il supporto.';
+
+  const htmlBody = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2>${isEnglish ? 'Email Address Changed' : 'Indirizzo Email Modificato'}</h2>
+      <p>${htmlGreeting}</p>
+      <p>${bodyCopy}</p>
+      <p style="color: #b91c1c; font-weight: bold;">${warningCopy}</p>
+    </div>
+  `;
+
+  const textBody = isEnglish
+    ? `${textGreeting}
+
+The email address on your Villa I Tatti Housing account has been changed to ${newEmail}.
+
+${warningCopy}`
+    : `${textGreeting}
+
+L'indirizzo email del tuo account Villa I Tatti Housing è stato modificato in ${newEmail}.
+
+${warningCopy}`;
 
   const command = new SendEmailCommand({
     Source: config.fromAddress,
@@ -190,15 +417,24 @@ export async function sendPasswordResetEmail({
   const config = await getSESConfig();
   const client = await getClient();
   const language = lang.toLowerCase();
-  const resetUrl = `${config.invitationBaseUrl}/${language}/reset-password?token=${token}`;
+  const resetUrl = `${config.invitationBaseUrl}/${language}/reset-password?token=${encodeURIComponent(token)}`;
 
   const isEnglish = language === 'en';
+  const safeFirstName = firstName ? escapeHtml(firstName) : undefined;
 
   const subject = isEnglish
     ? 'Reset your Villa I Tatti Housing password'
     : 'Reimposta la tua password di Villa I Tatti Housing';
 
-  const greeting = firstName
+  const htmlGreeting = safeFirstName
+    ? isEnglish
+      ? `Hello ${safeFirstName},`
+      : `Ciao ${safeFirstName},`
+    : isEnglish
+      ? 'Hello,'
+      : 'Ciao,';
+
+  const textGreeting = firstName
     ? isEnglish
       ? `Hello ${firstName},`
       : `Ciao ${firstName},`
@@ -224,7 +460,7 @@ export async function sendPasswordResetEmail({
     ? `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Reset Your Password</h2>
-        <p>${greeting}</p>
+        <p>${htmlGreeting}</p>
         <p>${introCopy}</p>
         <p>Click the button below to choose a new password.</p>
         <p style="text-align: center; margin: 30px 0;">
@@ -240,7 +476,7 @@ export async function sendPasswordResetEmail({
     : `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Reimposta la Tua Password</h2>
-        <p>${greeting}</p>
+        <p>${htmlGreeting}</p>
         <p>${introCopy}</p>
         <p>Clicca il pulsante qui sotto per scegliere una nuova password.</p>
         <p style="text-align: center; margin: 30px 0;">
@@ -255,7 +491,7 @@ export async function sendPasswordResetEmail({
     `;
 
   const textBody = isEnglish
-    ? `${greeting}
+    ? `${textGreeting}
 
 ${introCopy}
 
@@ -264,7 +500,7 @@ Reset your password: ${resetUrl}
 ${expiryCopy}
 
 ${ignoreCopy}`
-    : `${greeting}
+    : `${textGreeting}
 
 ${introCopy}
 

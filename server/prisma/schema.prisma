@@ -20,26 +20,31 @@ enum Language {
 }
 
 model User {
-  id                 Int          @id @default(autoincrement())
-  email              String       @unique
-  legacy_drupal_uid  Int?         @unique
-  password           String?
-  auth0_user_id      String?      @unique
-  profile_photo_path String?
-  profile_photo_url  String?
-  first_name         String
-  last_name          String
-  roles              Role[]       @default([HOUSE_USER])
-  preferred_language Language     @default(EN)
-  phone_number       String?
-  mobile_number      String?
-  created_at         DateTime     @default(now())
-  updated_at         DateTime     @updatedAt
-  last_login         DateTime?
-  listings           Listing[]
-  favorite_listings  FavoriteListing[]
-  invitations_sent   Invitation[]
-  configs_updated    ServiceConfig[]
+  id                        Int              @id @default(autoincrement())
+  email                     String           @unique
+  legacy_drupal_uid         Int?             @unique
+  password                  String?
+  auth0_user_id             String?          @unique
+  profile_photo_path        String?
+  profile_photo_url         String?
+  first_name                String
+  last_name                 String
+  roles                     Role[]           @default([HOUSE_USER])
+  preferred_language        Language          @default(EN)
+  phone_number              String?
+  mobile_number             String?
+  pending_email             String?
+  email_change_token_hash   String?
+  email_change_expires_at   DateTime?
+  token_version             Int               @default(0)
+  created_at                DateTime          @default(now())
+  updated_at                DateTime          @updatedAt
+  last_login                DateTime?
+  listings                  Listing[]
+  favorite_listings         FavoriteListing[]
+  invitations_sent          Invitation[]
+  configs_updated           ServiceConfig[]
+  password_resets            PasswordReset[]
 }
 
 model Invitation {
@@ -164,4 +169,16 @@ model Auth0RoleMapping {
   local_role      Role
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
+}
+
+model PasswordReset {
+  id         Int      @id @default(autoincrement())
+  token_hash String   @unique
+  user_id    Int
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  used       Boolean  @default(false)
+  created_at DateTime @default(now())
+  expires_at DateTime
+
+  @@index([user_id, used, expires_at])
 }
