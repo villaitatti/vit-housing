@@ -22,6 +22,9 @@ shared/    Shared types & Zod schemas
 ## Getting Started
 
 ```bash
+# Use the repo's Node version
+nvm use
+
 # Install dependencies
 pnpm install
 
