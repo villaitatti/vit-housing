@@ -25,6 +25,12 @@ const COOKIE_OPTIONS = {
   maxAge: 8 * 60 * 60 * 1000, // 8 hours
   path: '/',
 };
+const CLEAR_COOKIE_OPTIONS = {
+  httpOnly: COOKIE_OPTIONS.httpOnly,
+  secure: COOKIE_OPTIONS.secure,
+  sameSite: COOKIE_OPTIONS.sameSite,
+  path: COOKIE_OPTIONS.path,
+};
 const loginRateLimit = createRateLimitMiddleware({
   windowMs: 15 * 60 * 1000,
   maxRequests: 10,
@@ -581,7 +587,7 @@ router.post('/confirm-email-change', validate(confirmEmailChangeSchema), async (
     }
 
     // Clear auth cookie to force re-login
-    res.clearCookie('token', { path: '/' });
+    res.clearCookie('token', CLEAR_COOKIE_OPTIONS);
     sendSuccess(res, { message: 'Email changed successfully. Please log in with your new email.' });
   } catch (err) {
     console.error('Email change confirmation failed:', err);
@@ -591,7 +597,7 @@ router.post('/confirm-email-change', validate(confirmEmailChangeSchema), async (
 
 // POST /api/v1/auth/logout
 router.post('/logout', (_req: Request, res: Response) => {
-  res.clearCookie('token', { path: '/' });
+  res.clearCookie('token', CLEAR_COOKIE_OPTIONS);
   sendSuccess(res, { message: 'Logged out' });
 });
 

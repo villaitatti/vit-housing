@@ -39,7 +39,7 @@ export function createRateLimitMiddleware(options: RateLimitOptions) {
   return function rateLimitMiddleware(req: Request, res: Response, next: NextFunction): void {
     const now = Date.now();
     const key = options.keyGenerator ? options.keyGenerator(req) : (req.ip || 'unknown');
-    if (!req.ip) {
+    if (!req.ip && !options.keyGenerator) {
       console.warn('Rate limit middleware received request without req.ip', {
         method: req.method,
         url: req.originalUrl,

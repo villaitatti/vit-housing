@@ -392,7 +392,7 @@ export async function sendPasswordResetEmail({
   const config = await getSESConfig();
   const client = await getClient();
   const language = lang.toLowerCase();
-  const resetUrl = `${config.invitationBaseUrl}/${language}/reset-password?token=${token}`;
+  const resetUrl = `${config.invitationBaseUrl}/${language}/reset-password?token=${encodeURIComponent(token)}`;
 
   const isEnglish = language === 'en';
   const safeFirstName = firstName ? escapeHtml(firstName) : undefined;
