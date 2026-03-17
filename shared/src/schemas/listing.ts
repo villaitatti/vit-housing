@@ -86,6 +86,18 @@ export const listingFiltersSchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(12),
 });
 
+export const adminListingListSchema = z.object({
+  title: z.string().trim().optional().transform((value) => value || undefined),
+  ownerSearch: z.string().trim().optional().transform((value) => value || undefined),
+  ownerId: z.coerce.number().int().min(1).optional(),
+  address: z.string().trim().optional().transform((value) => value || undefined),
+  minRent: z.coerce.number().min(0).optional(),
+  maxRent: z.coerce.number().min(0).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
 export type CreateListingInput = z.infer<typeof createListingSchema>;
 export type UpdateListingInput = z.infer<typeof updateListingSchema>;
 export type ListingFilters = z.infer<typeof listingFiltersSchema>;
+export type AdminListingListInput = z.infer<typeof adminListingListSchema>;

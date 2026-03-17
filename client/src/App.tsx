@@ -27,6 +27,7 @@ const MyListingsPage = lazy(() => import('@/pages/MyListings').then((m) => ({ de
 const ProfilePage = lazy(() => import('@/pages/Profile').then((m) => ({ default: m.ProfilePage })));
 const AdminListingsPage = lazy(() => import('@/pages/admin/AdminListings').then((m) => ({ default: m.AdminListingsPage })));
 const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsers').then((m) => ({ default: m.AdminUsersPage })));
+const AdminUserDetailPage = lazy(() => import('@/pages/admin/AdminUserDetail').then((m) => ({ default: m.AdminUserDetailPage })));
 const InviteUserPage = lazy(() => import('@/pages/admin/InviteUser').then((m) => ({ default: m.InviteUserPage })));
 const AdminInvitationsPage = lazy(() => import('@/pages/admin/AdminInvitations').then((m) => ({ default: m.AdminInvitationsPage })));
 const ServiceConfigPage = lazy(() => import('@/pages/admin/ServiceConfig').then((m) => ({ default: m.ServiceConfigPage })));
@@ -130,6 +131,7 @@ function App() {
                   <Route index element={<Navigate to="listings" replace />} />
                   <Route path="listings" element={<Suspense fallback={<PageLoader />}><AdminListingsPage /></Suspense>} />
                   <Route path="users" element={<Suspense fallback={<PageLoader />}><AdminUsersPage /></Suspense>} />
+                  <Route path="users/:id" element={<Suspense fallback={<PageLoader />}><AdminUserDetailPage /></Suspense>} />
                   <Route path="invitations" element={<Suspense fallback={<PageLoader />}><AdminInvitationsPage /></Suspense>} />
                   <Route path="invite-user" element={<Suspense fallback={<PageLoader />}><InviteUserPage /></Suspense>} />
                   <Route

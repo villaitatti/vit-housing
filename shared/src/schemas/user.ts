@@ -39,3 +39,4 @@ export const adminUserListSchema = z.object({
 
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type AdminUpdateUserInput = z.infer<typeof adminUpdateUserSchema>;
+export type AdminUserListInput = z.infer<typeof adminUserListSchema>;

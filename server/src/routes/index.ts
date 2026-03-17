@@ -6,6 +6,7 @@ import listingsRouter from './listings.js';
 import favoritesRouter from './favorites.js';
 import configRouter from './config.js';
 import drupalImportRouter from './drupalImport.js';
+import adminListingsRouter from './adminListings.js';
 
 const router = Router();
 
@@ -15,6 +16,7 @@ router.use('/invitations', invitationsRouter);
 router.use('/listings', listingsRouter);
 router.use('/favorites', favoritesRouter);
 router.use('/config', configRouter);
+router.use('/admin/listings', adminListingsRouter);
 router.use('/admin/drupal-import', drupalImportRouter);
 
 export default router;

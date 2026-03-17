@@ -128,7 +128,7 @@ export const navigationItems: NavigationItem[] = [
     icon: Users,
     href: (lang) => `/${lang}/admin/users`,
     visible: (context) => hasAnyRole(context.roles, ADMIN_ROLES),
-    matches: ['/:lang/admin/users'],
+    matches: ['/:lang/admin/users', '/:lang/admin/users/:id'],
   },
   {
     id: 'admin-invitations',
@@ -254,6 +254,11 @@ const routeMetadata: RouteMetadataDefinition[] = [
     id: 'admin-users',
     pattern: '/:lang/admin/users',
     titleKey: 'admin.users',
+  },
+  {
+    id: 'admin-user-detail',
+    pattern: '/:lang/admin/users/:id',
+    titleKey: 'admin.userDetailsTitle',
   },
   {
     id: 'admin-invitations',
