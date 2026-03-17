@@ -64,6 +64,7 @@ export function ProfilePage() {
 
   const emailForm = useForm<ChangeEmailInput>({
     resolver: zodResolver(changeEmailSchema),
+    mode: 'onBlur',
     defaultValues: {
       new_email: '',
       current_password: '',

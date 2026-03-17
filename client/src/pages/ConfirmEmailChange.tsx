@@ -9,6 +9,8 @@ import { LanguageSwitch } from '@/components/layout/LanguageSwitch';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
+const SESSION_KEY = 'confirmEmailToken';
+
 export function ConfirmEmailChangePage() {
   const { t } = useTranslation();
   const { lang } = useParams();
@@ -16,9 +18,17 @@ export function ConfirmEmailChangePage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlToken = searchParams.get('token')?.trim() || '';
-  const [token] = useState(urlToken);
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Persist token to sessionStorage so it survives URL stripping and re-renders
+  const [token] = useState(() => {
+    if (urlToken) {
+      sessionStorage.setItem(SESSION_KEY, urlToken);
+      return urlToken;
+    }
+    return sessionStorage.getItem(SESSION_KEY) || '';
+  });
 
   // Strip token from URL for security
   useEffect(() => {
@@ -32,9 +42,13 @@ export function ConfirmEmailChangePage() {
     mutationFn: async (confirmToken: string) => {
       await api.post('/api/v1/auth/confirm-email-change', { token: confirmToken });
     },
-    onSuccess: () => setConfirmed(true),
+    onSuccess: () => {
+      sessionStorage.removeItem(SESSION_KEY);
+      setConfirmed(true);
+    },
     onError: (err: Error) => {
       if (err instanceof ApiError && (err.code === 'INVALID_TOKEN' || err.code === 'EMAIL_EXISTS')) {
+        sessionStorage.removeItem(SESSION_KEY);
         setError(err.code);
         return;
       }

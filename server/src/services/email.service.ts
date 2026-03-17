@@ -4,6 +4,15 @@ import { getEffectiveConfigValue } from './config.service.js';
 
 let sesClient: SESClient | null = null;
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 async function getSESConfig() {
   const region = await getEffectiveConfigValue('ses', 'region') || process.env.AWS_REGION || 'eu-west-1';
   const accessKeyId = await getEffectiveConfigValue('ses', 'access_key_id') || process.env.AWS_ACCESS_KEY_ID || '';
@@ -193,15 +202,16 @@ export async function sendEmailChangeVerification({
   const confirmUrl = `${config.invitationBaseUrl}/${language}/confirm-email-change?token=${token}`;
 
   const isEnglish = language === 'en';
+  const safeFirstName = firstName ? escapeHtml(firstName) : undefined;
 
   const subject = isEnglish
     ? 'Confirm your new email address — Villa I Tatti Housing'
     : 'Conferma il tuo nuovo indirizzo email — Villa I Tatti Housing';
 
-  const greeting = firstName
+  const greeting = safeFirstName
     ? isEnglish
-      ? `Hello ${firstName},`
-      : `Ciao ${firstName},`
+      ? `Hello ${safeFirstName},`
+      : `Ciao ${safeFirstName},`
     : isEnglish
       ? 'Hello,'
       : 'Ciao,';
@@ -307,22 +317,24 @@ export async function sendEmailChangedNotification({
   const language = lang.toLowerCase();
 
   const isEnglish = language === 'en';
+  const safeFirstName = firstName ? escapeHtml(firstName) : undefined;
+  const safeNewEmail = escapeHtml(newEmail);
 
   const subject = isEnglish
     ? 'Your email address has been changed — Villa I Tatti Housing'
     : 'Il tuo indirizzo email è stato modificato — Villa I Tatti Housing';
 
-  const greeting = firstName
+  const greeting = safeFirstName
     ? isEnglish
-      ? `Hello ${firstName},`
-      : `Ciao ${firstName},`
+      ? `Hello ${safeFirstName},`
+      : `Ciao ${safeFirstName},`
     : isEnglish
       ? 'Hello,'
       : 'Ciao,';
 
   const bodyCopy = isEnglish
-    ? `The email address on your Villa I Tatti Housing account has been changed to <strong>${newEmail}</strong>.`
-    : `L'indirizzo email del tuo account Villa I Tatti Housing è stato modificato in <strong>${newEmail}</strong>.`;
+    ? `The email address on your Villa I Tatti Housing account has been changed to <strong>${safeNewEmail}</strong>.`
+    : `L'indirizzo email del tuo account Villa I Tatti Housing è stato modificato in <strong>${safeNewEmail}</strong>.`;
 
   const warningCopy = isEnglish
     ? 'If you did not make this change, please contact support immediately.'

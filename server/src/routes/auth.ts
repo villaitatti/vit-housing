@@ -6,7 +6,7 @@ import { signToken } from '../lib/jwt.js';
 import { sendSuccess, sendError } from '../lib/response.js';
 import { validate } from '../middleware/validate.js';
 import { loginSchema, registerSchema, vitIdCallbackSchema, forgotPasswordSchema, resetPasswordSchema, changeEmailSchema, confirmEmailChangeSchema, EMAIL_CHANGE_EXPIRY_HOURS } from '@vithousing/shared';
-import { Role as PrismaRole } from '../generated/prisma/client.js';
+import { Role as PrismaRole, Prisma } from '../generated/prisma/client.js';
 import { getUserAuth0Roles } from '../services/auth0.service.js';
 import { verifyAuth0Token } from '../lib/auth0-jwt.js';
 import { hashInvitationToken, getInvitationStatus } from '../lib/invitations.js';
@@ -537,29 +537,31 @@ router.post('/confirm-email-change', validate(confirmEmailChangeSchema), async (
     const newEmail = user.pending_email;
     const oldEmail = user.email;
 
-    // Re-check uniqueness (race condition guard)
-    const conflict = await prisma.user.findUnique({ where: { email: newEmail } });
-    if (conflict) {
-      sendError(res, 'An account with this email already exists', 'EMAIL_EXISTS', 409);
-      return;
-    }
-
     // Atomic swap: update email, clear pending fields, invalidate password resets
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: user.id },
-        data: {
-          email: newEmail,
-          pending_email: null,
-          email_change_token_hash: null,
-          email_change_expires_at: null,
-        },
-      }),
-      prisma.passwordReset.updateMany({
-        where: { user_id: user.id, used: false },
-        data: { used: true },
-      }),
-    ]);
+    // The unique constraint on email will catch races where another user claims it
+    try {
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: user.id },
+          data: {
+            email: newEmail,
+            pending_email: null,
+            email_change_token_hash: null,
+            email_change_expires_at: null,
+          },
+        }),
+        prisma.passwordReset.updateMany({
+          where: { user_id: user.id, used: false },
+          data: { used: true },
+        }),
+      ]);
+    } catch (txErr) {
+      if (txErr instanceof Prisma.PrismaClientKnownRequestError && txErr.code === 'P2002') {
+        sendError(res, 'An account with this email already exists', 'EMAIL_EXISTS', 409);
+        return;
+      }
+      throw txErr;
+    }
 
     // Send notification to old email
     const lang = user.preferred_language === 'IT' ? 'it' : 'en';
