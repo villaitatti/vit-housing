@@ -550,9 +550,16 @@ router.post('/confirm-email-change', validate(confirmEmailChangeSchema), async (
         const newEmail = user.pending_email;
         const oldEmail = user.email;
 
-        // Swap email + clear pending fields + bump token_version atomically
-        await tx.user.update({
-          where: { id: user.id },
+        // Conditional update: include token conditions in the where clause so
+        // a concurrent transaction that already claimed the token will match
+        // 0 rows instead of blindly overwriting.
+        const updated = await tx.user.updateMany({
+          where: {
+            id: user.id,
+            email_change_token_hash: tokenHash,
+            email_change_expires_at: { gt: now },
+            pending_email: { not: null },
+          },
           data: {
             email: newEmail,
             pending_email: null,
@@ -561,6 +568,8 @@ router.post('/confirm-email-change', validate(confirmEmailChangeSchema), async (
             token_version: { increment: 1 },
           },
         });
+
+        if (updated.count === 0) return null;
 
         // Invalidate any pending password resets
         await tx.passwordReset.updateMany({
