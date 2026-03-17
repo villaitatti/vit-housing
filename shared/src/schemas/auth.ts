@@ -91,8 +91,21 @@ export const resetPasswordSchema = z
     path: ['password_confirm'],
   });
 
+export const EMAIL_CHANGE_EXPIRY_HOURS = 1;
+
+export const changeEmailSchema = z.object({
+  new_email: z.string().trim().toLowerCase().email('Invalid email address'),
+  current_password: z.string().min(1, 'Password is required'),
+});
+
+export const confirmEmailChangeSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+});
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type VitIdCallbackInput = z.infer<typeof vitIdCallbackSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type ChangeEmailInput = z.infer<typeof changeEmailSchema>;
+export type ConfirmEmailChangeInput = z.infer<typeof confirmEmailChangeSchema>;

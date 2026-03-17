@@ -1,19 +1,21 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
+import crypto from 'crypto';
 import { prisma } from '../lib/prisma.js';
 import { signToken } from '../lib/jwt.js';
 import { sendSuccess, sendError } from '../lib/response.js';
 import { validate } from '../middleware/validate.js';
-import { loginSchema, registerSchema, vitIdCallbackSchema, forgotPasswordSchema, resetPasswordSchema } from '@vithousing/shared';
+import { loginSchema, registerSchema, vitIdCallbackSchema, forgotPasswordSchema, resetPasswordSchema, changeEmailSchema, confirmEmailChangeSchema, EMAIL_CHANGE_EXPIRY_HOURS } from '@vithousing/shared';
 import { Role as PrismaRole } from '../generated/prisma/client.js';
 import { getUserAuth0Roles } from '../services/auth0.service.js';
 import { verifyAuth0Token } from '../lib/auth0-jwt.js';
 import { hashInvitationToken, getInvitationStatus } from '../lib/invitations.js';
 import { generatePasswordResetToken, hashPasswordResetToken, buildPasswordResetExpiryDate } from '../lib/password-reset.js';
-import { sendPasswordResetEmail } from '../services/email.service.js';
+import { sendPasswordResetEmail, sendEmailChangeVerification, sendEmailChangedNotification } from '../services/email.service.js';
 import { normalizeEmail } from '../lib/email.js';
 import { hashPassword, needsPasswordRehash, validatePasswordPolicy, verifyPassword } from '../lib/password.js';
 import { createRateLimitMiddleware } from '../middleware/rateLimit.js';
+import { authenticate } from '../middleware/authenticate.js';
 
 const router = Router();
 const COOKIE_OPTIONS = {
@@ -40,6 +42,12 @@ const passwordResetRateLimit = createRateLimitMiddleware({
   maxRequests: 5,
   code: 'RATE_LIMITED',
   message: 'Too many password reset attempts. Please try again later.',
+});
+const emailChangeRateLimit = createRateLimitMiddleware({
+  windowMs: 15 * 60 * 1000,
+  maxRequests: 5,
+  code: 'RATE_LIMITED',
+  message: 'Too many email change attempts. Please try again later.',
 });
 
 class InvitationUnavailableError extends Error {
@@ -426,6 +434,152 @@ router.post('/reset-password', passwordResetRateLimit, validate(resetPasswordSch
     sendSuccess(res, { message: 'Password has been reset successfully' });
   } catch (err) {
     sendError(res, 'Password reset failed', 'RESET_ERROR', 500);
+  }
+});
+
+// POST /api/v1/auth/change-email — Request email change (local users only)
+router.post('/change-email', authenticate, emailChangeRateLimit, validate(changeEmailSchema), async (req: Request, res: Response) => {
+  try {
+    const { new_email, current_password } = req.body;
+    const userId = req.user!.userId;
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      sendError(res, 'User not found', 'NOT_FOUND', 404);
+      return;
+    }
+
+    // Auth0 users cannot change email locally
+    if (user.auth0_user_id) {
+      sendError(res, 'Auth0 users cannot change their email here. Please update your email through your VIT ID provider.', 'FORBIDDEN', 403);
+      return;
+    }
+
+    // Local users must have a password
+    if (!user.password) {
+      sendError(res, 'Cannot change email for this account type', 'FORBIDDEN', 403);
+      return;
+    }
+
+    const normalizedNewEmail = normalizeEmail(new_email);
+
+    // Must be different from current
+    if (normalizedNewEmail === user.email) {
+      sendError(res, 'New email must be different from your current email', 'SAME_EMAIL', 400);
+      return;
+    }
+
+    // Verify current password
+    const passwordValid = await verifyPassword(current_password, user.password);
+    if (!passwordValid) {
+      sendError(res, 'Incorrect password', 'INVALID_PASSWORD', 401);
+      return;
+    }
+
+    // Check new email isn't already taken
+    const existingUser = await prisma.user.findUnique({ where: { email: normalizedNewEmail } });
+    if (existingUser) {
+      sendError(res, 'An account with this email already exists', 'EMAIL_EXISTS', 409);
+      return;
+    }
+
+    // Generate token
+    const token = crypto.randomBytes(32).toString('base64url');
+    const tokenHash = crypto.createHash('sha256').update(token, 'utf8').digest('hex');
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + EMAIL_CHANGE_EXPIRY_HOURS);
+
+    // Store pending email change
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        pending_email: normalizedNewEmail,
+        email_change_token_hash: tokenHash,
+        email_change_expires_at: expiresAt,
+      },
+    });
+
+    // Send verification email to the new address
+    const lang = user.preferred_language === 'IT' ? 'it' : 'en';
+    await sendEmailChangeVerification({
+      to: normalizedNewEmail,
+      token,
+      lang,
+      firstName: user.first_name,
+    });
+
+    sendSuccess(res, { message: 'Verification email sent to your new address' });
+  } catch (err) {
+    console.error('Email change request failed:', err);
+    sendError(res, 'Email change request failed', 'EMAIL_CHANGE_ERROR', 500);
+  }
+});
+
+// POST /api/v1/auth/confirm-email-change — Confirm email change via token
+router.post('/confirm-email-change', validate(confirmEmailChangeSchema), async (req: Request, res: Response) => {
+  try {
+    const { token } = req.body;
+    const tokenHash = crypto.createHash('sha256').update(token, 'utf8').digest('hex');
+
+    const user = await prisma.user.findFirst({
+      where: {
+        email_change_token_hash: tokenHash,
+        email_change_expires_at: { gt: new Date() },
+        pending_email: { not: null },
+      },
+    });
+
+    if (!user || !user.pending_email) {
+      sendError(res, 'Invalid or expired email change token', 'INVALID_TOKEN', 400);
+      return;
+    }
+
+    const newEmail = user.pending_email;
+    const oldEmail = user.email;
+
+    // Re-check uniqueness (race condition guard)
+    const conflict = await prisma.user.findUnique({ where: { email: newEmail } });
+    if (conflict) {
+      sendError(res, 'An account with this email already exists', 'EMAIL_EXISTS', 409);
+      return;
+    }
+
+    // Atomic swap: update email, clear pending fields, invalidate password resets
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: {
+          email: newEmail,
+          pending_email: null,
+          email_change_token_hash: null,
+          email_change_expires_at: null,
+        },
+      }),
+      prisma.passwordReset.updateMany({
+        where: { user_id: user.id, used: false },
+        data: { used: true },
+      }),
+    ]);
+
+    // Send notification to old email
+    const lang = user.preferred_language === 'IT' ? 'it' : 'en';
+    try {
+      await sendEmailChangedNotification({
+        to: oldEmail,
+        newEmail,
+        lang,
+        firstName: user.first_name,
+      });
+    } catch (emailErr) {
+      console.error('Failed to send email change notification to old address:', emailErr);
+    }
+
+    // Clear auth cookie to force re-login
+    res.clearCookie('token', { path: '/' });
+    sendSuccess(res, { message: 'Email changed successfully. Please log in with your new email.' });
+  } catch (err) {
+    console.error('Email change confirmation failed:', err);
+    sendError(res, 'Email change confirmation failed', 'CONFIRM_EMAIL_ERROR', 500);
   }
 });
 

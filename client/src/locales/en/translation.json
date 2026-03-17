@@ -505,6 +505,14 @@
     "title": "Profile",
     "personalInfo": "Personal Information",
     "updateSuccess": "Profile updated successfully!",
+    "changeEmail": "Change email",
+    "changeEmailTitle": "Change Email Address",
+    "changeEmailDescription": "Enter your new email address and current password. We'll send a verification link to the new address.",
+    "newEmail": "New Email Address",
+    "currentPassword": "Current Password",
+    "changeEmailSubmit": "Send Verification Email",
+    "changeEmailSuccess": "Verification email sent to {{email}}. Please check your inbox to confirm the change.",
+    "changeEmailAuth0": "Your email is managed by your VIT ID provider and cannot be changed here.",
     "photo": {
       "title": "Profile Photo",
       "help": "Upload a square portrait to use across the site.",
@@ -520,6 +528,13 @@
       "updateSuccess": "Profile photo updated successfully!",
       "removeSuccess": "Profile photo removed successfully!"
     }
+  },
+  "confirmEmailChange": {
+    "title": "Confirm Email Change",
+    "successTitle": "Email Changed",
+    "successMessage": "Your email address has been updated successfully. Please log in with your new email.",
+    "invalidToken": "This email change link is invalid or has expired. Please request a new one from your profile.",
+    "emailExists": "An account with this email address already exists. The change could not be completed."
   },
   "errors": {
     "unauthorized": "You must be logged in to access this page.",
