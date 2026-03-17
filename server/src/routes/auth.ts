@@ -529,28 +529,29 @@ router.post('/confirm-email-change', validate(confirmEmailChangeSchema), async (
   try {
     const { token } = req.body;
     const tokenHash = crypto.createHash('sha256').update(token, 'utf8').digest('hex');
+    const now = new Date();
 
-    const user = await prisma.user.findFirst({
-      where: {
-        email_change_token_hash: tokenHash,
-        email_change_expires_at: { gt: new Date() },
-        pending_email: { not: null },
-      },
-    });
-
-    if (!user || !user.pending_email) {
-      sendError(res, 'Invalid or expired email change token', 'INVALID_TOKEN', 400);
-      return;
-    }
-
-    const newEmail = user.pending_email;
-    const oldEmail = user.email;
-
-    // Atomic swap: update email, clear pending fields, invalidate password resets
-    // The unique constraint on email will catch races where another user claims it
+    // Use an interactive transaction so the find + update + password-reset
+    // invalidation are atomic — no window for a concurrent request to
+    // claim the same token or for the token to expire between read and write.
+    let result: { oldEmail: string; newEmail: string; firstName: string; preferredLanguage: string } | null = null;
     try {
-      await prisma.$transaction([
-        prisma.user.update({
+      result = await prisma.$transaction(async (tx) => {
+        const user = await tx.user.findFirst({
+          where: {
+            email_change_token_hash: tokenHash,
+            email_change_expires_at: { gt: now },
+            pending_email: { not: null },
+          },
+        });
+
+        if (!user || !user.pending_email) return null;
+
+        const newEmail = user.pending_email;
+        const oldEmail = user.email;
+
+        // Swap email + clear pending fields + bump token_version atomically
+        await tx.user.update({
           where: { id: user.id },
           data: {
             email: newEmail,
@@ -559,12 +560,21 @@ router.post('/confirm-email-change', validate(confirmEmailChangeSchema), async (
             email_change_expires_at: null,
             token_version: { increment: 1 },
           },
-        }),
-        prisma.passwordReset.updateMany({
+        });
+
+        // Invalidate any pending password resets
+        await tx.passwordReset.updateMany({
           where: { user_id: user.id, used: false },
           data: { used: true },
-        }),
-      ]);
+        });
+
+        return {
+          oldEmail,
+          newEmail,
+          firstName: user.first_name,
+          preferredLanguage: user.preferred_language,
+        };
+      });
     } catch (txErr) {
       if (txErr instanceof Prisma.PrismaClientKnownRequestError && txErr.code === 'P2002') {
         sendError(res, 'An account with this email already exists', 'EMAIL_EXISTS', 409);
@@ -573,14 +583,19 @@ router.post('/confirm-email-change', validate(confirmEmailChangeSchema), async (
       throw txErr;
     }
 
+    if (!result) {
+      sendError(res, 'Invalid or expired email change token', 'INVALID_TOKEN', 400);
+      return;
+    }
+
     // Send notification to old email
-    const lang = user.preferred_language === 'IT' ? 'it' : 'en';
+    const lang = result.preferredLanguage === 'IT' ? 'it' : 'en';
     try {
       await sendEmailChangedNotification({
-        to: oldEmail,
-        newEmail,
+        to: result.oldEmail,
+        newEmail: result.newEmail,
         lang,
-        firstName: user.first_name,
+        firstName: result.firstName,
       });
     } catch (emailErr) {
       console.error('Failed to send email change notification to old address:', emailErr);

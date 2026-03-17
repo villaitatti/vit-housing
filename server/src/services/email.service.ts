@@ -73,7 +73,8 @@ export async function sendInvitationEmail({
   const client = await getClient();
   const language = lang.toLowerCase();
   const registrationUrl = `${config.invitationBaseUrl}/${language}/register?token=${token}`;
-  const safeRecipientName = escapeHtml([firstName, lastName].filter(Boolean).join(' ').trim());
+  const recipientName = [firstName, lastName].filter(Boolean).join(' ').trim();
+  const safeRecipientName = escapeHtml(recipientName);
   const formattedExpiry = formatInvitationExpiry(expiresAt, language);
 
   const isEnglish = language === 'en';
@@ -98,10 +99,18 @@ export async function sendInvitationEmail({
       ? 'Sei stato invitato a unirti a Villa I Tatti Housing come proprietario.'
       : 'Sei stato invitato a unirti a Villa I Tatti Housing come utente.';
 
-  const greeting = safeRecipientName
+  const htmlGreeting = safeRecipientName
     ? isEnglish
       ? `Hello ${safeRecipientName},`
       : `Ciao ${safeRecipientName},`
+    : isEnglish
+      ? 'Hello,'
+      : 'Ciao,';
+
+  const textGreeting = recipientName
+    ? isEnglish
+      ? `Hello ${recipientName},`
+      : `Ciao ${recipientName},`
     : isEnglish
       ? 'Hello,'
       : 'Ciao,';
@@ -118,7 +127,7 @@ export async function sendInvitationEmail({
     ? `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Welcome to Villa I Tatti Housing</h2>
-        <p>${greeting}</p>
+        <p>${htmlGreeting}</p>
         <p>${introCopy}</p>
         <p>Click the button below to complete your registration as <strong>${roleName}</strong>.</p>
         <p style="text-align: center; margin: 30px 0;">
@@ -134,7 +143,7 @@ export async function sendInvitationEmail({
     : `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Benvenuto su Villa I Tatti Housing</h2>
-        <p>${greeting}</p>
+        <p>${htmlGreeting}</p>
         <p>${introCopy}</p>
         <p>Clicca il pulsante qui sotto per completare la registrazione come <strong>${roleName}</strong>.</p>
         <p style="text-align: center; margin: 30px 0;">
@@ -149,7 +158,7 @@ export async function sendInvitationEmail({
     `;
 
   const textBody = isEnglish
-    ? `${greeting}
+    ? `${textGreeting}
 
 ${introCopy}
 
@@ -158,7 +167,7 @@ Complete your registration as ${roleName}: ${registrationUrl}
 ${expiryCopy}
 
 ${ignoreCopy}`
-    : `${greeting}
+    : `${textGreeting}
 
 ${introCopy}
 
@@ -208,10 +217,18 @@ export async function sendEmailChangeVerification({
     ? 'Confirm your new email address — Villa I Tatti Housing'
     : 'Conferma il tuo nuovo indirizzo email — Villa I Tatti Housing';
 
-  const greeting = safeFirstName
+  const htmlGreeting = safeFirstName
     ? isEnglish
       ? `Hello ${safeFirstName},`
       : `Ciao ${safeFirstName},`
+    : isEnglish
+      ? 'Hello,'
+      : 'Ciao,';
+
+  const textGreeting = firstName
+    ? isEnglish
+      ? `Hello ${firstName},`
+      : `Ciao ${firstName},`
     : isEnglish
       ? 'Hello,'
       : 'Ciao,';
@@ -234,7 +251,7 @@ export async function sendEmailChangeVerification({
     ? `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Confirm Your New Email</h2>
-        <p>${greeting}</p>
+        <p>${htmlGreeting}</p>
         <p>${introCopy}</p>
         <p>Click the button below to confirm the change.</p>
         <p style="text-align: center; margin: 30px 0;">
@@ -250,7 +267,7 @@ export async function sendEmailChangeVerification({
     : `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Conferma il Tuo Nuovo Indirizzo Email</h2>
-        <p>${greeting}</p>
+        <p>${htmlGreeting}</p>
         <p>${introCopy}</p>
         <p>Clicca il pulsante qui sotto per confermare il cambio.</p>
         <p style="text-align: center; margin: 30px 0;">
@@ -265,7 +282,7 @@ export async function sendEmailChangeVerification({
     `;
 
   const textBody = isEnglish
-    ? `${greeting}
+    ? `${textGreeting}
 
 ${introCopy}
 
@@ -274,7 +291,7 @@ Confirm your email change: ${confirmUrl}
 ${expiryCopy}
 
 ${ignoreCopy}`
-    : `${greeting}
+    : `${textGreeting}
 
 ${introCopy}
 
@@ -324,10 +341,18 @@ export async function sendEmailChangedNotification({
     ? 'Your email address has been changed — Villa I Tatti Housing'
     : 'Il tuo indirizzo email è stato modificato — Villa I Tatti Housing';
 
-  const greeting = safeFirstName
+  const htmlGreeting = safeFirstName
     ? isEnglish
       ? `Hello ${safeFirstName},`
       : `Ciao ${safeFirstName},`
+    : isEnglish
+      ? 'Hello,'
+      : 'Ciao,';
+
+  const textGreeting = firstName
+    ? isEnglish
+      ? `Hello ${firstName},`
+      : `Ciao ${firstName},`
     : isEnglish
       ? 'Hello,'
       : 'Ciao,';
@@ -343,19 +368,19 @@ export async function sendEmailChangedNotification({
   const htmlBody = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2>${isEnglish ? 'Email Address Changed' : 'Indirizzo Email Modificato'}</h2>
-      <p>${greeting}</p>
+      <p>${htmlGreeting}</p>
       <p>${bodyCopy}</p>
       <p style="color: #b91c1c; font-weight: bold;">${warningCopy}</p>
     </div>
   `;
 
   const textBody = isEnglish
-    ? `${greeting}
+    ? `${textGreeting}
 
 The email address on your Villa I Tatti Housing account has been changed to ${newEmail}.
 
 ${warningCopy}`
-    : `${greeting}
+    : `${textGreeting}
 
 L'indirizzo email del tuo account Villa I Tatti Housing è stato modificato in ${newEmail}.
 
@@ -401,10 +426,18 @@ export async function sendPasswordResetEmail({
     ? 'Reset your Villa I Tatti Housing password'
     : 'Reimposta la tua password di Villa I Tatti Housing';
 
-  const greeting = safeFirstName
+  const htmlGreeting = safeFirstName
     ? isEnglish
       ? `Hello ${safeFirstName},`
       : `Ciao ${safeFirstName},`
+    : isEnglish
+      ? 'Hello,'
+      : 'Ciao,';
+
+  const textGreeting = firstName
+    ? isEnglish
+      ? `Hello ${firstName},`
+      : `Ciao ${firstName},`
     : isEnglish
       ? 'Hello,'
       : 'Ciao,';
@@ -427,7 +460,7 @@ export async function sendPasswordResetEmail({
     ? `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Reset Your Password</h2>
-        <p>${greeting}</p>
+        <p>${htmlGreeting}</p>
         <p>${introCopy}</p>
         <p>Click the button below to choose a new password.</p>
         <p style="text-align: center; margin: 30px 0;">
@@ -443,7 +476,7 @@ export async function sendPasswordResetEmail({
     : `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Reimposta la Tua Password</h2>
-        <p>${greeting}</p>
+        <p>${htmlGreeting}</p>
         <p>${introCopy}</p>
         <p>Clicca il pulsante qui sotto per scegliere una nuova password.</p>
         <p style="text-align: center; margin: 30px 0;">
@@ -458,7 +491,7 @@ export async function sendPasswordResetEmail({
     `;
 
   const textBody = isEnglish
-    ? `${greeting}
+    ? `${textGreeting}
 
 ${introCopy}
 
@@ -467,7 +500,7 @@ Reset your password: ${resetUrl}
 ${expiryCopy}
 
 ${ignoreCopy}`
-    : `${greeting}
+    : `${textGreeting}
 
 ${introCopy}
 

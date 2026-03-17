@@ -107,23 +107,17 @@ export function ProfilePage() {
     },
   });
 
-  const changeEmailSubmitting = useRef(false);
   const changeEmailMutation = useMutation({
     mutationFn: async (data: ChangeEmailInput) => {
-      if (changeEmailSubmitting.current) return '' as string;
-      changeEmailSubmitting.current = true;
       await api.post('/api/v1/auth/change-email', data);
       return data.new_email;
     },
     onSuccess: (newEmail) => {
-      changeEmailSubmitting.current = false;
-      if (!newEmail) return;
       toast.success(t('profile.changeEmailSuccess', { email: newEmail }));
       setChangeEmailOpen(false);
       emailForm.reset();
     },
     onError: (err: Error) => {
-      changeEmailSubmitting.current = false;
       toast.error(err.message);
     },
   });
@@ -346,7 +340,10 @@ export function ProfilePage() {
             <DialogDescription>{t('profile.changeEmailDescription')}</DialogDescription>
           </DialogHeader>
           <form
-            onSubmit={emailForm.handleSubmit((data) => changeEmailMutation.mutate(data))}
+            onSubmit={emailForm.handleSubmit((data) => {
+              if (changeEmailMutation.isPending) return;
+              changeEmailMutation.mutate(data);
+            })}
             className="space-y-4"
           >
             <div className="space-y-2">
