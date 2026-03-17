@@ -63,10 +63,11 @@ test('buildAdminUserWhere ignores an empty roles array like an undefined roles f
 });
 
 test('buildAdminUserRoleStatsWhere stays global apart from the requested role', () => {
-  assert.deepEqual(buildAdminUserRoleStatsWhere('HOUSE_USER'), {
-    roles: { has: 'HOUSE_USER' },
-  });
-  assert.deepEqual(buildAdminUserRoleStatsWhere('HOUSE_LANDLORD'), {
-    roles: { has: 'HOUSE_LANDLORD' },
-  });
+  const roles = ['HOUSE_USER', 'HOUSE_LANDLORD'] as const;
+
+  for (const role of roles) {
+    assert.deepEqual(buildAdminUserRoleStatsWhere(role), {
+      roles: { has: role },
+    });
+  }
 });
