@@ -354,7 +354,24 @@ export function AdminUserDetailPage() {
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {listingsQuery.data?.items?.length ? (
+          {listingsQuery.isLoading && !listingsQuery.data ? (
+            <div className="space-y-3">
+              <Skeleton className="h-44 w-full rounded-2xl" />
+              <Skeleton className="h-44 w-full rounded-2xl" />
+            </div>
+          ) : listingsQuery.isError ? (
+            <div className="flex flex-col items-center gap-4 py-12 text-center">
+              <div>
+                <p className="font-medium text-destructive">
+                  {listingsQuery.error instanceof Error ? listingsQuery.error.message : t('common.error')}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">{t('admin.retryUserListingsFetch')}</p>
+              </div>
+              <Button variant="outline" onClick={() => listingsQuery.refetch()}>
+                {t('common.retry')}
+              </Button>
+            </div>
+          ) : listingsQuery.data?.items?.length ? (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {listingsQuery.data.items.map((listing) => (
                 <AdminManagedListingCard
@@ -381,6 +398,7 @@ export function AdminUserDetailPage() {
                   size="sm"
                   disabled={page <= 1}
                   onClick={() => setPage((currentPage) => currentPage - 1)}
+                  aria-label={t('common.back')}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -392,6 +410,7 @@ export function AdminUserDetailPage() {
                   size="sm"
                   disabled={page >= totalPages}
                   onClick={() => setPage((currentPage) => currentPage + 1)}
+                  aria-label={t('pagination.nextPage', 'Next page')}
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>

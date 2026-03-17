@@ -48,6 +48,7 @@ interface AdminUser {
   created_at: string;
   last_login: string | null;
   _count: { listings: number };
+  updating?: boolean;
 }
 
 interface AdminUsersStats {
@@ -124,7 +125,7 @@ export function AdminUsersPage() {
     limit,
   };
 
-  const { data, isLoading, isFetching } = useQuery<AdminUsersResponse>({
+  const { data, isLoading, isFetching, error, isError, refetch } = useQuery<AdminUsersResponse>({
     queryKey: queryKeys.users.list(filters),
     queryFn: async () => {
       const params: Record<string, string | number> = { sortBy, sortOrder, page, limit };
@@ -150,23 +151,50 @@ export function AdminUsersPage() {
         queryClient.setQueryData<AdminUsersResponse>(queryKey, {
           ...previous,
           items: previous.items.map((user) => (
-            user.id === id ? { ...user, roles: newRoles } : user
+            user.id === id ? { ...user, roles: newRoles, updating: true } : user
           )),
         });
       }
 
-      return { previous, queryKey };
+      return { previous, queryKey, id };
     },
     onError: (err: Error, _vars, context) => {
       if (context?.previous) {
         queryClient.setQueryData(context.queryKey, context.previous);
+      } else if (context?.queryKey) {
+        queryClient.setQueryData<AdminUsersResponse | undefined>(context.queryKey, (current) => {
+          if (!current) {
+            return current;
+          }
+
+          return {
+            ...current,
+            items: current.items.map((user) => (
+              user.id === context.id ? { ...user, updating: false } : user
+            )),
+          };
+        });
       }
       toast.error(err.message);
     },
     onSuccess: () => {
       toast.success(t('admin.rolesUpdated'));
     },
-    onSettled: () => {
+    onSettled: (_data, _error, _vars, context) => {
+      if (context?.queryKey) {
+        queryClient.setQueryData<AdminUsersResponse | undefined>(context.queryKey, (current) => {
+          if (!current) {
+            return current;
+          }
+
+          return {
+            ...current,
+            items: current.items.map((user) => (
+              user.id === context.id ? { ...user, updating: false } : user
+            )),
+          };
+        });
+      }
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
     },
   });
@@ -229,6 +257,24 @@ export function AdminUsersPage() {
         <Skeleton className="h-32 w-full rounded-2xl" />
         <Skeleton className="h-96 w-full rounded-2xl" />
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card className="rounded-2xl border-border/70 bg-card/95 shadow-sm">
+        <CardContent className="flex flex-col items-center gap-4 py-10 text-center">
+          <div>
+            <p className="font-medium text-destructive">
+              {error instanceof Error ? error.message : t('common.error')}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{t('admin.retryUsersFetch')}</p>
+          </div>
+          <Button variant="outline" onClick={() => refetch()}>
+            {t('common.retry')}
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -412,7 +458,7 @@ export function AdminUsersPage() {
                                 <Checkbox
                                   checked={user.roles.includes(role)}
                                   onCheckedChange={() => toggleUserRole(user, role)}
-                                  disabled={user.roles.length === 1 && user.roles.includes(role)}
+                                  disabled={user.updating || (user.roles.length === 1 && user.roles.includes(role))}
                                 />
                                 <span className="text-sm">{t(`admin.${ROLE_LABELS[role]}`)}</span>
                               </label>

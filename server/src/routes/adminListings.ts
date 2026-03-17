@@ -16,9 +16,9 @@ router.get(
   authenticate,
   requireRole('HOUSE_ADMIN', 'HOUSE_IT_ADMIN'),
   validate(adminListingListSchema, 'query'),
-  async (req: Request, res: Response) => {
+  async (req: Request<Record<string, never>, unknown, unknown, AdminListingListInput>, res: Response) => {
     try {
-      const filters = req.query as unknown as AdminListingListInput;
+      const filters = req.query;
       const { page, limit } = filters;
       const skip = (page - 1) * limit;
       const where = buildAdminListingWhere(filters);

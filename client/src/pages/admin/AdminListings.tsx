@@ -88,7 +88,7 @@ export function AdminListingsPage() {
     limit,
   };
 
-  const { data, isLoading, isFetching } = useQuery<AdminListingsResponse>({
+  const { data, isLoading, isFetching, error, isError, refetch } = useQuery<AdminListingsResponse>({
     queryKey: queryKeys.listings.admin(filters),
     queryFn: async () => {
       const params: Record<string, string | number> = { page, limit };
@@ -159,6 +159,24 @@ export function AdminListingsPage() {
         <Skeleton className="h-32 w-full rounded-2xl" />
         <Skeleton className="h-96 w-full rounded-2xl" />
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card className="rounded-2xl border-border/70 bg-card/95 shadow-sm">
+        <CardContent className="flex flex-col items-center gap-4 py-10 text-center">
+          <div>
+            <p className="font-medium text-destructive">
+              {error instanceof Error ? error.message : t('common.error')}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{t('admin.retryListingsFetch')}</p>
+          </div>
+          <Button variant="outline" onClick={() => refetch()}>
+            {t('common.retry')}
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -304,7 +322,10 @@ export function AdminListingsPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link to={getListingEditPath(currentLang, listing.slug)}>
+                          <Link
+                            to={getListingEditPath(currentLang, listing.slug)}
+                            aria-label={`Edit listing ${listing.slug || listing.id}`}
+                          >
                             <Pencil className="h-4 w-4" />
                           </Link>
                         </Button>
@@ -313,6 +334,7 @@ export function AdminListingsPage() {
                           size="sm"
                           onClick={() => setDeleteId(listing.id)}
                           className="text-destructive hover:text-destructive"
+                          aria-label={`Delete listing ${listing.slug || listing.id}`}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
